@@ -1,0 +1,6 @@
+.env
+.vscode
+tmpdir
+.project
+.idea
+seed_ml_accounts.log
