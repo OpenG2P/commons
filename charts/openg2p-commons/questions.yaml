@@ -442,4 +442,3 @@ questions:
   label: Spring Config application properties.
   group: Mock Identity System Settings
   show_if: "mock-identity-system.enabled=true&&mock-identity-system.springConfig.gitRepo.enabled=false"
-
