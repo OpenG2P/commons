@@ -1,16 +1,16 @@
 global:
-  keycloakBaseUrl: https://keycloak.openg2p.org
+  keycloakBaseUrl: https://keycloak.your.org
   keycloakIssuerUrl: '{{ tpl .Values.global.keycloakBaseUrl $ }}/realms/master'
 
-  openg2pKeymanagerHostname: keymanager.loadtest.openg2p.org
-  openg2pMinioHostname: minio.loadtest.openg2p.org
-  openg2pOpensearchHostname: opensearch.loadtest.openg2p.org
-  openg2pKafkaUiHostname: kafka.loadtest.openg2p.org
-  openg2pSupersetHostname: superset.loadtest.openg2p.org
-  openg2pEsignetHostname: esignet.loadtest.openg2p.org
-  openg2pOdkCentralHostname: odk.loadtest.openg2p.org
+  openg2pKeymanagerHostname: keymanager.openg2p.sandbox.org
+  openg2pMinioHostname: minio.openg2p.sandbox.org
+  openg2pOpensearchHostname: opensearch.openg2p.sandbox.org
+  openg2pKafkaUiHostname: kafka.openg2p.sandbox.org
+  openg2pSupersetHostname: superset.openg2p.sandbox.org
+  openg2pEsignetHostname: esignet.openg2p.sandbox.org
+  openg2pOdkCentralHostname: odk.openg2p.sandbox.org
 
-  sysAdminEmail: admin@loadtest.openg2p.org
+  sysAdminEmail: admin@openg2p.sandbox.org
   openg2pKeymanagerAuthEnabled: false
 
 postgresql:
