@@ -7,6 +7,7 @@ on:
     branches:
       - 1.*
       - main
+      - develop
   workflow_dispatch:
     inputs:
       forcePublishCharts:
