@@ -620,7 +620,7 @@ artifactory:
   resources: {}
 
 softhsm:
-  enabled: false
+  enabled: true
   # Hardcoding this for now. else every upgrade will reset the pin
   securityPIN: MTYwMzIyMjg=
   resources: {}
