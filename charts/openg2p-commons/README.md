@@ -1,4 +1,4 @@
-# OpenG2P Social Registry Helm Chart
+# OpenG2P Commons Helm Chart
 
 This helm contains the following components:
 
