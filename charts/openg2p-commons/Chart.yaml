@@ -1,8 +1,8 @@
 apiVersion: v2
 name: openg2p-commons
-description:  Helm chart for Common services used by modules
+description:  Helm chart for common services used by modules
 type: application
-version: 1.0.0-develop
+version: 1.0.0
 dependencies:
 - name: postgresql
   version: 15.5.38
