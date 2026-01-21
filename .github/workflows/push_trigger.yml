@@ -1,4 +1,4 @@
-name: Publish OpenG2P Helm charts 
+name: Publish OpenG2P Helm charts
 
 on:
   push:
@@ -6,7 +6,6 @@ on:
       - '**'
     branches:
       - 1.*
-      - main
       - develop
   workflow_dispatch:
     inputs:
