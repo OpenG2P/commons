@@ -1,1 +1,1 @@
-- Refer to deployment guide [here](https://docs.openg2p.org/social-registry/deployment).
+- Refer to [docs](https://docs.openg2p.org/deployment/concepts/openg2p-commons-helm-chart)
