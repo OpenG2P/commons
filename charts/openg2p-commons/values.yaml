@@ -85,28 +85,38 @@ mail:
   enabled: true
   mailname: admin@openg2p.sanbox.org
 
-odk-central:
+odkCentral:
   enabled: true
   hostname: '{{ tpl .Values.global.openg2pOdkCentralHostname $ }}'
 
   postgresqlInstallationName: '{{ .Release.Name }}-postgresql'
   mailInstallationName: '{{ .Release.Name }}-mail'
 
+  # Default
+  oidcClientId: 'openg2p-odk-{{ .Release.Namespace }}'
+  # Name of the secret in Kuberentes containing (DO NOT password directly here)
+  # Same name as client id by convension.
+  oidcClientSecret: '{{ tpl .Values.odkCentral.oidcClientId $ }}'
+  # Key containing client password. Hardcoded in Keycloak Init script
+  oidcClientSecretKey: 'client_secret'
+
   s3BlobsEnabled: true
-  minioInstallationName: '{{ .Release.Name }}-minio'
 
   backend:
     envVars:
       OIDC_ENABLED: true
       OIDC_ISSUER_URL: '{{ tpl .Values.global.keycloakIssuerUrl $ }}'
-      OIDC_CLIENT_ID: 'openg2p-odk-{{ .Release.Namespace }}'
-      OIDC_CLIENT_SECRET: ""
+      OIDC_CLIENT_ID: '{{ tpl .Values.odkCentral.oidcClientId $ }}'
 
     envVarsFrom:
       DB_PASSWORD:
         secretKeyRef:
           name: '{{ tpl .Values.postgresqlInstallationName $ }}-addl-user-passwords'
           key: odkuser
+      OIDC_CLIENT_SECRET:
+        secretKeyRef:
+          name: '{{ tpl .Values.odkCentral.oidcClientSecret $ }}'
+          key: '{{ tpl .Values.odkCentral.oidcClientSecretKey $ }}'
 
 odk-central-enketo-redis-main:
   enabled: true
@@ -146,16 +156,19 @@ minio:
     size: 16Gi
 
   oidcWellKnownConfigUrl: '{{ tpl .Values.global.keycloakIssuerUrl $ }}/.well-known/openid-configuration'
+  # Default
   oidcClientId: 'openg2p-minio-{{ .Release.Namespace }}'
-  oidcClientSecret: ''
+  # Name of the secret in Kuberentes containing (DO NOT password directly here)
+  # Same name as client id by convension.
+  oidcClientSecret: '{{ tpl .Values.minio.oidcClientId $ }}'
+  # Key containing client password. Hardcoded in Keycloak Init script
+  oidcClientSecretKey: 'client_secret'
 
   extraEnvVars:
   - name: MINIO_IDENTITY_OPENID_CONFIG_URL
     value: '{{ tpl .Values.oidcWellKnownConfigUrl $ }}'
   - name: MINIO_IDENTITY_OPENID_CLIENT_ID
     value: '{{ tpl .Values.oidcClientId $ }}'
-  - name: MINIO_IDENTITY_OPENID_CLIENT_SECRET
-    value: '{{ tpl .Values.oidcClientSecret $ }}'
   - name: MINIO_IDENTITY_OPENID_DISPLAY_NAME
     value: Keycloak
   - name: MINIO_IDENTITY_OPENID_CLAIM_NAME
@@ -166,6 +179,12 @@ minio:
     value: "on"
   - name: MINIO_IDENTITY_OPENID_CLAIM_USERINFO
     value: "on"
+
+  envVarsFrom:
+      MINIO_IDENTITY_OPENID_CLIENT_SECRET:
+        secretKeyRef:
+          name: '{{ tpl .Values.minio.oidcClientSecret $ }}'
+          key: '{{ tpl .Values.minio.oidcClientSecretKey $ }}'
 
   istio:
     enabled: true
@@ -192,8 +211,13 @@ opensearch:
   hostname: '{{ tpl .Values.global.openg2pOpensearchHostname $ }}'
 
   oidcWellKnownConfigUrl: '{{ tpl .Values.global.keycloakIssuerUrl $ }}/.well-known/openid-configuration'
+  # Default
   oidcClientId: 'openg2p-opensearch-{{ .Release.Namespace }}'
-  oidcClientSecret: ''
+  # Name of the secret in Kuberentes containing (DO NOT password directly here)
+  # Same name as client id by convension.
+  oidcClientSecret: '{{ tpl .Values.oidcClientId $ }}'
+  # Key containing client password. Hardcoded in Keycloak Init script
+  oidcClientSecretKey: 'client_secret'
 
   master:
     masterOnly: false
@@ -314,6 +338,7 @@ opensearch:
         openid:
           connect_url: '{{ tpl .Values.oidcWellKnownConfigUrl $ }}'
           client_id: '{{ tpl .Values.oidcClientId $ }}'
+          #TODO: client_secret: '{{ tpl .Values.oidcClientSecret $ }}'
           client_secret: '{{ tpl .Values.oidcClientSecret $ }}'
           base_redirect_url: 'https://{{ tpl .Values.hostname $ }}'
           logout_url: ""
