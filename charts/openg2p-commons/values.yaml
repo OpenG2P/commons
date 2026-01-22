@@ -678,7 +678,7 @@ keymanager:
       branch: master
     rawConfig: ""
   envVars:
-    auth_server_admin_allowed_audience: 'openg2p-sr,openg2p-sr-{{ .Release.Namespace }},openg2p-pbms,openg2p-pbms-{{ .Release.Namespace }},openg2p-spar,openg2p-spar-{{ .Release.Namespace }},openg2p-g2p-bridge,openg2p-g2p-bridge-{{ .Release.Namespace }}'
+    auth_server_admin_allowed_audience: 'openg2p-registry,openg2p-registry-{{ .Release.Namespace }},openg2p-pbms,openg2p-pbms-{{ .Release.Namespace }},openg2p-spar,openg2p-spar-{{ .Release.Namespace }},openg2p-g2p-bridge,openg2p-g2p-bridge-{{ .Release.Namespace }}'
   envVarsFrom:
     db_dbuser_password:
       secretKeyRef:
@@ -719,8 +719,13 @@ superset:
   hostname: superset.openg2p.sandbox.org
 
   oidcIssuerUrl: '{{ tpl .Values.global.keycloakIssuerUrl $ }}'
+  # Default name
   oidcClientId: 'openg2p-superset-{{ .Release.Namespace }}'
-  oidcClientSecret: ''
+  # Name of the secret in Kuberentes containing (DO NOT password directly here)
+  # Same name as client id by convension.
+  oidcClientSecret: '{{ tpl .Values.oidcClientId $ }}'
+  # Key containing client password. Hardcoded in Keycloak Init script
+  oidcClientSecretKey: 'client_secret'
 
   supersetSecretKey: ''
 

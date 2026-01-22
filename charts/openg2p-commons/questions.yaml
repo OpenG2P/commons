@@ -239,13 +239,7 @@ questions:
   group: Reporting
 
 # Superset
-- variable: superset.enabled
-  description: This installs Superset for reporting
-  type: boolean
-  label: Install Superset?
-  group: Superset
-
-- variable: global.openg2pSupersetHostname
+- variable: superset.hostname
   description: Hostname for Superset Dashboards
   type: string
   label: Superset Hostname
@@ -276,22 +270,10 @@ questions:
   label: Install eSignet?
   group: eSignet
 
-- variable: global.openg2pEsignetHostname
+- variable: esignet.hostname
   description: Hostname under which eSignet should be accessible
   type: string
   label: eSignet Hostname
-  group: eSignet
-
-- variable: softhsm.enabled
-  label: Install Softhsm?
-  description: Enabling this is mandatory for eSignet
-  type: boolean
-  group: eSignet
-
-- variable: kafka.enabled
-  label: Install Kafka?
-  description: Enabling this is mandatory for eSignet
-  type: boolean
   group: eSignet
 
 - variable: esignet.springConfig.profile
@@ -304,22 +286,15 @@ questions:
   label: Spring Config Names
   group: eSignet
 
-- variable: esignet.springConfig.gitRepo.enabled
-  description: Enables download of configs from Git repo.
-  type: boolean
-  label: Spring Config Git Enabled
+- variable: esignet.springConfig.gitRepo.repoUrl
+  description: |-
+    Repo Url for remote Git repo containing configs.
+    This url should include username password if required.
+  type: string
+  label: Spring Config Git Repo Url
   group: eSignet
-  show_subquestion_if: true
-  subquestions:
-  - variable: esignet.springConfig.gitRepo.repoUrl
-    description: |-
-      Repo Url for remote Git repo containing configs.
-      This url should include username password if required.
-    type: string
-    label: Spring Config Git Repo Url
-    group: eSignet
 
-  - variable: esignet.springConfig.gitRepo.branch
+- variable: esignet.springConfig.gitRepo.branch
     description: Branch of remote Git repo containing configs.
     type: string
     label: Spring Config Git Repo Branch
