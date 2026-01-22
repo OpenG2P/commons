@@ -2,13 +2,13 @@ global:
   keycloakBaseUrl: https://keycloak.your.org
   keycloakIssuerUrl: '{{ tpl .Values.global.keycloakBaseUrl $ }}/realms/master'
 
-  openg2pKeymanagerHostname: keymanager.openg2p.sandbox.org
-  openg2pMinioHostname: minio.openg2p.sandbox.org
-  openg2pOpensearchHostname: opensearch.openg2p.sandbox.org
-  openg2pKafkaUiHostname: kafka.openg2p.sandbox.org
-  openg2pSupersetHostname: superset.openg2p.sandbox.org
-  openg2pEsignetHostname: esignet.openg2p.sandbox.org
-  openg2pOdkCentralHostname: odk.openg2p.sandbox.org
+  keymanagerHostname: keymanager.openg2p.sandbox.org
+  minioHostname: minio.openg2p.sandbox.org
+  opensearchHostname: opensearch.openg2p.sandbox.org
+  kafkaUiHostname: kafka.openg2p.sandbox.org
+  supersetHostname: superset.openg2p.sandbox.org
+  esignetHostname: esignet.openg2p.sandbox.org
+  odkCentralHostname: odk.openg2p.sandbox.org
 
   sysAdminEmail: admin@openg2p.sandbox.org
   openg2pKeymanagerAuthEnabled: false
@@ -31,7 +31,11 @@ postgresql:
     extendedConfiguration: |-
       wal_level = logical
       max_wal_senders = 20
-      max_replication_slots = 10
+      max_replication_slots = 300
+      max_connections = 500
+    # Defaul resources is set to "nano" in original Helm chart. We don't set any limit here
+    # and let postgresql consume any amount of resources. Later we can limit it
+    resourcesPreset: "none"
     extraEnvVars:
       - name: ADDL_DBS_ENABLED
         value: '{{ .Values.additionalDbs.enabled | ternary "true" "false" }}'
@@ -85,9 +89,9 @@ mail:
   enabled: true
   mailname: admin@openg2p.sanbox.org
 
-odkCentral:
+odk-central:
   enabled: true
-  hostname: '{{ tpl .Values.global.openg2pOdkCentralHostname $ }}'
+  hostname: '{{ tpl .Values.global.odkCentralHostname $ }}'
 
   postgresqlInstallationName: '{{ .Release.Name }}-postgresql'
   mailInstallationName: '{{ .Release.Name }}-mail'
@@ -96,7 +100,7 @@ odkCentral:
   oidcClientId: 'openg2p-odk-{{ .Release.Namespace }}'
   # Name of the secret in Kuberentes containing (DO NOT password directly here)
   # Same name as client id by convension.
-  oidcClientSecret: '{{ tpl .Values.odkCentral.oidcClientId $ }}'
+  oidcClientSecret: '{{ tpl .Values.oidcClientId $ }}'
   # Key containing client password. Hardcoded in Keycloak Init script
   oidcClientSecretKey: 'client_secret'
 
@@ -106,7 +110,7 @@ odkCentral:
     envVars:
       OIDC_ENABLED: true
       OIDC_ISSUER_URL: '{{ tpl .Values.global.keycloakIssuerUrl $ }}'
-      OIDC_CLIENT_ID: '{{ tpl .Values.odkCentral.oidcClientId $ }}'
+      OIDC_CLIENT_ID: '{{ tpl .Values.oidcClientId $ }}'
 
     envVarsFrom:
       DB_PASSWORD:
@@ -115,8 +119,8 @@ odkCentral:
           key: odkuser
       OIDC_CLIENT_SECRET:
         secretKeyRef:
-          name: '{{ tpl .Values.odkCentral.oidcClientSecret $ }}'
-          key: '{{ tpl .Values.odkCentral.oidcClientSecretKey $ }}'
+          name: '{{ tpl .Values.oidcClientSecret $ }}'
+          key: '{{ tpl .Values.oidcClientSecretKey $ }}'
 
 odk-central-enketo-redis-main:
   enabled: true
@@ -150,7 +154,7 @@ odk-central-enketo-redis-cache:
 
 minio:
   enabled: true
-  hostname: '{{ tpl .Values.global.openg2pMinioHostname $ }}'
+  hostname: '{{ tpl .Values.global.minioHostname $ }}'
   persistence:
     enabled: true
     size: 16Gi
@@ -160,7 +164,7 @@ minio:
   oidcClientId: 'openg2p-minio-{{ .Release.Namespace }}'
   # Name of the secret in Kuberentes containing (DO NOT password directly here)
   # Same name as client id by convension.
-  oidcClientSecret: '{{ tpl .Values.minio.oidcClientId $ }}'
+  oidcClientSecret: '{{ tpl .Values.oidcClientId $ }}'
   # Key containing client password. Hardcoded in Keycloak Init script
   oidcClientSecretKey: 'client_secret'
 
@@ -181,10 +185,10 @@ minio:
     value: "on"
 
   envVarsFrom:
-      MINIO_IDENTITY_OPENID_CLIENT_SECRET:
-        secretKeyRef:
-          name: '{{ tpl .Values.minio.oidcClientSecret $ }}'
-          key: '{{ tpl .Values.minio.oidcClientSecretKey $ }}'
+    MINIO_IDENTITY_OPENID_CLIENT_SECRET:
+      secretKeyRef:
+        name: '{{ tpl .Values.oidcClientSecret $ }}'
+        key: '{{ tpl .Values.oidcClientSecretKey $ }}'
 
   istio:
     enabled: true
@@ -208,7 +212,7 @@ minio:
 
 opensearch:
   enabled: true
-  hostname: '{{ tpl .Values.global.openg2pOpensearchHostname $ }}'
+  hostname: '{{ tpl .Values.global.opensearchHostname $ }}'
 
   oidcWellKnownConfigUrl: '{{ tpl .Values.global.keycloakIssuerUrl $ }}/.well-known/openid-configuration'
   # Default
@@ -310,6 +314,13 @@ opensearch:
 
     resourcesPreset: "none"
 
+    extraEnvVars:
+    - name: OIDC_CLIENT_SECRET
+      valueFrom:
+        secretKeyRef:
+          name: '{{ tpl .Values.oidcClientSecret $ }}'
+          key: '{{ tpl .Values.oidcClientSecretKey $ }}'
+
     extraVolumes:
     - name: dashboards-config
       configMap:
@@ -338,8 +349,7 @@ opensearch:
         openid:
           connect_url: '{{ tpl .Values.oidcWellKnownConfigUrl $ }}'
           client_id: '{{ tpl .Values.oidcClientId $ }}'
-          #TODO: client_secret: '{{ tpl .Values.oidcClientSecret $ }}'
-          client_secret: '{{ tpl .Values.oidcClientSecret $ }}'
+          client_secret: "${OIDC_CLIENT_SECRET}"
           base_redirect_url: 'https://{{ tpl .Values.hostname $ }}'
           logout_url: ""
         ui:
@@ -430,7 +440,7 @@ kafka:
 kafkaUi:
   enabled: true
   # kafka.nameOverride will apply here too.
-  hostname: '{{ tpl .Values.global.openg2pKafkaUiHostname $ }}'
+  hostname: '{{ tpl .Values.global.kafkaUiHostname $ }}'
 
   basePath: ""
 
@@ -652,7 +662,7 @@ softhsm:
 
 keymanager:
   enabled: true
-  hostname: '{{ tpl .Values.global.openg2pKeymanagerHostname $ }}'
+  hostname: '{{ tpl .Values.global.keymanagerHostname $ }}'
   authEnabled: '{{ .Values.global.openg2pKeymanagerAuthEnabled }}'
   istio:
     enabled: false
@@ -704,7 +714,7 @@ keymanager:
 
 superset:
   enabled: true
-  hostname: '{{ tpl .Values.global.openg2pSupersetHostname $ }}'
+  hostname: '{{ tpl .Values.global.supersetHostname $ }}'
 
   oidcIssuerUrl: '{{ tpl .Values.global.keycloakIssuerUrl $ }}'
   oidcClientId: 'openg2p-superset-{{ .Release.Namespace }}'
@@ -839,7 +849,7 @@ esignetRedis:
 
 esignet:
   enabled: false
-  hostname: '{{ tpl .Values.global.openg2pEsignetHostname $ }}'
+  hostname: '{{ tpl .Values.global.esignetHostname $ }}'
 
   captchaEnabled: false
 
@@ -873,7 +883,7 @@ esignet:
 
 mock-identity-system:
   enabled: false
-  hostname: '{{ tpl .Values.global.openg2pEsignetHostname $ }}'
+  hostname: '{{ tpl .Values.global.esignetHostname $ }}'
 
   envVarsFrom:
     db_dbuser_password:
