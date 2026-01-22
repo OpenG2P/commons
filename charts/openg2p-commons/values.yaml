@@ -729,6 +729,13 @@ superset:
 
   supersetSecretKey: ''
 
+  extraEnvRaw:
+  - name: OIDC_CLIENT_SECRET
+    valueFrom:
+      secretKeyRef:
+        name: '{{ tpl .Values.oidcClientSecret $ }}'
+        key: '{{ tpl .Values.oidcClientSecretKey $ }}'
+
   init:
     createAdmin: false
     jobAnnotations:
@@ -751,6 +758,7 @@ superset:
 
   configOverrides:
     enable_oauth: |
+      import os
       SECRET_KEY = '{{ tpl .Values.supersetSecretKey $ }}' or 'OPENG2P_SUPER_SECRET_KEY'
 
       # This will make sure the redirect_uri is properly computed, even with SSL offloading
@@ -765,7 +773,7 @@ superset:
           "token_key": "access_token",
           "remote_app": {
             "client_id": "{{ tpl .Values.oidcClientId $ }}",
-            "client_secret": "{{ tpl .Values.oidcClientSecret $ }}",
+            "client_secret": os.getenv("OIDC_CLIENT_SECRET"),
             "api_base_url": "{{ tpl .Values.oidcIssuerUrl $ }}/protocol/openid-connect",
             "client_kwargs": {"scope": "email profile openid"},
             "access_token_url": "{{ tpl .Values.oidcIssuerUrl $ }}/protocol/openid-connect/token",
