@@ -2,16 +2,7 @@ global:
   keycloakBaseUrl: https://keycloak.your.org
   keycloakIssuerUrl: '{{ tpl .Values.global.keycloakBaseUrl $ }}/realms/master'
 
-  keymanagerHostname: keymanager.openg2p.sandbox.org
-  minioHostname: minio.openg2p.sandbox.org
-  opensearchHostname: opensearch.openg2p.sandbox.org
-  kafkaUiHostname: kafka.openg2p.sandbox.org
-  supersetHostname: superset.openg2p.sandbox.org
-  esignetHostname: esignet.openg2p.sandbox.org
-  odkCentralHostname: odk.openg2p.sandbox.org
-
   sysAdminEmail: admin@openg2p.sandbox.org
-  openg2pKeymanagerAuthEnabled: false
 
 postgresql:
   enabled: true
@@ -91,7 +82,7 @@ mail:
 
 odk-central:
   enabled: true
-  hostname: '{{ tpl .Values.global.odkCentralHostname $ }}'
+  hostname: odk.openg2p.sandbox.org
 
   postgresqlInstallationName: '{{ .Release.Name }}-postgresql'
   mailInstallationName: '{{ .Release.Name }}-mail'
@@ -154,7 +145,7 @@ odk-central-enketo-redis-cache:
 
 minio:
   enabled: true
-  hostname: '{{ tpl .Values.global.minioHostname $ }}'
+  hostname: minio.openg2p.sandbox.org
   persistence:
     enabled: true
     size: 16Gi
@@ -212,7 +203,7 @@ minio:
 
 opensearch:
   enabled: true
-  hostname: '{{ tpl .Values.global.opensearchHostname $ }}'
+  hostname: opensearch.openg2p.sandbox.org
 
   oidcWellKnownConfigUrl: '{{ tpl .Values.global.keycloakIssuerUrl $ }}/.well-known/openid-configuration'
   # Default
@@ -440,7 +431,7 @@ kafka:
 kafkaUi:
   enabled: true
   # kafka.nameOverride will apply here too.
-  hostname: '{{ tpl .Values.global.kafkaUiHostname $ }}'
+  hostname: kafka.openg2p.sandbox.org
 
   basePath: ""
 
@@ -662,8 +653,8 @@ softhsm:
 
 keymanager:
   enabled: true
-  hostname: '{{ tpl .Values.global.keymanagerHostname $ }}'
-  authEnabled: '{{ .Values.global.openg2pKeymanagerAuthEnabled }}'
+  hostname: keymanager.openg2p.sandbox.org
+  authEnabled: false
   istio:
     enabled: false
   keystoreType: PKCS12
@@ -714,7 +705,7 @@ keymanager:
 
 superset:
   enabled: true
-  hostname: '{{ tpl .Values.global.supersetHostname $ }}'
+  hostname: superset.openg2p.sandbox.org
 
   oidcIssuerUrl: '{{ tpl .Values.global.keycloakIssuerUrl $ }}'
   oidcClientId: 'openg2p-superset-{{ .Release.Namespace }}'
@@ -849,7 +840,7 @@ esignetRedis:
 
 esignet:
   enabled: false
-  hostname: '{{ tpl .Values.global.esignetHostname $ }}'
+  hostname: esignet.openg2p.sandbox.org
 
   captchaEnabled: false
 
