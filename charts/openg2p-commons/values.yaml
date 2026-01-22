@@ -442,6 +442,13 @@ kafkaUi:
   oidcIssuerUrl: '{{ tpl .Values.global.keycloakIssuerUrl $ }}'
   oidcClientId: 'openg2p-kafka-{{ .Release.Namespace }}'
   oidcClientSecret: ''
+  # Default name
+  oidcClientId: 'openg2p-kafka-{{ .Release.Namespace }}'
+  # Name of the secret in Kuberentes containing (DO NOT password directly here)
+  # Same name as client id by convension.
+  oidcClientSecret: '{{ tpl .Values.kafkaUi.oidcClientId $ }}'
+  # Key containing client password. Hardcoded in Keycloak Init script
+  oidcClientSecretKey: 'client_secret'
 
   commonLabels:
     app.kubernetes.io/name: '{{ include "common.names.name" . }}-ui'
@@ -545,7 +552,11 @@ kafkaUi:
     JDK_JAVA_OPTIONS: '{{ tpl .Values.kafkaUi.javaOpts $ }}'
     SERVER_SERVLET_CONTEXT_PATH: '{{ tpl .Values.kafkaUi.basePath $ }}'
     SPRING_CONFIG_ADDITIONAL-LOCATION: '/kafka-ui/config.yml'
-  envVarsFrom: {}
+  envVarsFrom:
+    OIDC_CLIENT_SECRET:
+      secretKeyRef:
+        name: '{{ tpl .Values.kafkaUi.oidcClientSecret $ }}'
+        key: '{{ tpl .Values.kafkaUi.oidcClientSecretKey $ }}'
 
   configYml: |-
     server:
@@ -565,7 +576,7 @@ kafkaUi:
         client:
           keycloak:
             clientId: '{{ tpl .Values.kafkaUi.oidcClientId $ }}'
-            clientSecret: '{{ tpl .Values.kafkaUi.oidcClientSecret $ }}'
+            clientSecret: '${OIDC_CLIENT_SECRET}'
             scope: ["openid","profile","email"]
             authorization-grant-type: authorization_code
             issuer-uri: '{{ tpl .Values.kafkaUi.oidcIssuerUrl $ }}'
