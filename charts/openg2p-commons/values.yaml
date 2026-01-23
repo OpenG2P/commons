@@ -94,6 +94,8 @@ odk-central:
 
   odk-central-enketo:
     enabled: true
+    enketoSecret: "change-me-in-production"
+    enketoLessSecret: "change-me-in-production"
     envVars:
       # Here we pointing to the same redis instance for both. This redis does not have
       # persistence. This is ok since we use the online form feature for testing and
