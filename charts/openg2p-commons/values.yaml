@@ -674,6 +674,7 @@ keymanager:
       branch: master
     rawConfig: ""
   envVars:
+    JDK_JAVA_OPTIONS: "-XX:-UseContainerSupport -Dspring.jmx.enabled=false -Dcom.sun.management.jmxremote=false"
     auth_server_admin_allowed_audience: 'openg2p-registry,openg2p-registry-{{ .Release.Namespace }},openg2p-pbms,openg2p-pbms-{{ .Release.Namespace }},openg2p-spar,openg2p-spar-{{ .Release.Namespace }},openg2p-g2p-bridge,openg2p-g2p-bridge-{{ .Release.Namespace }}'
   envVarsFrom:
     db_dbuser_password:
@@ -706,6 +707,9 @@ keymanager:
       - OPENG2P_SPAR_NID:ENCRYPT
       - OPENG2P_PBMS:ENCRYPT
       - OPENG2P_PBMS_NID:ENCRYPT
+
+    envVars:
+      JDK_JAVA_OPTIONS: "-XX:-UseContainerSupport -Dspring.jmx.enabled=false -Dcom.sun.management.jmxremote=false"
 
   persistence:
     enabled: true
@@ -849,6 +853,7 @@ esignet:
   envVars:
     esignet_captcha_site_key: ''
     esignet_captcha_secret_key: ''
+    JDK_JAVA_OPTIONS: "-XX:-UseContainerSupport -Dspring.jmx.enabled=false"
   # TODO: read from a common variable in global.
   artifactoryInstallationName: '{{ .Release.Name }}-artifactory'
   postgresqlInstallationName: '{{ .Release.Name }}-postgresql'
@@ -884,6 +889,9 @@ esignet:
 mock-identity-system:
   enabled: false
   hostname: '{{ tpl .Values.global.esignetHostname $ }}'
+
+  envVars:
+    JDK_JAVA_OPTIONS: "-XX:-UseContainerSupport -Dspring.jmx.enabled=false"
 
   envVarsFrom:
     db_dbuser_password:
