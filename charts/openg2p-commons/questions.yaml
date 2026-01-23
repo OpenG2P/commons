@@ -251,17 +251,19 @@ questions:
   label: OIDC Client ID
   group: Superset
 
-- variable: superset.oidcClientSecret
-  description: OIDC Client Secret for Superset login
+- variable: superset.extraEnvRaw[0].valueFrom.secretKeyRef.name
+  description: Name of the secret containing OIDC Client Secret
   type: string
-  label: OIDC Client Secret
+  label: OIDC Client Secret Name
   group: Superset
+  default: superset-oidc-secret
 
-- variable: superset.supersetSecretKey
-  description: Secret Key for Superset
+- variable: superset.extraEnvRaw[0].valueFrom.secretKeyRef.key
+  description: Key within the secret containing OIDC Client Secret
   type: string
-  label: Superset Secret Key
+  label: OIDC Client Secret Key
   group: Superset
+  default: client_secret
 
 # eSignet
 - variable: esignet.enabled
