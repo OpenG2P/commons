@@ -78,11 +78,11 @@ postgresql:
         credentialName: ""
 
 mail:
-  enabled: true
+  enabled: false
   mailname: admin@openg2p.sanbox.org
 
 odk-central:
-  enabled: true
+  enabled: false
   hostname: odk.qa.openg2p.org
 
   # Both these are consumed directly by odk-central charts.
@@ -140,7 +140,7 @@ redis:
       enabled: false
 
 minio:
-  enabled: true
+  enabled: false
   hostname: minio.qa.openg2p.org
   persistence:
     enabled: true
@@ -197,7 +197,7 @@ minio:
         credentialName: ""
 
 opensearch:
-  enabled: true
+  enabled: false
   hostname: opensearch.qa.openg2p.org
 
   oidcWellKnownConfigUrl: '{{ tpl .Values.global.keycloakIssuerUrl $ }}/.well-known/openid-configuration'
@@ -392,7 +392,7 @@ opensearch:
         credentialName: ""
 
 kafka:
-  enabled: true
+  enabled: false
   heapOpts: ""
   extraConfig: |-
     log.retention.hours=2
@@ -424,7 +424,7 @@ kafka:
       client: 9092
 
 kafkaUi:
-  enabled: true
+  enabled: false 
   # kafka.nameOverride will apply here too.
   hostname: kafka.qa.openg2p.org
 
@@ -638,27 +638,27 @@ kafkaUi:
         credentialName: ""
 
 reporting:
-  enabled: true
+  enabled: false
   debezium:
     enabled: true
   opensearch-kafka-connector:
     enabled: true
 
 artifactory:
-  enabled: true
+  enabled: false
   image:
     repository: mosipid/artifactory-server
     tag: 1.4.1-ES
   resources: {}
 
 softhsm:
-  enabled: true
+  enabled: false
   # Hardcoding this for now. else every upgrade will reset the pin
   securityPIN: MTYwMzIyMjg=
   resources: {}
 
 keymanager:
-  enabled: true
+  enabled: false
   hostname: keymanager.qa.openg2p.org
   authEnabled: false
   istio:
@@ -714,17 +714,12 @@ keymanager:
     enabled: true
 
 superset:
-  enabled: true
+  enabled: false
   hostname: superset.qa.openg2p.org
 
   oidcIssuerUrl: '{{ tpl .Values.global.keycloakIssuerUrl $ }}'
   # Default name
   oidcClientId: 'openg2p-superset-{{ .Release.Namespace }}'
-  # Name of the secret in Kuberentes containing (DO NOT password directly here)
-  # Same name as client id by convension.
-  oidcClientSecret: '{{ tpl .Values.oidcClientId $ }}'
-  # Key containing client password. Hardcoded in Keycloak Init script
-  oidcClientSecretKey: 'client_secret'
 
   supersetSecretKey: ''
 
@@ -732,8 +727,9 @@ superset:
   - name: OIDC_CLIENT_SECRET
     valueFrom:
       secretKeyRef:
-        name: '{{ tpl .Values.oidcClientSecret $ }}'
-        key: '{{ tpl .Values.oidcClientSecretKey $ }}'
+        # TODO: Currently hardcoded due to super helm chart not supporting templates,
+        name: openg2p-supserset-qa
+        key: client_secret
 
   init:
     createAdmin: false
