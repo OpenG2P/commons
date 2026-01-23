@@ -75,7 +75,7 @@ mail:
   mailname: admin@openg2p.sanbox.org
 
 odk-central:
-  enabled: false 
+  enabled: true
   hostname: odk.qa.openg2p.org
 
   postgresqlInstallationName: '{{ tpl .Values.global.postgresqlHost $ }}'
