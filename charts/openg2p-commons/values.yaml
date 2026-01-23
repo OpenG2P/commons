@@ -737,9 +737,11 @@ superset:
     jobAnnotations:
       "helm.sh/hook-weight": "0"
 
+  # Tell Superset chart not to install Postgresql
   postgresql:
     enabled: false
 
+  # Since we have a common Redis, we tell Superset chart not to install Redis
   redis:
     enabled: false
 
@@ -847,6 +849,13 @@ esignet:
   envVars:
     esignet_captcha_site_key: ''
     esignet_captcha_secret_key: ''
+  # TODO: read from a common variable in global.
+  artifactoryInstallationName: '{{ .Release.Name }}-artifactory'
+  postgresqlInstallationName: '{{ .Release.Name }}-postgresql'
+  redisInstallationName: '{{ .Release.Name }}-esignet-redis'
+  kafkaInstallationName: '{{ .Release.Name }}-kafka'
+  mockIdentitySystemInstallationName: '{{ .Release.Name }}-mock-identity-system'
+  softhsmInstallationName: '{{ .Release.Name }}-softhsm'
 
   envVarsFrom:
     db_dbuser_password:
