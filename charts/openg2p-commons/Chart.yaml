@@ -45,17 +45,10 @@ dependencies:
   repository: https://apache.github.io/superset
   condition: superset.enabled
 - name: redis
-  alias: supersetRedis
   version: 19.6.4
   repository: https://openg2p.github.io/openg2p-helm
-  condition: superset.enabled
 - name: esignet
   version: 1.4.3
-  repository: https://openg2p.github.io/openg2p-helm
-  condition: esignet.enabled
-- name: redis
-  alias: esignetRedis
-  version: 19.6.4
   repository: https://openg2p.github.io/openg2p-helm
   condition: esignet.enabled
 - name: mock-identity-system
@@ -66,16 +59,6 @@ dependencies:
   version: v2025.2.2
   repository: https://openg2p.github.io/openg2p-helm
   condition: odk-central.enabled
-- name: redis
-  alias: odk-central-enketo-redis-main
-  version: 19.6.4
-  repository: https://openg2p.github.io/openg2p-helm
-  condition: odk-central-enketo-redis-main.enabled
-- name: redis
-  alias: odk-central-enketo-redis-cache
-  version: 19.6.4
-  repository: https://openg2p.github.io/openg2p-helm
-  condition: odk-central-enketo-redis-cache.enabled
 icon: https://openg2p.github.io/openg2p-helm/openg2p-logo.png
 annotations:
   catalog.cattle.io/display-name: "OpenG2P Commons"

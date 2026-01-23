@@ -83,7 +83,7 @@ mail:
 
 odk-central:
   enabled: true
-  hostname: odk.openg2p.sandbox.org
+  hostname: odk.qa.openg2p.org
 
   # Both these are consumed directly by odk-central charts.
   postgresqlInstallationName: '{{ .Release.Name }}-postgresql'
@@ -141,7 +141,7 @@ redis:
 
 minio:
   enabled: true
-  hostname: minio.openg2p.sandbox.org
+  hostname: minio.qa.openg2p.org
   persistence:
     enabled: true
     size: 16Gi
@@ -170,9 +170,8 @@ minio:
     value: "on"
   - name: MINIO_IDENTITY_OPENID_CLAIM_USERINFO
     value: "on"
-
-  envVarsFrom:
-    MINIO_IDENTITY_OPENID_CLIENT_SECRET:
+  - name: MINIO_IDENTITY_OPENID_CLIENT_SECRET
+    valueFrom:
       secretKeyRef:
         name: '{{ tpl .Values.oidcClientSecret $ }}'
         key: '{{ tpl .Values.oidcClientSecretKey $ }}'
@@ -199,7 +198,7 @@ minio:
 
 opensearch:
   enabled: true
-  hostname: opensearch.openg2p.sandbox.org
+  hostname: opensearch.qa.openg2p.org
 
   oidcWellKnownConfigUrl: '{{ tpl .Values.global.keycloakIssuerUrl $ }}/.well-known/openid-configuration'
   # Default
@@ -427,7 +426,7 @@ kafka:
 kafkaUi:
   enabled: true
   # kafka.nameOverride will apply here too.
-  hostname: kafka.openg2p.sandbox.org
+  hostname: kafka.qa.openg2p.org
 
   basePath: ""
 
@@ -660,7 +659,7 @@ softhsm:
 
 keymanager:
   enabled: true
-  hostname: keymanager.openg2p.sandbox.org
+  hostname: keymanager.qa.openg2p.org
   authEnabled: false
   istio:
     enabled: false
@@ -716,7 +715,7 @@ keymanager:
 
 superset:
   enabled: true
-  hostname: superset.openg2p.sandbox.org
+  hostname: superset.qa.openg2p.org
 
   oidcIssuerUrl: '{{ tpl .Values.global.keycloakIssuerUrl $ }}'
   # Default name
@@ -846,7 +845,7 @@ superset:
 
 esignet:
   enabled: false
-  hostname: esignet.openg2p.sandbox.org
+  hostname: esignet.qa.openg2p.org
 
   captchaEnabled: false
 
