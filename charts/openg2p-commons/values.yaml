@@ -94,8 +94,6 @@ odk-central:
 
   odk-central-enketo:
     enabled: true
-    enketoSecret: "change-me-in-production"
-    enketoLessSecret: "change-me-in-production"
     envVars:
       # Here we pointing to the same redis instance for both. This redis does not have
       # persistence. This is ok since we use the online form feature for testing and
@@ -205,7 +203,7 @@ minio:
         credentialName: ""
 
 opensearch:
-  enabled: false
+  enabled: true
   hostname: opensearch.qa.openg2p.org
 
   oidcWellKnownConfigUrl: '{{ tpl .Values.global.keycloakIssuerUrl $ }}/.well-known/openid-configuration'
