@@ -4,6 +4,7 @@ global:
 
   postgresqlHost: '{{ .Release.Name }}-postgresql'
   mailInstallationName: '{{ .Release.Name }}-mail'
+  minioInstallationName: '{{ .Release.Name }}-minio'
 
   sysAdminEmail: admin@openg2p.sandbox.org
   redisInstallationName: '{{ .Release.Name }}-redis-master'
@@ -74,10 +75,10 @@ mail:
   mailname: admin@openg2p.sanbox.org
 
 odk-central:
-  enabled: false
+  enabled: true
   hostname: odk.qa.openg2p.org
   
-  postgresqlInstallationName: '{{ tpl .Values.global.postgresHost $ }}'
+  postgresqlInstallationName: '{{ tpl .Values.global.postgresqlHost $ }}'
   mailInstallationName: '{{ .Release.Name }}-mail'
 
   # Default
@@ -89,6 +90,7 @@ odk-central:
   oidcClientSecretKey: 'client_secret'
 
   s3BlobsEnabled: true
+  s3ServerUrl: 'http://{{ tpl .Values.global.minioInstallationName $ }}:3000'
 
   odk-central-enketo:
     enabled: true
@@ -108,6 +110,7 @@ odk-central:
     envVarsFrom:
       DB_PASSWORD:
         secretKeyRef:
+          # MUST MATCH one defined under postgres-init
           name: odk-db-user
           key: odk-db-user-password
       OIDC_CLIENT_SECRET:
@@ -850,7 +853,7 @@ esignet:
   envVarsFrom:
     db_dbuser_password:
       secretKeyRef:
-        name: '{{ tpl .Values.global.postgresHost $ }}-addl-user-passwords'
+        name: '{{ tpl .Values.global.postgresqlHost $ }}-addl-user-passwords'
         key: esignetuser
 
   postgresInit:
@@ -859,7 +862,7 @@ esignet:
     envVarsFrom:
       DBUSER_PWD:
         secretKeyRef:
-          name: '{{ tpl .Values.global.postgresHost $ }}-addl-user-passwords'
+          name: '{{ tpl .Values.global.postgresqlHost $ }}-addl-user-passwords'
           key: esignetuser
 
   springConfig:
@@ -881,7 +884,7 @@ mock-identity-system:
   envVarsFrom:
     db_dbuser_password:
       secretKeyRef:
-        name: '{{ tpl .Values.global.postgresHost $ }}-addl-user-passwords'
+        name: '{{ tpl .Values.global.postgresqlHost $ }}-addl-user-passwords'
         key: mockidsystemuser
 
   postgresInit:
@@ -890,7 +893,7 @@ mock-identity-system:
     envVarsFrom:
       DBUSER_PWD:
         secretKeyRef:
-          name: '{{ tpl .Values.global.postgresHost $ }}-addl-user-passwords'
+          name: '{{ tpl .Values.global.postgresqlHost $ }}-addl-user-passwords'
           key: mockidsystemuser
 
   springConfig:
