@@ -3,6 +3,7 @@ global:
   keycloakIssuerUrl: '{{ tpl .Values.global.keycloakBaseUrl $ }}/realms/master'
 
   sysAdminEmail: admin@openg2p.sandbox.org
+  redisInstallationName: '{{ .Release.Name }}-redis-master'
 
 postgresql:
   enabled: true
@@ -10,14 +11,14 @@ postgresql:
     postgresPassword: ""
   additionalDbs:
     enabled: true
-    userPasswordsExistingSecret: ""
-    userPasswords:
-      odkuser: ""
-      superset: superset
-      keymgruser: ""
-      kerneluser: ""
-      esignetuser: ""
-      mockidsystemuser: ""
+    #userPasswordsExistingSecret: ""
+    #userPasswords:
+    #  odkuser: ""
+    #  superset: superset
+    #  keymgruser: ""
+    #  kerneluser: ""
+    #  esignetuser: ""
+    #  mockidsystemuser: ""
   primary:
     extendedConfiguration: |-
       wal_level = logical
@@ -84,6 +85,7 @@ odk-central:
   enabled: true
   hostname: odk.openg2p.sandbox.org
 
+  # Both these are consumed directly by odk-central charts.
   postgresqlInstallationName: '{{ .Release.Name }}-postgresql'
   mailInstallationName: '{{ .Release.Name }}-mail'
 
@@ -96,6 +98,15 @@ odk-central:
   oidcClientSecretKey: 'client_secret'
 
   s3BlobsEnabled: true
+
+  odk-central-enketo:
+    enabled: true
+    envVars:
+      # Here we pointing to the same redis instance for both. This redis does not have
+      # persistence. This is ok since we use the online form feature for testing and
+      # not full fledged used in production. ODK is mostly used in offline mode.
+      REDIS_MAIN_HOST: '{{ tpl .Values.global.redisInstallationName $ }}'
+      REDIS_CACHE_HOST: '{{ tpl .Values.global.redisInstallationName $ }}'
 
   backend:
     envVars:
@@ -113,35 +124,20 @@ odk-central:
           name: '{{ tpl .Values.oidcClientSecret $ }}'
           key: '{{ tpl .Values.oidcClientSecretKey $ }}'
 
-odk-central-enketo-redis-main:
+redis:
+  # Default name of the redis service is .Release.Name-redis-master
   enabled: true
+  architecture: standalone
   image:
     registry: docker.io
     repository: openg2p/redis
     tag: 7.2.5-debian-12-r4
-  architecture: standalone
   auth:
     enabled: false
   master:
     resourcesPreset: none
     persistence:
-      enabled: true
-      size: 2Gi
-
-odk-central-enketo-redis-cache:
-  enabled: true
-  image:
-    registry: docker.io
-    repository: openg2p/redis
-    tag: 7.2.5-debian-12-r4
-  architecture: standalone
-  auth:
-    enabled: false
-  master:
-    resourcesPreset: none
-    persistence:
-      enabled: true
-      size: 2Gi
+      enabled: false
 
 minio:
   enabled: true
@@ -749,7 +745,7 @@ superset:
 
   supersetNode:
     connections:
-      redis_host: '{{ .Release.Name }}-superset-redis-headless'
+      redis_host: '{{ tpl .Values.global.redisInstallationName $ }}'
       db_host: '{{ .Release.Name }}-postgresql'
 
   bootstrapScript: |
@@ -841,26 +837,6 @@ superset:
       tls:
         mode: SIMPLE
         credentialName: ""
-
-supersetRedis:
-  nameOverride: superset-redis
-  architecture: standalone
-  auth:
-    enabled: false
-  master:
-    resourcesPreset: none
-    persistence:
-      enabled: false
-
-esignetRedis:
-  nameOverride: esignet-redis
-  architecture: standalone
-  auth:
-    enabled: true
-  master:
-    resourcesPreset: none
-    persistence:
-      enabled: false
 
 esignet:
   enabled: false
