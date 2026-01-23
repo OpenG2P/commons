@@ -8,6 +8,10 @@ dependencies:
   version: 15.5.38
   repository: https://openg2p.github.io/openg2p-helm
   condition: postgresql.enabled
+- name: postgres-init
+  version: 1.1.0 
+  repository: https://openg2p.github.io/openg2p-helm
+  condition: postgres-init.enabled
 - name: mail
   version: 1.2.1
   repository: https://openg2p.github.io/openg2p-helm

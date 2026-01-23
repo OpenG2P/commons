@@ -2,6 +2,9 @@ global:
   keycloakBaseUrl: https://keycloak.your.org
   keycloakIssuerUrl: '{{ tpl .Values.global.keycloakBaseUrl $ }}/realms/master'
 
+  postgresqlHost: '{{ .Release.Name }}-postgresql'
+  mailInstallationName: '{{ .Release.Name }}-mail'
+
   sysAdminEmail: admin@openg2p.sandbox.org
   redisInstallationName: '{{ .Release.Name }}-redis-master'
 
@@ -10,15 +13,7 @@ postgresql:
   auth:
     postgresPassword: ""
   additionalDbs:
-    enabled: true
-    #userPasswordsExistingSecret: ""
-    #userPasswords:
-    #  odkuser: ""
-    #  superset: superset
-    #  keymgruser: ""
-    #  kerneluser: ""
-    #  esignetuser: ""
-    #  mockidsystemuser: ""
+    enabled: false
   primary:
     extendedConfiguration: |-
       wal_level = logical
@@ -29,34 +24,11 @@ postgresql:
     # and let postgresql consume any amount of resources. Later we can limit it
     resourcesPreset: "none"
     extraEnvVars:
-      - name: ADDL_DBS_ENABLED
-        value: '{{ .Values.additionalDbs.enabled | ternary "true" "false" }}'
       - name: POSTGRES_POSTGRES_PASSWORD
         valueFrom:
           secretKeyRef:
             name: '{{ include "postgresql.v1.primary.fullname" . }}'
             key: postgres-password
-      - name: ADDL_DBS_USER_PASSWORD_odkuser
-        valueFrom:
-          secretKeyRef:
-            name: '{{ include "postgresql.v1.primary.fullname" . }}-addl-user-passwords'
-            key: odkuser
-      - name: ADDL_DBS_USER_PASSWORD_superset
-        valueFrom:
-          secretKeyRef:
-            name: '{{ include "postgresql.v1.primary.fullname" . }}-addl-user-passwords'
-            key: superset
-    # Extra DBs and Users create
-    initdb:
-      scripts:
-        create_dbs_and_users.sh: |-
-          #!/bin/bash
-          if [ "$ADDL_DBS_ENABLED" = "true" ]; then
-            PGPASSWORD=$POSTGRES_POSTGRES_PASSWORD psql -U postgres -d postgres -c "CREATE ROLE odkuser WITH LOGIN NOSUPERUSER CREATEDB CREATEROLE INHERIT REPLICATION CONNECTION LIMIT -1 PASSWORD '"$ADDL_DBS_USER_PASSWORD_odkuser"';"
-            PGPASSWORD=$POSTGRES_POSTGRES_PASSWORD psql -U postgres -d postgres -c "CREATE DATABASE odkdb WITH OWNER = odkuser TEMPLATE = template0 ENCODING = 'UTF8' TABLESPACE = pg_default CONNECTION LIMIT = -1;"
-            PGPASSWORD=$POSTGRES_POSTGRES_PASSWORD psql -U postgres -d postgres -c "CREATE ROLE superset WITH LOGIN NOSUPERUSER CREATEDB CREATEROLE INHERIT REPLICATION CONNECTION LIMIT -1 PASSWORD '"$ADDL_DBS_USER_PASSWORD_superset"';"
-            PGPASSWORD=$POSTGRES_POSTGRES_PASSWORD psql -U postgres -d postgres -c "CREATE DATABASE superset WITH OWNER = superset TEMPLATE = template0 ENCODING = 'UTF8' TABLESPACE = pg_default CONNECTION LIMIT = -1;"
-          fi
   istio:
     enabled: false
     virtualservice:
@@ -77,6 +49,26 @@ postgresql:
         mode: SIMPLE
         credentialName: ""
 
+postgres-init:
+  enabled: true
+  postgresql:
+    host: '{{ tpl .Values.global.postgresqlHost $ }}'
+    port: 5432
+    # Hard coding.  
+    existingSecret: commons-postgresql
+    existingSecretPostgresPasswordKey: postgres-password
+  databases:
+    # We are creating the following databases as the respective charts don't create on their own.
+    - name: superset
+      # As expected by Superset chart
+      user: superset
+      secret: superset-db-user
+      secretUserPasswordKey: superset-db-user-password
+    - name: odkdb
+      user: odkuser
+      secret: odk-db-user
+      secretUserPasswordKey: odk-db-user-password
+ 
 mail:
   enabled: false
   mailname: admin@openg2p.sanbox.org
@@ -84,9 +76,8 @@ mail:
 odk-central:
   enabled: false
   hostname: odk.qa.openg2p.org
-
-  # Both these are consumed directly by odk-central charts.
-  postgresqlInstallationName: '{{ .Release.Name }}-postgresql'
+  
+  postgresqlInstallationName: '{{ tpl .Values.global.postgresHost $ }}'
   mailInstallationName: '{{ .Release.Name }}-mail'
 
   # Default
@@ -117,8 +108,8 @@ odk-central:
     envVarsFrom:
       DB_PASSWORD:
         secretKeyRef:
-          name: '{{ tpl .Values.postgresqlInstallationName $ }}-addl-user-passwords'
-          key: odkuser
+          name: odk-db-user
+          key: odk-db-user-password
       OIDC_CLIENT_SECRET:
         secretKeyRef:
           name: '{{ tpl .Values.oidcClientSecret $ }}'
@@ -851,7 +842,6 @@ esignet:
     JDK_JAVA_OPTIONS: "-XX:-UseContainerSupport -Dspring.jmx.enabled=false"
   # TODO: read from a common variable in global.
   artifactoryInstallationName: '{{ .Release.Name }}-artifactory'
-  postgresqlInstallationName: '{{ .Release.Name }}-postgresql'
   redisInstallationName: '{{ .Release.Name }}-esignet-redis'
   kafkaInstallationName: '{{ .Release.Name }}-kafka'
   mockIdentitySystemInstallationName: '{{ .Release.Name }}-mock-identity-system'
@@ -860,7 +850,7 @@ esignet:
   envVarsFrom:
     db_dbuser_password:
       secretKeyRef:
-        name: '{{ tpl .Values.postgresqlInstallationName $ }}-addl-user-passwords'
+        name: '{{ tpl .Values.global.postgresHost $ }}-addl-user-passwords'
         key: esignetuser
 
   postgresInit:
@@ -869,7 +859,7 @@ esignet:
     envVarsFrom:
       DBUSER_PWD:
         secretKeyRef:
-          name: '{{ tpl .Values.postgresqlInstallationName $ }}-addl-user-passwords'
+          name: '{{ tpl .Values.global.postgresHost $ }}-addl-user-passwords'
           key: esignetuser
 
   springConfig:
@@ -885,15 +875,13 @@ mock-identity-system:
   enabled: false
   hostname: esignet.qa.openg2p.org
 
-  postgresqlInstallationName: '{{ .Release.Name }}-postgresql'
-
   envVars:
     JDK_JAVA_OPTIONS: "-XX:-UseContainerSupport -Dspring.jmx.enabled=false"
 
   envVarsFrom:
     db_dbuser_password:
       secretKeyRef:
-        name: '{{ tpl .Values.postgresqlInstallationName $ }}-addl-user-passwords'
+        name: '{{ tpl .Values.global.postgresHost $ }}-addl-user-passwords'
         key: mockidsystemuser
 
   postgresInit:
@@ -902,7 +890,7 @@ mock-identity-system:
     envVarsFrom:
       DBUSER_PWD:
         secretKeyRef:
-          name: '{{ tpl .Values.postgresqlInstallationName $ }}-addl-user-passwords'
+          name: '{{ tpl .Values.global.postgresHost $ }}-addl-user-passwords'
           key: mockidsystemuser
 
   springConfig:
