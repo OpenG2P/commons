@@ -71,7 +71,7 @@ postgres-init:
       secret: odk-db-user
       secretUserPasswordKey: odk-db-user-password
     - name: mosip_keymgr
-      user: keymgr_db_user
+      user: keymgruser
       secret: keymgr-db-user
       secretUserPasswordKey: keymgr-db-user-password
 
@@ -689,11 +689,10 @@ keymanager:
       enabled: true
       repoUrl: https://github.com/openg2p/mosip-config
       # This branch has user name as per our conventions here
-      branch: commons-1.1
+      branch: master
     rawConfig: ""
   envVars:
     JDK_JAVA_OPTIONS: "-XX:-UseContainerSupport -Dspring.jmx.enabled=false -Dcom.sun.management.jmxremote=false"
-    SPRING_JPA_HIBERNATE_DDL_AUTO: update
     auth_server_admin_allowed_audience: 'openg2p-registry,openg2p-registry-{{ .Release.Namespace }},openg2p-pbms,openg2p-pbms-{{ .Release.Namespace }},openg2p-spar,openg2p-spar-{{ .Release.Namespace }},openg2p-g2p-bridge,openg2p-g2p-bridge-{{ .Release.Namespace }}'
   envVarsFrom:
     db_dbuser_password:
@@ -702,10 +701,11 @@ keymanager:
         key: keymgr-db-user-password
   postgresInit:
     enabled: true
+    #forceRun: true
     commonAnnotations:
       "helm.sh/hook-weight": "0"
     envVars:
-      DB_USER: keymgr_db_user
+      DB_USER: keymgruser
     envVarsFrom:
       DBUSER_PWD:
         # Must be same as above
