@@ -74,6 +74,10 @@ postgres-init:
       user: keymgruser
       secret: keymgr-db-user
       secretUserPasswordKey: keymgr-db-user-password
+    - name: mosip_mockidentitysystem
+      user: mockidsystemuser 
+      secret: mockid-db-user
+      secretUserPasswordKey: mockid-db-user-password
 
 mail:
   enabled: false
@@ -877,7 +881,7 @@ esignet:
     JDK_JAVA_OPTIONS: "-XX:-UseContainerSupport -Dspring.jmx.enabled=false"
   # TODO: read from a common variable in global.
   artifactoryInstallationName: '{{ .Release.Name }}-artifactory'
-  redisInstallationName: '{{ .Release.Name }}-esignet-redis'
+  redisInstallationName: '{{ tpl .Values.global.redisInstallationName $ }}'
   kafkaInstallationName: '{{ .Release.Name }}-kafka'
   mockIdentitySystemInstallationName: '{{ .Release.Name }}-mock-identity-system'
   softhsmInstallationName: '{{ .Release.Name }}-softhsm'
@@ -907,7 +911,7 @@ esignet:
     rawConfig: ""
 
 mock-identity-system:
-  enabled: false
+  enabled: true
   hostname: esignet.qa.openg2p.org
 
   envVars:
@@ -915,18 +919,20 @@ mock-identity-system:
 
   envVarsFrom:
     db_dbuser_password:
+      # MUST MATCH what is specified in postgres-init
       secretKeyRef:
-        name: '{{ tpl .Values.global.postgresqlHost $ }}-addl-user-passwords'
-        key: mockidsystemuser
+        name: mockid-db-user
+        key: mockid-db-user-password
 
   postgresInit:
     commonAnnotations:
       "helm.sh/hook-weight": "0"
     envVarsFrom:
       DBUSER_PWD:
+        # Same as above
         secretKeyRef:
-          name: '{{ tpl .Values.global.postgresqlHost $ }}-addl-user-passwords'
-          key: mockidsystemuser
+          name: mockid-db-user
+          key: mockid-db-user-password
 
   springConfig:
     names: application,mock-identity-system
