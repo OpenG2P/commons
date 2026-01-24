@@ -398,7 +398,7 @@ opensearch:
         credentialName: ""
 
 kafka:
-  enabled: false
+  enabled: true
   heapOpts: ""
   extraConfig: |-
     log.retention.hours=2
@@ -430,7 +430,7 @@ kafka:
       client: 9092
 
 kafkaUi:
-  enabled: false
+  enabled: true
   # kafka.nameOverride will apply here too.
   hostname: kafka.qa.openg2p.org
 
@@ -651,7 +651,7 @@ reporting:
     enabled: true
 
 artifactory:
-  enabled: false
+  enabled: true
   image:
     repository: mosipid/artifactory-server
     tag: 1.4.1-ES
