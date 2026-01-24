@@ -678,6 +678,7 @@ keymanager:
   p12KeystorePass: ''
   # Postgres Init is important 
   skipPostgresInitCheck: false
+  # Keymanager should come up even if Keygen has not run. The idea is to have keygen run by individuals
   skipKeygenCheck: true
   postgresqlInstallationName: '{{ tpl .Values.global.postgresqlHost $ }}'
   istio:
@@ -713,8 +714,7 @@ keymanager:
           name: keymgr-db-user
           key: keymgr-db-user-password
   keygen:
-    # TODO: Disabled for debugging as its throwing errors
-    enabled: false
+    enabled: true
     commonAnnotations:
       "helm.sh/hook-weight": "1"
     appIdsList:
