@@ -60,6 +60,7 @@ postgres-init:
     existingSecretPostgresPasswordKey: postgres-password
   databases:
     # We are creating the following databases as the respective charts don't create on their own.
+    # Note that Keymanager creates DB on its own.
     - name: superset
       # As expected by Superset chart
       user: superset
@@ -69,6 +70,10 @@ postgres-init:
       user: odkuser
       secret: odk-db-user
       secretUserPasswordKey: odk-db-user-password
+    - name: mosip_keymgr
+      user: keymgr_db_user
+      secret: keymgr-db-user
+      secretUserPasswordKey: keymgr-db-user-password
 
 mail:
   enabled: false
@@ -658,43 +663,58 @@ artifactory:
   resources: {}
 
 softhsm:
-  enabled: false
+  enabled: true
   # Hardcoding this for now. else every upgrade will reset the pin
   securityPIN: MTYwMzIyMjg=
   resources: {}
 
 keymanager:
-  enabled: false
+  enabled: true
   hostname: keymanager.qa.openg2p.org
+  # Disabling for now. TODO - understand the implications
   authEnabled: false
+  # For country deployments we may for file based keystore instead of SoftHSM
+  keystoreType: PKCS12
+  p12KeystorePass: ''
+  # Postgres Init is important 
+  skipPostgresInitCheck: false
+  skipKeygenCheck: true
+  postgresqlInstallationName: '{{ tpl .Values.global.postgresqlHost $ }}'
   istio:
     enabled: false
-  keystoreType: PKCS12
   springConfig:
     names: application,kernel
     profile: default
     gitRepo:
       enabled: true
       repoUrl: https://github.com/openg2p/mosip-config
-      branch: master
+      # This branch has user name as per our conventions here
+      branch: commons-1.1
     rawConfig: ""
   envVars:
     JDK_JAVA_OPTIONS: "-XX:-UseContainerSupport -Dspring.jmx.enabled=false -Dcom.sun.management.jmxremote=false"
+    SPRING_JPA_HIBERNATE_DDL_AUTO: update
     auth_server_admin_allowed_audience: 'openg2p-registry,openg2p-registry-{{ .Release.Namespace }},openg2p-pbms,openg2p-pbms-{{ .Release.Namespace }},openg2p-spar,openg2p-spar-{{ .Release.Namespace }},openg2p-g2p-bridge,openg2p-g2p-bridge-{{ .Release.Namespace }}'
   envVarsFrom:
     db_dbuser_password:
       secretKeyRef:
-        name: '{{ .Release.Name }}-postgresql-addl-user-passwords'
-        key: keymgruser
+        name: keymgr-db-user 
+        key: keymgr-db-user-password
   postgresInit:
+    enabled: true
     commonAnnotations:
       "helm.sh/hook-weight": "0"
+    envVars:
+      DB_USER: keymgr_db_user
     envVarsFrom:
       DBUSER_PWD:
+        # Must be same as above
         secretKeyRef:
-          name: '{{ .Release.Name }}-postgresql-addl-user-passwords'
-          key: keymgruser
+          name: keymgr-db-user
+          key: keymgr-db-user-password
   keygen:
+    # TODO: Disabled for debugging as its throwing errors
+    enabled: false
     commonAnnotations:
       "helm.sh/hook-weight": "1"
     appIdsList:
