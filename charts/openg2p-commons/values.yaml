@@ -758,7 +758,7 @@ superset:
     valueFrom:
       secretKeyRef:
         # TODO: Currently hardcoded due to super helm chart not supporting templates,
-        name: openg2p-supserset-qa
+        name: openg2p-superset-qa
         key: client_secret
 
   init:
@@ -777,7 +777,7 @@ superset:
   supersetNode:
     connections:
       redis_host: '{{ tpl .Values.global.redisInstallationName $ }}'
-      db_host: '{{ .Release.Name }}-postgresql'
+      db_host: '{{ tpl .Values.global.postgresqlHost $ }}'
 
   bootstrapScript: |
     #!/bin/bash
