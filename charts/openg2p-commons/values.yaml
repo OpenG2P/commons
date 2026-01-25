@@ -744,7 +744,7 @@ keymanager:
     enabled: true
 
 superset:
-  enabled: false
+  enabled: true
   hostname: superset.qa.openg2p.org
 
   oidcIssuerUrl: '{{ tpl .Values.global.keycloakIssuerUrl $ }}'
@@ -760,6 +760,11 @@ superset:
         # TODO: Currently hardcoded due to super helm chart not supporting templates,
         name: openg2p-superset-qa
         key: client_secret
+  - name: DB_PASS
+    valueFrom:
+      secretKeyRef:
+        name: superset-db-user
+        key: superset-db-user-password
 
   init:
     createAdmin: false
@@ -911,7 +916,7 @@ esignet:
     rawConfig: ""
 
 mock-identity-system:
-  enabled: true
+  enabled: false
   hostname: esignet.qa.openg2p.org
 
   envVars:
