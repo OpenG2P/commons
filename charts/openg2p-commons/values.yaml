@@ -916,7 +916,7 @@ esignet:
     rawConfig: ""
 
 mock-identity-system:
-  enabled: false
+  enabled: true
   hostname: esignet.qa.openg2p.org
 
   envVars:
