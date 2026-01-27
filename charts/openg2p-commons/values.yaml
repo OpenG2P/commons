@@ -7,7 +7,8 @@ global:
   minioInstallationName: '{{ .Release.Name }}-minio'
 
   sysAdminEmail: admin@openg2p.sandbox.org
-  redisInstallationName: '{{ .Release.Name }}-redis-master'
+  redisInstallationName: '{{ .Release.Name }}-redis'
+  redisAuthInstallationName: '{{ .Release.Name }}-redis-auth'
 
 postgresql:
   enabled: true
@@ -78,6 +79,10 @@ postgres-init:
       user: mockidsystemuser 
       secret: mockid-db-user
       secretUserPasswordKey: mockid-db-user-password
+    - name: mosip_esignet
+      user: esignetuser
+      secret: esignet-db-user
+      secretUserPasswordKey: esignet-db-user-password
 
 mail:
   enabled: false
@@ -107,8 +112,8 @@ odk-central:
       # Here we pointing to the same redis instance for both. This redis does not have
       # persistence. This is ok since we use the online form feature for testing and
       # not full fledged used in production. ODK is mostly used in offline mode.
-      REDIS_MAIN_HOST: '{{ tpl .Values.global.redisInstallationName $ }}'
-      REDIS_CACHE_HOST: '{{ tpl .Values.global.redisInstallationName $ }}'
+      REDIS_MAIN_HOST: '{{ tpl .Values.global.redisInstallationName $ }}-master'
+      REDIS_CACHE_HOST: '{{ tpl .Values.global.redisInstallationName $ }}-master'
 
   backend:
     initContainers:
@@ -139,6 +144,7 @@ odk-central:
           name: '{{ tpl .Values.oidcClientSecret $ }}'
           key: '{{ tpl .Values.oidcClientSecretKey $ }}'
 
+# Redis without auth enabled.
 redis:
   # Default name of the redis service is .Release.Name-redis-master
   enabled: true
@@ -149,6 +155,23 @@ redis:
     tag: 7.2.5-debian-12-r4
   auth:
     enabled: false
+  master:
+    resourcesPreset: none
+    persistence:
+      enabled: false
+
+# Redis with authentication enabled required by services like eSignet
+redis-auth:
+  enabled: true
+  # We override the name here
+  nameOverride: "redis-auth"
+  architecture: standalone
+  image:
+    registry: docker.io
+    repository: openg2p/redis
+    tag: 7.2.5-debian-12-r4
+  auth:
+    enabled: true
   master:
     resourcesPreset: none
     persistence:
@@ -781,7 +804,7 @@ superset:
 
   supersetNode:
     connections:
-      redis_host: '{{ tpl .Values.global.redisInstallationName $ }}'
+      redis_host: '{{ tpl .Values.global.redisInstallationName $ }}-master'
       db_host: '{{ tpl .Values.global.postgresqlHost $ }}'
 
   bootstrapScript: |
@@ -875,7 +898,7 @@ superset:
         credentialName: ""
 
 esignet:
-  enabled: false
+  enabled: true
   hostname: esignet.qa.openg2p.org
 
   captchaEnabled: false
@@ -886,7 +909,8 @@ esignet:
     JDK_JAVA_OPTIONS: "-XX:-UseContainerSupport -Dspring.jmx.enabled=false"
   # TODO: read from a common variable in global.
   artifactoryInstallationName: '{{ .Release.Name }}-artifactory'
-  redisInstallationName: '{{ tpl .Values.global.redisInstallationName $ }}'
+  # Note Redis Auth used here
+  redisInstallationName: '{{ tpl .Values.global.redisAuthInstallationName $ }}'
   kafkaInstallationName: '{{ .Release.Name }}-kafka'
   mockIdentitySystemInstallationName: '{{ .Release.Name }}-mock-identity-system'
   softhsmInstallationName: '{{ .Release.Name }}-softhsm'
@@ -894,8 +918,14 @@ esignet:
   envVarsFrom:
     db_dbuser_password:
       secretKeyRef:
-        name: '{{ tpl .Values.global.postgresqlHost $ }}-addl-user-passwords'
-        key: esignetuser
+        # Must match postgres-init
+        name: esignet-db-user
+        key: esignet-db-user-password
+    spring_redis_password:
+      secretKeyRef:
+        name: '{{ tpl .Values.redisInstallationName $ }}'
+        # In our common Redis, auth is disabled, so we have created this manaully with random password 
+        key: redis-password
 
   postgresInit:
     commonAnnotations:
@@ -903,8 +933,8 @@ esignet:
     envVarsFrom:
       DBUSER_PWD:
         secretKeyRef:
-          name: '{{ tpl .Values.global.postgresqlHost $ }}-addl-user-passwords'
-          key: esignetuser
+          name: esignet-db-user  
+          key: esignet-db-user-password
 
   springConfig:
     names: application,esignet

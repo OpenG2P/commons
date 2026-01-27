@@ -51,6 +51,10 @@ dependencies:
 - name: redis
   version: 19.6.4
   repository: https://openg2p.github.io/openg2p-helm
+- name: redis
+  alias: redis-auth
+  version: 19.6.4
+  repository: https://openg2p.github.io/openg2p-helm
 - name: esignet
   version: 1.4.3
   repository: https://openg2p.github.io/openg2p-helm
