@@ -76,7 +76,7 @@ postgres-init:
       secret: keymgr-db-user
       secretUserPasswordKey: keymgr-db-user-password
     - name: mosip_mockidentitysystem
-      user: mockidsystemuser 
+      user: mockidsystemuser
       secret: mockid-db-user
       secretUserPasswordKey: mockid-db-user-password
     - name: mosip_esignet
@@ -703,7 +703,7 @@ keymanager:
   # For country deployments we may for file based keystore instead of SoftHSM
   keystoreType: PKCS12
   p12KeystorePass: ''
-  # Postgres Init is important 
+  # Postgres Init is important
   skipPostgresInitCheck: false
   # Keymanager should come up even if Keygen has not run. The idea is to have keygen run by individuals
   skipKeygenCheck: true
@@ -725,7 +725,7 @@ keymanager:
   envVarsFrom:
     db_dbuser_password:
       secretKeyRef:
-        name: keymgr-db-user 
+        name: keymgr-db-user
         key: keymgr-db-user-password
   postgresInit:
     enabled: true
@@ -924,7 +924,7 @@ esignet:
     spring_redis_password:
       secretKeyRef:
         name: '{{ tpl .Values.redisInstallationName $ }}'
-        # In our common Redis, auth is disabled, so we have created this manaully with random password 
+        # In our common Redis, auth is disabled, so we have created this manaully with random password
         key: redis-password
 
   postgresInit:
@@ -933,7 +933,7 @@ esignet:
     envVarsFrom:
       DBUSER_PWD:
         secretKeyRef:
-          name: esignet-db-user  
+          name: esignet-db-user
           key: esignet-db-user-password
 
   springConfig:
