@@ -1,4 +1,4 @@
-# openg2p-deployment-commons
+# openg2p-commons-deployment
 Common modules for a sandbox or production environment.
 
 ## License
