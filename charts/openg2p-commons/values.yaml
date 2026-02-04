@@ -84,6 +84,11 @@ postgres-init:
       secret: esignet-db-user
       secretUserPasswordKey: esignet-db-user-password
 
+masterData:
+  enabled: true
+  global:
+    masterDataHostname: master-data.qa.openg2p.org
+
 mail:
   enabled: false
   mailname: admin@openg2p.sanbox.org

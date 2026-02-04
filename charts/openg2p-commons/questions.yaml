@@ -7,6 +7,18 @@ questions:
   label: Keycloak Base URL
   group: Keycloak
 
+# Master data
+- variable: masterData.enabled
+  type: boolean
+  label: Enable Master Data service
+  group: Master Data 
+
+- variable: masterData.global.masterDataHostname
+  description: Domain name of Master Data service
+  type: string
+  label: Master Data Hostname
+  group: Master Data
+
 # PostgreSQL
 - variable: postgres.enabled
   description: Disable for external PostgreSQL server 
