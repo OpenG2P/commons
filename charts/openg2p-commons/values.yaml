@@ -79,6 +79,9 @@ postgres-init:
       user: mockidsystemuser
       secret: mockid-db-user
       secretUserPasswordKey: mockid-db-user-password
+    # Although esignet runs postgres init we are creating the DB and user 
+    # because we want the user password to be in a secret and not directly
+    # passed
     - name: mosip_esignet
       user: esignetuser
       secret: esignet-db-user
@@ -919,6 +922,7 @@ esignet:
   kafkaInstallationName: '{{ .Release.Name }}-kafka'
   mockIdentitySystemInstallationName: '{{ .Release.Name }}-mock-identity-system'
   softhsmInstallationName: '{{ .Release.Name }}-softhsm'
+  postgresqlInstallationName: '{{ tpl .Values.global.postgresqlHost $ }}'
 
   envVarsFrom:
     db_dbuser_password:
@@ -934,6 +938,7 @@ esignet:
 
   postgresInit:
     commonAnnotations:
+      "helm.sh/hook": post-install,post-upgrade
       "helm.sh/hook-weight": "0"
     envVarsFrom:
       DBUSER_PWD:
