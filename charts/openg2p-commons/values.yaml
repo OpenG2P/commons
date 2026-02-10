@@ -79,7 +79,7 @@ postgres-init:
       user: mockidsystemuser
       secret: mockid-db-user
       secretUserPasswordKey: mockid-db-user-password
-    # Although esignet runs postgres init we are creating the DB and user 
+    # Although esignet runs postgres init we are creating the DB and user
     # because we want the user password to be in a secret and not directly
     # passed
     - name: mosip_esignet

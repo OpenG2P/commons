@@ -11,7 +11,7 @@ questions:
 - variable: masterData.enabled
   type: boolean
   label: Enable Master Data service
-  group: Master Data 
+  group: Master Data
 
 - variable: masterData.global.masterDataHostname
   description: Domain name of Master Data service
@@ -20,10 +20,10 @@ questions:
   group: Master Data
 
 # PostgreSQL
-- variable: postgres.enabled
-  description: Disable for external PostgreSQL server 
+- variable: postgresql.enabled
+  description: Disable for external PostgreSQL server
   type: string
-  label: PostgreSQL Hostname
+  label: Install PostgreSQL
   group: Postgres
 
 - variable: global.postgresqlHost
@@ -41,7 +41,7 @@ questions:
 
 - variable: global.mailInstallationName
   description: Hostname of the Mail server. Change for external installations.
-  type: string 
+  type: string
   label: Mail Server Hostname
   group: Mail
 
@@ -184,4 +184,3 @@ questions:
   type: boolean
   label: Install Mock Identity System?
   group: eSignet
-
