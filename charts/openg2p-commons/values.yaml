@@ -973,9 +973,11 @@ mock-identity-system:
         name: mockid-db-user
         key: mockid-db-user-password
 
+  postgresqlInstallationName: '{{ tpl .Values.global.postgresqlHost $ }}'
   postgresInit:
     commonAnnotations:
       "helm.sh/hook-weight": "0"
+      "helm.sh/hook": post-install,post-upgrade
     envVarsFrom:
       DBUSER_PWD:
         # Same as above
