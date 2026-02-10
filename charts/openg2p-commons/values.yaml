@@ -91,6 +91,10 @@ masterData:
   enabled: true
   global:
     masterDataHostname: master-data.qa.openg2p.org
+  postgres-init:
+    job:
+      annotations:
+        "helm.sh/hook": post-install,post-upgrade
 
 mail:
   enabled: false
