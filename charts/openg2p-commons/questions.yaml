@@ -165,6 +165,12 @@ questions:
   label: Superset Hostname
   group: Superset
 
+- variable: superset.extraEnvRaw[0].valueFrom.secretKeyRef.name
+  description: Keycloak client secret name. Change for your namespace 
+  type: string
+  label: Keycloak Client Secret
+  group: Superset
+
 # eSignet
 - variable: esignet.enabled
   description: This installs eSignet for mocking user authentication
