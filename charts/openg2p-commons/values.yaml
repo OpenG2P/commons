@@ -15,7 +15,7 @@ keycloak-init:
   enabled: true
   keycloak:
     url: '{{ tpl .Values.global.keycloakBaseUrl $ }}'
-    user: 'client-manager@openg2p.org'
+    user: ''
     # Password can be passed directly (used by install.sh to create the secret).
     # If empty, the chart expects the existingSecret to already exist.
     password: ''

@@ -33,8 +33,11 @@ if ! kubectl get secret keycloak-client-manager -n "$NAMESPACE" &>/dev/null; the
   echo "This secret is required for keycloak-init to create OIDC clients."
   echo "The user must have roles: manage-clients, query-clients, view-clients in Keycloak master realm."
   echo ""
-  read -rp "Keycloak client-manager username [client-manager@openg2p.org]: " KC_USER
-  KC_USER="${KC_USER:-client-manager@openg2p.org}"
+  read -rp "Keycloak client-manager username: " KC_USER
+  if [ -z "$KC_USER" ]; then
+    echo "Error: Username cannot be empty."
+    exit 1
+  fi
   read -rsp "Keycloak client-manager password: " KC_PASS
   echo ""
 
