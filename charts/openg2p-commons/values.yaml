@@ -11,6 +11,42 @@ global:
   redisInstallationName: '{{ .Release.Name }}-redis'
   redisAuthInstallationName: '{{ .Release.Name }}-redis-auth'
 
+keycloak-init:
+  enabled: true
+  keycloak:
+    url: '{{ tpl .Values.global.keycloakBaseUrl $ }}'
+    user: 'client-manager@openg2p.org'
+    # Password can be passed directly (used by install.sh to create the secret).
+    # If empty, the chart expects the existingSecret to already exist.
+    password: ''
+    realm: master
+    existingSecret: keycloak-client-manager
+    existingSecretKey: keycloak-client-manager-password
+  job:
+    backoffLimit: 3
+    ttlSecondsAfterFinished: 600
+  # Only commons-related clients. Other module clients are added by their own charts.
+  clients:
+    - clientId: 'openg2p-superset-{{ .suffix }}'
+      name: 'Superset {{ .suffix }}'
+      redirectUris: ["*"]
+      clientRoles: ["Admin"]
+    - clientId: 'openg2p-opensearch-{{ .suffix }}'
+      name: 'OpenSearch {{ .suffix }}'
+      redirectUris: ["*"]
+      clientRoles: ["admin"]
+    - clientId: 'openg2p-kafka-{{ .suffix }}'
+      name: 'Kafka {{ .suffix }}'
+      redirectUris: ["*"]
+      clientRoles: ["Admin"]
+    - clientId: 'openg2p-minio-{{ .suffix }}'
+      name: 'MinIO {{ .suffix }}'
+      redirectUris: ["*"]
+      clientRoles: ["consoleAdmin"]
+    - clientId: 'openg2p-odk-{{ .suffix }}'
+      name: 'ODK {{ .suffix }}'
+      redirectUris: ["*"]
+
 postgresql:
   enabled: true
   auth:

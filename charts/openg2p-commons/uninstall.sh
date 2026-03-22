@@ -36,12 +36,15 @@ HOOK_RESOURCES=(
   "${RELEASE}-keymanager-postgres-init"
   "${RELEASE}-keymanager-keygen"
   "${RELEASE}-master-data-postgres-init"
+  "${RELEASE}-keycloak-init"
 )
 for name in "${HOOK_RESOURCES[@]}"; do
   kubectl delete job "$name" -n "$NAMESPACE" --ignore-not-found 2>/dev/null
   kubectl delete serviceaccount "$name" -n "$NAMESPACE" --ignore-not-found 2>/dev/null
   kubectl delete configmap "$name" -n "$NAMESPACE" --ignore-not-found 2>/dev/null
 done
+# keycloak-init jobs include revision number in name (e.g. commons-keycloak-init-1)
+kubectl delete jobs -n "$NAMESPACE" -l app.kubernetes.io/name=keycloak-init --ignore-not-found 2>/dev/null
 echo "Hook resources cleaned up."
 
 # 3. Delete all Secrets in the namespace

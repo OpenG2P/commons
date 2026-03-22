@@ -12,9 +12,34 @@ questions:
 
 # Keycloak
 - variable: global.keycloakBaseUrl
-  description: Keycloak Base Url used in all components
+  description: Keycloak Base URL used in all components (e.g. https://keycloak.openg2p.org)
   type: string
   label: Keycloak Base URL
+  group: Keycloak
+
+- variable: keycloak-init.enabled
+  description: >-
+    Enable Keycloak client initialization. Creates OIDC clients and secrets
+    for Superset, OpenSearch, Kafka, MinIO, and ODK.
+  type: boolean
+  label: Run Keycloak Init?
+  group: Keycloak
+
+- variable: keycloak-init.keycloak.user
+  description: >-
+    Keycloak user with client management permissions (roles: manage-clients,
+    query-clients, view-clients in master realm).
+  type: string
+  label: Keycloak Client Manager Username
+  group: Keycloak
+
+- variable: keycloak-init.keycloak.password
+  description: >-
+    Password for the Keycloak client manager user. If provided, the chart
+    creates the keycloak-client-manager Kubernetes secret automatically.
+    Leave blank if you have already created the secret manually.
+  type: password
+  label: Keycloak Client Manager Password
   group: Keycloak
 
 # Master data
