@@ -1,0 +1,47 @@
+{{- if (index .Values "keycloak-init" "enabled") }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Release.Name }}-client-secrets-sync-{{ .Release.Revision }}
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-weight": "-5"
+    "helm.sh/hook-delete-policy": before-hook-creation
+spec:
+  backoffLimit: 3
+  ttlSecondsAfterFinished: 600
+  template:
+    spec:
+      serviceAccountName: {{ .Release.Name }}-client-secrets-sync
+      restartPolicy: OnFailure
+      containers:
+        - name: sync
+          image: "docker.io/alpine:3.20"
+          command: ["/bin/sh", "-c", "apk add --no-cache curl jq > /dev/null 2>&1 && sh /scripts/sync.sh"]
+          env:
+            - name: KEYCLOAK_URL
+              value: {{ tpl (index .Values "keycloak-init" "keycloak" "url") . | quote }}
+            - name: KEYCLOAK_REALM
+              value: {{ index .Values "keycloak-init" "keycloak" "realm" | quote }}
+            - name: KEYCLOAK_USER
+              value: {{ index .Values "keycloak-init" "keycloak" "user" | quote }}
+            - name: KEYCLOAK_PASSWORD
+              {{- if (index .Values "keycloak-init" "keycloak" "existingSecret") }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ index .Values "keycloak-init" "keycloak" "existingSecret" }}
+                  key: {{ index .Values "keycloak-init" "keycloak" "existingSecretKey" }}
+              {{- else }}
+              value: {{ index .Values "keycloak-init" "keycloak" "password" | quote }}
+              {{- end }}
+            - name: NAMESPACE
+              value: {{ .Release.Namespace | quote }}
+          volumeMounts:
+            - name: scripts
+              mountPath: /scripts
+              readOnly: true
+      volumes:
+        - name: scripts
+          configMap:
+            name: {{ .Release.Name }}-client-secrets-sync
+{{- end }}

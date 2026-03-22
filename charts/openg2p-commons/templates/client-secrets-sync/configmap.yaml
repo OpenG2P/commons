@@ -1,0 +1,126 @@
+{{- if (index .Values "keycloak-init" "enabled") }}
+{{- $suffix := .Release.Namespace }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-client-secrets-sync
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-weight": "-10"
+    "helm.sh/hook-delete-policy": before-hook-creation
+data:
+  sync.sh: |
+    #!/bin/sh
+    set -e
+
+    KEYCLOAK_URL="${KEYCLOAK_URL}"
+    KEYCLOAK_REALM="${KEYCLOAK_REALM}"
+    KEYCLOAK_USER="${KEYCLOAK_USER}"
+    KEYCLOAK_PASSWORD="${KEYCLOAK_PASSWORD}"
+    NAMESPACE="${NAMESPACE}"
+    K8S_API="https://kubernetes.default.svc"
+    SA_TOKEN=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
+    CA_CERT="/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
+
+    # Get Keycloak access token
+    get_token() {
+      curl -sfk -X POST \
+        "${KEYCLOAK_URL}/realms/master/protocol/openid-connect/token" \
+        -d "client_id=admin-cli" \
+        -d "username=${KEYCLOAK_USER}" \
+        -d "password=${KEYCLOAK_PASSWORD}" \
+        -d "grant_type=password" | jq -r '.access_token'
+    }
+
+    # Fetch client secret from Keycloak
+    get_client_secret() {
+      local client_id="$1"
+      local token="$2"
+
+      # Find client UUID by clientId
+      local client_uuid
+      client_uuid=$(curl -sfk \
+        -H "Authorization: Bearer ${token}" \
+        "${KEYCLOAK_URL}/admin/realms/${KEYCLOAK_REALM}/clients?clientId=${client_id}" \
+        | jq -r '.[0].id // empty')
+
+      if [ -z "$client_uuid" ]; then
+        echo "WARN: Client ${client_id} not found in Keycloak. Skipping." >&2
+        return 1
+      fi
+
+      # Get client secret
+      curl -sfk \
+        -H "Authorization: Bearer ${token}" \
+        "${KEYCLOAK_URL}/admin/realms/${KEYCLOAK_REALM}/clients/${client_uuid}/client-secret" \
+        | jq -r '.value // empty'
+    }
+
+    # Create or patch K8s secret
+    upsert_secret() {
+      local secret_name="$1"
+      local secret_value="$2"
+      local encoded
+      encoded=$(printf '%s' "${secret_value}" | base64)
+
+      # Check if secret exists
+      local http_code
+      http_code=$(curl -s -o /dev/null -w "%{http_code}" \
+        --cacert "${CA_CERT}" \
+        -H "Authorization: Bearer ${SA_TOKEN}" \
+        "${K8S_API}/api/v1/namespaces/${NAMESPACE}/secrets/${secret_name}")
+
+      if [ "$http_code" = "200" ]; then
+        # Patch existing secret
+        curl -sf --cacert "${CA_CERT}" \
+          -X PATCH \
+          -H "Authorization: Bearer ${SA_TOKEN}" \
+          -H "Content-Type: application/strategic-merge-patch+json" \
+          -d "{\"data\":{\"client_secret\":\"${encoded}\"}}" \
+          "${K8S_API}/api/v1/namespaces/${NAMESPACE}/secrets/${secret_name}" > /dev/null
+        echo "Patched secret ${secret_name}"
+      else
+        # Create new secret
+        curl -sf --cacert "${CA_CERT}" \
+          -X POST \
+          -H "Authorization: Bearer ${SA_TOKEN}" \
+          -H "Content-Type: application/json" \
+          -d "{\"apiVersion\":\"v1\",\"kind\":\"Secret\",\"metadata\":{\"name\":\"${secret_name}\",\"namespace\":\"${NAMESPACE}\"},\"type\":\"Opaque\",\"data\":{\"client_secret\":\"${encoded}\"}}" \
+          "${K8S_API}/api/v1/namespaces/${NAMESPACE}/secrets" > /dev/null
+        echo "Created secret ${secret_name}"
+      fi
+    }
+
+    echo "Fetching Keycloak access token..."
+    TOKEN=""
+    for i in $(seq 1 30); do
+      TOKEN=$(get_token) && [ -n "$TOKEN" ] && break
+      echo "Waiting for Keycloak... (attempt $i/30)"
+      sleep 5
+    done
+
+    if [ -z "$TOKEN" ]; then
+      echo "ERROR: Could not authenticate to Keycloak."
+      exit 1
+    fi
+
+    echo "Syncing client secrets from Keycloak to namespace ${NAMESPACE}..."
+    ERRORS=0
+    {{- range (index .Values "keycloak-init" "clients") }}
+    CLIENT_ID="{{ tpl .clientId (dict "suffix" $suffix) }}"
+    echo "Processing ${CLIENT_ID}..."
+    SECRET_VALUE=$(get_client_secret "${CLIENT_ID}" "${TOKEN}") || { ERRORS=$((ERRORS+1)); continue; }
+    if [ -n "$SECRET_VALUE" ]; then
+      upsert_secret "${CLIENT_ID}" "${SECRET_VALUE}"
+    else
+      echo "WARN: Empty secret for ${CLIENT_ID}. Skipping."
+      ERRORS=$((ERRORS+1))
+    fi
+    {{- end }}
+
+    if [ $ERRORS -gt 0 ]; then
+      echo "Completed with ${ERRORS} warning(s)."
+    else
+      echo "All client secrets synced successfully."
+    fi
+{{- end }}

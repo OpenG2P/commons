@@ -47,11 +47,29 @@ done
 kubectl delete jobs -n "$NAMESPACE" -l app.kubernetes.io/name=keycloak-init --ignore-not-found 2>/dev/null
 echo "Hook resources cleaned up."
 
-# 3. Delete all Secrets in the namespace
+# 3. Delete Secrets in the namespace, preserving Keycloak client secrets
+#    (they have helm.sh/resource-policy=keep because Keycloak clients persist
+#    on the Keycloak server and the secrets must stay in sync)
 echo ""
-echo "--- Deleting all Secrets in namespace '$NAMESPACE' ---"
-kubectl delete secrets -n "$NAMESPACE" --all --ignore-not-found
-echo "Secrets deleted."
+echo "--- Deleting Secrets in namespace '$NAMESPACE' (preserving Keycloak client secrets) ---"
+KEYCLOAK_SECRETS=$(kubectl get secrets -n "$NAMESPACE" -o jsonpath='{range .items[?(@.metadata.annotations.helm\.sh/resource-policy=="keep")]}{.metadata.name}{"\n"}{end}' 2>/dev/null || true)
+if [ -n "$KEYCLOAK_SECRETS" ]; then
+  echo "Preserving secrets with resource-policy=keep:"
+  echo "$KEYCLOAK_SECRETS" | sed 's/^/  /'
+fi
+# Delete all secrets EXCEPT those with resource-policy=keep
+kubectl get secrets -n "$NAMESPACE" -o json | \
+  python3 -c "
+import json, sys
+data = json.load(sys.stdin)
+for item in data.get('items', []):
+    ann = item.get('metadata', {}).get('annotations', {}) or {}
+    if ann.get('helm.sh/resource-policy') != 'keep':
+        print(item['metadata']['name'])
+" | while read -r secret_name; do
+  kubectl delete secret "$secret_name" -n "$NAMESPACE" --ignore-not-found 2>/dev/null
+done
+echo "Secrets deleted (Keycloak client secrets preserved)."
 
 # 4. Delete all PVCs in the namespace, and collect bound PV names first
 echo ""
