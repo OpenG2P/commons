@@ -1,5 +1,15 @@
 questions:
 
+# General
+- variable: global.baseDomain
+  description: >-
+    Base domain for all services. All service hostnames are derived as
+    <service>.baseDomain (e.g., superset.example.openg2p.org).
+  type: string
+  label: Base Domain
+  required: true
+  group: General
+
 # Keycloak
 - variable: global.keycloakBaseUrl
   description: Keycloak Base Url used in all components
@@ -13,16 +23,10 @@ questions:
   label: Enable Master Data service
   group: Master Data
 
-- variable: masterData.global.masterDataHostname
-  description: Domain name of Master Data service
-  type: string
-  label: Master Data Hostname
-  group: Master Data
-
 # PostgreSQL
 - variable: postgresql.enabled
   description: Disable for external PostgreSQL server
-  type: string
+  type: boolean
   label: Install PostgreSQL
   group: Postgres
 
@@ -30,6 +34,14 @@ questions:
   description: Hostname of PostgreSQL installation. Change this only for external PostgreSQL server.
   type: string
   label: PostgreSQL Hostname
+  group: Postgres
+
+- variable: postgres-init.postgresql.existingSecret
+  description: >-
+    Name of the Kubernetes secret containing the PostgreSQL superuser password.
+    Change this when using an external PostgreSQL server.
+  type: string
+  label: PostgreSQL Password Secret Name
   group: Postgres
 
 # Mail
@@ -45,17 +57,11 @@ questions:
   label: Mail Server Hostname
   group: Mail
 
-  # ODK
+# ODK
 - variable: odk-central.enabled
   description: This installs ODK Central
   type: boolean
   label: Install ODK Central?
-  group: ODK
-
-- variable: odk-central.hostname
-  description: Hostname for ODK Central
-  type: string
-  label: ODK Central Hostname
   group: ODK
 
 # Minio
@@ -65,23 +71,11 @@ questions:
   label: Install Minio?
   group: Minio
 
-- variable: minio.hostname
-  description: Hostname for Minio Console
-  type: string
-  label: Minio Console Hostname
-  group: Minio
-
 # Opensearch
 - variable: opensearch.enabled
   description: This installs OpenSearch.
   type: boolean
   label: Install OpenSearch?
-  group: Opensearch
-
-- variable: opensearch.hostname
-  description: Hostname for OpenSearch Dashboards
-  type: string
-  label: OpenSearch Dashboards Hostname
   group: Opensearch
 
 # Kafka
@@ -97,12 +91,6 @@ questions:
   label: Install Kafka UI?
   group: Kafka
 
-- variable: kafkaUi.hostname
-  description: Hostname with which Kafka UI should be accessible
-  type: string
-  label: Kafka UI Hostname
-  group: Kafka
-
 # Reporting
 - variable: reporting.enabled
   description: This installs Reporting Framework.
@@ -115,12 +103,6 @@ questions:
   description: This installs Keymanager.
   type: boolean
   label: Install Keymanager?
-  group: Keymanager
-
-- variable: keymanager.hostname
-  label: Keymanager Hostname
-  description: Hostname of Keymanager
-  type: boolean
   group: Keymanager
 
 - variable: keymanager.istio.enabled
@@ -155,33 +137,16 @@ questions:
 # Superset
 - variable: superset.enabled
   description: Install Superset
-  type: string
+  type: boolean
   label: Install Superset?
   group: Superset
 
-- variable: superset.hostname
-  description: Hostname for Superset Dashboards
-  type: string
-  label: Superset Hostname
-  group: Superset
-
-- variable: superset.extraEnvRaw[0].valueFrom.secretKeyRef.name
-  description: Keycloak client secret name. Change for your namespace 
-  type: string
-  label: Keycloak Client Secret
-  group: Superset
 
 # eSignet
 - variable: esignet.enabled
   description: This installs eSignet for mocking user authentication
   type: boolean
   label: Install eSignet?
-  group: eSignet
-
-- variable: esignet.hostname
-  description: Hostname under which eSignet should be accessible
-  type: string
-  label: eSignet Hostname
   group: eSignet
 
 # Mock Identity Settings
