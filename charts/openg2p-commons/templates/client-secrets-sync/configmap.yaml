@@ -5,8 +5,8 @@ kind: ConfigMap
 metadata:
   name: {{ .Release.Name }}-client-secrets-sync
   annotations:
-    "helm.sh/hook": pre-install,pre-upgrade
-    "helm.sh/hook-weight": "-10"
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "5"
     "helm.sh/hook-delete-policy": before-hook-creation
 data:
   sync.sh: |
@@ -123,4 +123,21 @@ data:
     else
       echo "All client secrets synced successfully."
     fi
+
+    # Restart deployments that use OIDC client secrets so they pick up patched values
+    echo "Restarting affected deployments..."
+    RESTART_PATCH="{\"spec\":{\"template\":{\"metadata\":{\"annotations\":{\"client-secrets-sync/restartedAt\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}}}}}"
+    DEPLOYMENTS="{{ .Release.Name }}-superset {{ .Release.Name }}-superset-worker"
+    for DEPLOY in $DEPLOYMENTS; do
+      echo "Restarting deployment ${DEPLOY}..."
+      curl -sf --cacert "${CA_CERT}" \
+        -X PATCH \
+        -H "Authorization: Bearer ${SA_TOKEN}" \
+        -H "Content-Type: application/strategic-merge-patch+json" \
+        -d "${RESTART_PATCH}" \
+        "${K8S_API}/apis/apps/v1/namespaces/${NAMESPACE}/deployments/${DEPLOY}" > /dev/null 2>&1 \
+        && echo "Restarted ${DEPLOY}" \
+        || echo "WARN: Could not restart ${DEPLOY} (may not exist)"
+    done
+    echo "Done."
 {{- end }}

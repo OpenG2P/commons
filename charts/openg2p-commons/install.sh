@@ -48,8 +48,38 @@ helm install "$RELEASE" "$SCRIPT_DIR" \
   --set global.baseDomain="$BASE_DOMAIN" \
   --set global.keycloakBaseUrl="$KEYCLOAK_URL" \
   --set "keycloak-init.keycloak.user=$KC_USER" \
-  "$@" \
-  --wait --timeout 15m
+  --timeout 20m \
+  "$@"
+
+echo ""
+echo "=== Helm install submitted. Waiting for resources to be ready... ==="
+
+# Poll until all deployments are available or timeout
+TIMEOUT=900  # 15 minutes
+INTERVAL=15
+ELAPSED=0
+
+while [ $ELAPSED -lt $TIMEOUT ]; do
+  NOT_READY=$(kubectl get deployments -n "$NAMESPACE" -o json 2>/dev/null \
+    | jq -r '.items[] | select(.status.availableReplicas != .status.replicas) | .metadata.name' 2>/dev/null)
+
+  if [ -z "$NOT_READY" ]; then
+    echo ""
+    echo "=== All deployments are ready ==="
+    break
+  fi
+
+  echo "Waiting for deployments: $(echo "$NOT_READY" | tr '\n' ' ')... (${ELAPSED}s/${TIMEOUT}s)"
+  sleep $INTERVAL
+  ELAPSED=$((ELAPSED + INTERVAL))
+done
+
+if [ $ELAPSED -ge $TIMEOUT ]; then
+  echo ""
+  echo "WARNING: Timed out waiting for deployments. Check status:"
+  kubectl get pods -n "$NAMESPACE" --field-selector=status.phase!=Running 2>/dev/null
+  exit 1
+fi
 
 echo ""
 echo "=== Install complete ==="
