@@ -1,6 +1,6 @@
 # OpenG2P Commons Helm Chart
 
-Installs all common components. 
+Installs all common components. This chart has been tailored for automation runs such that it runs without manual supervision.
 
 Use `install.sh` and `uninstall.sh` if you would like to install using command line. 
 
