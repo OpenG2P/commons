@@ -140,12 +140,15 @@ masterData:
   global:
     masterDataHostname: 'master-data.{{ .Values.global.baseDomain }}'
   postgres-init:
-    job:
+    serviceAccount:
+      # Use a unique name to avoid collision with the main postgres-init ServiceAccount.
+      # Both subcharts produce the same default name (commons-postgres-init).
+      name: master-data-postgres-init
       annotations:
         "helm.sh/hook": post-install,post-upgrade
         "helm.sh/hook-weight": "0"
         "helm.sh/hook-delete-policy": before-hook-creation
-    serviceAccount:
+    job:
       annotations:
         "helm.sh/hook": post-install,post-upgrade
         "helm.sh/hook-weight": "0"

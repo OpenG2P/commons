@@ -66,6 +66,7 @@ HOOK_RESOURCES=(
   "${RELEASE}-keymanager-postgres-init"
   "${RELEASE}-keymanager-keygen"
   "${RELEASE}-master-data-postgres-init"
+  "master-data-postgres-init"
   "${RELEASE}-keycloak-init"
 )
 for name in "${HOOK_RESOURCES[@]}"; do
