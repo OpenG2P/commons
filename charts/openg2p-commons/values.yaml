@@ -139,6 +139,17 @@ masterData:
   enabled: true
   global:
     masterDataHostname: 'master-data.{{ .Values.global.baseDomain }}'
+  postgres-init:
+    job:
+      annotations:
+        "helm.sh/hook": post-install,post-upgrade
+        "helm.sh/hook-weight": "0"
+        "helm.sh/hook-delete-policy": before-hook-creation
+    serviceAccount:
+      annotations:
+        "helm.sh/hook": post-install,post-upgrade
+        "helm.sh/hook-weight": "0"
+        "helm.sh/hook-delete-policy": before-hook-creation
 mail:
   enabled: false
   mailname: admin@openg2p.sandbox.org
