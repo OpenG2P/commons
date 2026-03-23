@@ -47,6 +47,7 @@ helm install "$RELEASE" "$SCRIPT_DIR" \
   -n "$NAMESPACE" \
   --set global.baseDomain="$BASE_DOMAIN" \
   --set global.keycloakBaseUrl="$KEYCLOAK_URL" \
+  --set "keycloak-init.keycloak.url=$KEYCLOAK_URL" \
   --set "keycloak-init.keycloak.user=$KC_USER" \
   --timeout 20m \
   "$@"

@@ -14,7 +14,9 @@ global:
 keycloak-init:
   enabled: true
   keycloak:
-    url: '{{ tpl .Values.global.keycloakBaseUrl $ }}'
+    # NOTE: keycloak-init subchart does not support tpl on this value.
+    # Must be set explicitly via --set or install.sh.
+    url: ''
     user: ''
     # Password can be passed directly (used by install.sh to create the secret).
     # If empty, the chart expects the existingSecret to already exist.

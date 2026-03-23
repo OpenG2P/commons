@@ -17,6 +17,14 @@ questions:
   label: Keycloak Base URL
   group: Keycloak
 
+- variable: keycloak-init.keycloak.url
+  description: >-
+    Keycloak URL for client initialization (must match Keycloak Base URL above).
+    Required because the keycloak-init subchart does not support Helm tpl.
+  type: string
+  label: Keycloak Init URL
+  group: Keycloak
+
 - variable: keycloak-init.enabled
   description: >-
     Enable Keycloak client initialization. Creates OIDC clients and secrets

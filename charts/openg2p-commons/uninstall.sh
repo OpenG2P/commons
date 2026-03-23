@@ -78,19 +78,19 @@ PV_NAMES=$(kubectl get pvc -n "$NAMESPACE" -o jsonpath='{.items[*].spec.volumeNa
 kubectl delete pvc -n "$NAMESPACE" --all --ignore-not-found
 echo "PVCs deleted."
 
-# 5. Delete PVs that were bound to the above PVCs and are now in Released state
+# 5. Delete PVs that were bound to the above PVCs
 echo ""
-echo "--- Cleaning up Released PVs ---"
+echo "--- Cleaning up PVs ---"
 if [ -n "$PV_NAMES" ]; then
-  # Wait briefly for PV status to update after PVC deletion
-  sleep 3
+  # Wait for PV status to update after PVC deletion
+  sleep 5
   for pv in $PV_NAMES; do
     PV_STATUS=$(kubectl get pv "$pv" -o jsonpath='{.status.phase}' 2>/dev/null || true)
-    if [ "$PV_STATUS" = "Released" ]; then
-      echo "Deleting PV '$pv' (Released)"
+    if [ -z "$PV_STATUS" ]; then
+      echo "PV '$pv' already gone."
+    else
+      echo "Deleting PV '$pv' (status: $PV_STATUS)"
       kubectl delete pv "$pv" --ignore-not-found
-    elif [ -n "$PV_STATUS" ]; then
-      echo "Skipping PV '$pv' (status: $PV_STATUS)"
     fi
   done
 else
