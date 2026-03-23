@@ -6,12 +6,42 @@ if [ $# -lt 2 ]; then
   echo "Usage: $0 <namespace> <release-name>"
   echo "  namespace    : Kubernetes namespace"
   echo "  release-name : Helm release name"
+  echo ""
+  echo "  WARNING: This script will PERMANENTLY DELETE:"
+  echo "    - The Helm release and all its resources"
+  echo "    - ALL Secrets in the namespace (including Keycloak client secrets)"
+  echo "    - ALL PVCs in the namespace"
+  echo "    - ALL PVs that were bound to those PVCs"
+  echo "    - All orphaned hook Jobs and ServiceAccounts"
+  echo ""
+  echo "  This action is IRREVERSIBLE. Keycloak client secrets will need to be"
+  echo "  re-synced from the Keycloak server on the next install."
   exit 1
 fi
 
 NAMESPACE="$1"
 RELEASE="$2"
 
+echo ""
+echo "╔══════════════════════════════════════════════════════════════════╗"
+echo "║  WARNING: DESTRUCTIVE OPERATION                                ║"
+echo "║                                                                ║"
+echo "║  This will PERMANENTLY DELETE all resources in namespace       ║"
+echo "║  '$NAMESPACE' including:                                       "
+echo "║    - Helm release '$RELEASE'                                   "
+echo "║    - ALL Secrets (including Keycloak client secrets)           ║"
+echo "║    - ALL PVCs and their associated PVs                        ║"
+echo "║                                                                ║"
+echo "║  This action is IRREVERSIBLE.                                  ║"
+echo "╚══════════════════════════════════════════════════════════════════╝"
+echo ""
+read -rp "Type 'yes' to confirm: " CONFIRM
+if [ "$CONFIRM" != "yes" ]; then
+  echo "Aborted."
+  exit 0
+fi
+
+echo ""
 echo "=== Uninstalling release '$RELEASE' from namespace '$NAMESPACE' ==="
 
 # 1. Uninstall the Helm release
@@ -47,29 +77,11 @@ done
 kubectl delete jobs -n "$NAMESPACE" -l app.kubernetes.io/name=keycloak-init --ignore-not-found 2>/dev/null
 echo "Hook resources cleaned up."
 
-# 3. Delete Secrets in the namespace, preserving Keycloak client secrets
-#    (they have helm.sh/resource-policy=keep because Keycloak clients persist
-#    on the Keycloak server and the secrets must stay in sync)
+# 3. Delete ALL Secrets in the namespace (including Keycloak client secrets)
 echo ""
-echo "--- Deleting Secrets in namespace '$NAMESPACE' (preserving Keycloak client secrets) ---"
-KEYCLOAK_SECRETS=$(kubectl get secrets -n "$NAMESPACE" -o jsonpath='{range .items[?(@.metadata.annotations.helm\.sh/resource-policy=="keep")]}{.metadata.name}{"\n"}{end}' 2>/dev/null || true)
-if [ -n "$KEYCLOAK_SECRETS" ]; then
-  echo "Preserving secrets with resource-policy=keep:"
-  echo "$KEYCLOAK_SECRETS" | sed 's/^/  /'
-fi
-# Delete all secrets EXCEPT those with resource-policy=keep
-kubectl get secrets -n "$NAMESPACE" -o json | \
-  python3 -c "
-import json, sys
-data = json.load(sys.stdin)
-for item in data.get('items', []):
-    ann = item.get('metadata', {}).get('annotations', {}) or {}
-    if ann.get('helm.sh/resource-policy') != 'keep':
-        print(item['metadata']['name'])
-" | while read -r secret_name; do
-  kubectl delete secret "$secret_name" -n "$NAMESPACE" --ignore-not-found 2>/dev/null
-done
-echo "Secrets deleted (Keycloak client secrets preserved)."
+echo "--- Deleting ALL Secrets in namespace '$NAMESPACE' ---"
+kubectl delete secrets -n "$NAMESPACE" --all --ignore-not-found
+echo "All secrets deleted."
 
 # 4. Delete all PVCs in the namespace, and collect bound PV names first
 echo ""
