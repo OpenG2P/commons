@@ -843,6 +843,10 @@ superset:
 
   init:
     createAdmin: false
+    jobAnnotations:
+      "helm.sh/hook": post-install,post-upgrade
+      "helm.sh/hook-weight": "5"
+      "helm.sh/hook-delete-policy": before-hook-creation
 
   # Tell Superset chart not to install Postgresql
   postgresql:

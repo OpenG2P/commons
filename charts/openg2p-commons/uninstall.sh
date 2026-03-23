@@ -75,6 +75,16 @@ for name in "${HOOK_RESOURCES[@]}"; do
 done
 # keycloak-init jobs include revision number in name (e.g. commons-keycloak-init-1)
 kubectl delete jobs -n "$NAMESPACE" -l app.kubernetes.io/name=keycloak-init --ignore-not-found 2>/dev/null
+# Superset init-db job and client-secrets-sync jobs
+kubectl delete jobs -n "$NAMESPACE" "${RELEASE}-superset-init-db" --ignore-not-found 2>/dev/null
+kubectl delete jobs -n "$NAMESPACE" -l job-name="${RELEASE}-client-secrets-sync" --ignore-not-found 2>/dev/null
+# Catch-all: delete ALL remaining jobs in the namespace
+kubectl delete jobs -n "$NAMESPACE" --all --ignore-not-found 2>/dev/null
+# Clean up hook ConfigMaps, ServiceAccounts, Roles, RoleBindings
+kubectl delete configmap "${RELEASE}-client-secrets-sync" -n "$NAMESPACE" --ignore-not-found 2>/dev/null
+kubectl delete serviceaccount "${RELEASE}-client-secrets-sync" -n "$NAMESPACE" --ignore-not-found 2>/dev/null
+kubectl delete rolebinding "${RELEASE}-client-secrets-sync" -n "$NAMESPACE" --ignore-not-found 2>/dev/null
+kubectl delete role "${RELEASE}-client-secrets-sync" -n "$NAMESPACE" --ignore-not-found 2>/dev/null
 echo "Hook resources cleaned up."
 
 # 3. Delete ALL Secrets in the namespace (including Keycloak client secrets)
