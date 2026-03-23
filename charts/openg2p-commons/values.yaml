@@ -1,5 +1,6 @@
 global:
-  keycloakBaseUrl: https://keycloak2.openg2p.org
+  baseDomain: qa.openg2p.org
+  keycloakBaseUrl: https://keycloak.openg2p.org
   keycloakIssuerUrl: '{{ tpl .Values.global.keycloakBaseUrl $ }}/realms/master'
 
   postgresqlHost: '{{ .Release.Name }}-postgresql'
@@ -9,6 +10,44 @@ global:
   sysAdminEmail: admin@openg2p.sandbox.org
   redisInstallationName: '{{ .Release.Name }}-redis'
   redisAuthInstallationName: '{{ .Release.Name }}-redis-auth'
+
+keycloak-init:
+  enabled: true
+  keycloak:
+    # NOTE: keycloak-init subchart does not support tpl on this value.
+    # Must be set explicitly via --set or install.sh.
+    url: ''
+    user: ''
+    # Password can be passed directly (used by install.sh to create the secret).
+    # If empty, the chart expects the existingSecret to already exist.
+    password: ''
+    realm: master
+    existingSecret: keycloak-client-manager
+    existingSecretKey: keycloak-client-manager-password
+  job:
+    backoffLimit: 3
+    ttlSecondsAfterFinished: 600
+  # Only commons-related clients. Other module clients are added by their own charts.
+  clients:
+    - clientId: 'openg2p-superset-{{ .suffix }}'
+      name: 'Superset {{ .suffix }}'
+      redirectUris: ["*"]
+      clientRoles: ["Admin"]
+    - clientId: 'openg2p-opensearch-{{ .suffix }}'
+      name: 'OpenSearch {{ .suffix }}'
+      redirectUris: ["*"]
+      clientRoles: ["admin"]
+    - clientId: 'openg2p-kafka-{{ .suffix }}'
+      name: 'Kafka {{ .suffix }}'
+      redirectUris: ["*"]
+      clientRoles: ["Admin"]
+    - clientId: 'openg2p-minio-{{ .suffix }}'
+      name: 'MinIO {{ .suffix }}'
+      redirectUris: ["*"]
+      clientRoles: ["consoleAdmin"]
+    - clientId: 'openg2p-odk-{{ .suffix }}'
+      name: 'ODK {{ .suffix }}'
+      redirectUris: ["*"]
 
 postgresql:
   enabled: true
@@ -53,11 +92,20 @@ postgresql:
 
 postgres-init:
   enabled: true
+  job:
+    annotations:
+      "helm.sh/hook": post-install,post-upgrade
+      "helm.sh/hook-weight": "0"
+      "helm.sh/hook-delete-policy": before-hook-creation
+  serviceAccount:
+    annotations:
+      "helm.sh/hook": post-install,post-upgrade
+      "helm.sh/hook-weight": "0"
+      "helm.sh/hook-delete-policy": before-hook-creation
   postgresql:
     host: '{{ tpl .Values.global.postgresqlHost $ }}'
     port: 5432
-    # Hard coding.
-    existingSecret: commons-postgresql
+    existingSecret: '{{ .Release.Name }}-postgresql'
     existingSecretPostgresPasswordKey: postgres-password
   databases:
     # We are creating the following databases as the respective charts don't create on their own.
@@ -90,19 +138,14 @@ postgres-init:
 masterData:
   enabled: true
   global:
-    masterDataHostname: master-data.qa.openg2p.org
-  postgres-init:
-    job:
-      annotations:
-        "helm.sh/hook": post-install,post-upgrade
-
+    masterDataHostname: 'master-data.{{ .Values.global.baseDomain }}'
 mail:
   enabled: false
-  mailname: admin@openg2p.sanbox.org
+  mailname: admin@openg2p.sandbox.org
 
 odk-central:
   enabled: true
-  hostname: odk.qa.openg2p.org
+  hostname: 'odk.{{ .Values.global.baseDomain }}'
 
   postgresqlInstallationName: '{{ tpl .Values.global.postgresqlHost $ }}'
   mailInstallationName: '{{ .Release.Name }}-mail'
@@ -110,7 +153,7 @@ odk-central:
   # Default
   oidcClientId: 'openg2p-odk-{{ .Release.Namespace }}'
   # Name of the secret in Kuberentes containing (DO NOT password directly here)
-  # Same name as client id by convension.
+  # Same name as client id by convention.
   oidcClientSecret: '{{ tpl .Values.oidcClientId $ }}'
   # Key containing client password. Hardcoded in Keycloak Init script
   oidcClientSecretKey: 'client_secret'
@@ -191,7 +234,7 @@ redis-auth:
 
 minio:
   enabled: true
-  hostname: minio.qa.openg2p.org
+  hostname: 'minio.{{ .Values.global.baseDomain }}'
   persistence:
     enabled: true
     size: 16Gi
@@ -200,7 +243,7 @@ minio:
   # Default
   oidcClientId: 'openg2p-minio-{{ .Release.Namespace }}'
   # Name of the secret in Kuberentes containing (DO NOT password directly here)
-  # Same name as client id by convension.
+  # Same name as client id by convention.
   oidcClientSecret: '{{ tpl .Values.oidcClientId $ }}'
   # Key containing client password. Hardcoded in Keycloak Init script
   oidcClientSecretKey: 'client_secret'
@@ -248,13 +291,13 @@ minio:
 
 opensearch:
   enabled: true
-  hostname: opensearch.qa.openg2p.org
+  hostname: 'opensearch.{{ .Values.global.baseDomain }}'
 
   oidcWellKnownConfigUrl: '{{ tpl .Values.global.keycloakIssuerUrl $ }}/.well-known/openid-configuration'
   # Default
   oidcClientId: 'openg2p-opensearch-{{ .Release.Namespace }}'
   # Name of the secret in Kuberentes containing (DO NOT password directly here)
-  # Same name as client id by convension.
+  # Same name as client id by convention.
   oidcClientSecret: '{{ tpl .Values.oidcClientId $ }}'
   # Key containing client password. Hardcoded in Keycloak Init script
   oidcClientSecretKey: 'client_secret'
@@ -476,7 +519,7 @@ kafka:
 kafkaUi:
   enabled: true
   # kafka.nameOverride will apply here too.
-  hostname: kafka.qa.openg2p.org
+  hostname: 'kafka.{{ .Values.global.baseDomain }}'
 
   basePath: ""
 
@@ -485,12 +528,10 @@ kafkaUi:
   opensearchKafkaConnectorAddress: '{{ .Release.Name }}-reporting-os-kafka-connector'
 
   oidcIssuerUrl: '{{ tpl .Values.global.keycloakIssuerUrl $ }}'
-  oidcClientId: 'openg2p-kafka-{{ .Release.Namespace }}'
-  oidcClientSecret: ''
   # Default name
   oidcClientId: 'openg2p-kafka-{{ .Release.Namespace }}'
-  # Name of the secret in Kuberentes containing (DO NOT password directly here)
-  # Same name as client id by convension.
+  # Name of the secret in Kubernetes containing (DO NOT put password directly here)
+  # Same name as client id by convention.
   oidcClientSecret: '{{ tpl .Values.kafkaUi.oidcClientId $ }}'
   # Key containing client password. Hardcoded in Keycloak Init script
   oidcClientSecretKey: 'client_secret'
@@ -709,7 +750,7 @@ softhsm:
 
 keymanager:
   enabled: true
-  hostname: keymanager.qa.openg2p.org
+  hostname: 'keymanager.{{ .Values.global.baseDomain }}'
   # Disabling for now. TODO - understand the implications
   authEnabled: false
   # For country deployments we may for file based keystore instead of SoftHSM
@@ -743,7 +784,9 @@ keymanager:
     enabled: true
     #forceRun: true
     commonAnnotations:
-      "helm.sh/hook-weight": "0"
+      "helm.sh/hook": post-install,post-upgrade
+      "helm.sh/hook-weight": "2"
+      "helm.sh/hook-delete-policy": before-hook-creation
     envVars:
       DB_USER: keymgruser
     envVarsFrom:
@@ -754,8 +797,6 @@ keymanager:
           key: keymgr-db-user-password
   keygen:
     enabled: true
-    commonAnnotations:
-      "helm.sh/hook-weight": "1"
     appIdsList:
       - OPENG2P_SR
       - OPENG2P_SR_NID
@@ -780,7 +821,7 @@ keymanager:
 
 superset:
   enabled: true
-  hostname: superset.qa.openg2p.org
+  hostname: 'superset.{{ .Values.global.baseDomain }}'
 
   oidcIssuerUrl: '{{ tpl .Values.global.keycloakIssuerUrl $ }}'
   # Default name
@@ -788,13 +829,12 @@ superset:
 
   supersetSecretKey: ''
 
+  # envFromSecrets supports tpl (unlike extraEnvRaw), so we can use dynamic names.
+  # All keys from these secrets are loaded as env vars.
+  envFromSecrets:
+    - 'openg2p-superset-{{ .Release.Namespace }}'
+
   extraEnvRaw:
-  - name: OIDC_CLIENT_SECRET
-    valueFrom:
-      secretKeyRef:
-        # TODO: Currently hardcoded due to super helm chart not supporting templates,
-        name: openg2p-superset-qa
-        key: client_secret
   - name: DB_PASS
     valueFrom:
       secretKeyRef:
@@ -803,8 +843,6 @@ superset:
 
   init:
     createAdmin: false
-    jobAnnotations:
-      "helm.sh/hook-weight": "0"
 
   # Tell Superset chart not to install Postgresql
   postgresql:
@@ -818,6 +856,10 @@ superset:
     connections:
       redis_host: '{{ tpl .Values.global.redisInstallationName $ }}-master'
       db_host: '{{ tpl .Values.global.postgresqlHost $ }}'
+      # db_pass intentionally empty — the real password comes from extraEnvRaw
+      # (secret superset-db-user created by postgres-init). This prevents the
+      # commons-superset-env secret from containing a stale/wrong DB_PASS.
+      db_pass: ''
 
   bootstrapScript: |
     #!/bin/bash
@@ -840,7 +882,7 @@ superset:
           "token_key": "access_token",
           "remote_app": {
             "client_id": "{{ tpl .Values.oidcClientId $ }}",
-            "client_secret": os.getenv("OIDC_CLIENT_SECRET"),
+            "client_secret": os.getenv("client_secret"),
             "api_base_url": "{{ tpl .Values.oidcIssuerUrl $ }}/protocol/openid-connect",
             "client_kwargs": {"scope": "email profile openid"},
             "access_token_url": "{{ tpl .Values.oidcIssuerUrl $ }}/protocol/openid-connect/token",
@@ -911,7 +953,7 @@ superset:
 
 esignet:
   enabled: true
-  hostname: esignet.qa.openg2p.org
+  hostname: 'esignet.{{ .Values.global.baseDomain }}'
 
   captchaEnabled: false
 
@@ -943,7 +985,8 @@ esignet:
   postgresInit:
     commonAnnotations:
       "helm.sh/hook": post-install,post-upgrade
-      "helm.sh/hook-weight": "0"
+      "helm.sh/hook-weight": "2"
+      "helm.sh/hook-delete-policy": before-hook-creation
     envVarsFrom:
       DBUSER_PWD:
         secretKeyRef:
@@ -961,7 +1004,7 @@ esignet:
 
 mock-identity-system:
   enabled: true
-  hostname: esignet.qa.openg2p.org
+  hostname: 'esignet.{{ .Values.global.baseDomain }}'
 
   envVars:
     JDK_JAVA_OPTIONS: "-XX:-UseContainerSupport -Dspring.jmx.enabled=false"
@@ -976,8 +1019,9 @@ mock-identity-system:
   postgresqlInstallationName: '{{ tpl .Values.global.postgresqlHost $ }}'
   postgresInit:
     commonAnnotations:
-      "helm.sh/hook-weight": "0"
       "helm.sh/hook": post-install,post-upgrade
+      "helm.sh/hook-weight": "2"
+      "helm.sh/hook-delete-policy": before-hook-creation
     envVarsFrom:
       DBUSER_PWD:
         # Same as above
