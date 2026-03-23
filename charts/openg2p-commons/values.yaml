@@ -1,12 +1,14 @@
 global:
-  keycloakBaseUrl: https://keycloak.your.org
+  keycloakBaseUrl: https://keycloak2.openg2p.org
   keycloakIssuerUrl: '{{ tpl .Values.global.keycloakBaseUrl $ }}/realms/master'
 
   postgresqlHost: '{{ .Release.Name }}-postgresql'
   mailInstallationName: '{{ .Release.Name }}-mail'
+  minioInstallationName: '{{ .Release.Name }}-minio'
 
   sysAdminEmail: admin@openg2p.sandbox.org
-  redisInstallationName: '{{ .Release.Name }}-redis-master'
+  redisInstallationName: '{{ .Release.Name }}-redis'
+  redisAuthInstallationName: '{{ .Release.Name }}-redis-auth'
 
 postgresql:
   enabled: true
@@ -54,11 +56,12 @@ postgres-init:
   postgresql:
     host: '{{ tpl .Values.global.postgresqlHost $ }}'
     port: 5432
-    # Hard coding.  
+    # Hard coding.
     existingSecret: commons-postgresql
     existingSecretPostgresPasswordKey: postgres-password
   databases:
     # We are creating the following databases as the respective charts don't create on their own.
+    # Note that Keymanager creates DB on its own.
     - name: superset
       # As expected by Superset chart
       user: superset
@@ -68,16 +71,40 @@ postgres-init:
       user: odkuser
       secret: odk-db-user
       secretUserPasswordKey: odk-db-user-password
- 
+    - name: mosip_keymgr
+      user: keymgruser
+      secret: keymgr-db-user
+      secretUserPasswordKey: keymgr-db-user-password
+    - name: mosip_mockidentitysystem
+      user: mockidsystemuser
+      secret: mockid-db-user
+      secretUserPasswordKey: mockid-db-user-password
+    # Although esignet runs postgres init we are creating the DB and user
+    # because we want the user password to be in a secret and not directly
+    # passed
+    - name: mosip_esignet
+      user: esignetuser
+      secret: esignet-db-user
+      secretUserPasswordKey: esignet-db-user-password
+
+masterData:
+  enabled: true
+  global:
+    masterDataHostname: master-data.qa.openg2p.org
+  postgres-init:
+    job:
+      annotations:
+        "helm.sh/hook": post-install,post-upgrade
+
 mail:
   enabled: false
   mailname: admin@openg2p.sanbox.org
 
 odk-central:
-  enabled: false
+  enabled: true
   hostname: odk.qa.openg2p.org
-  
-  postgresqlInstallationName: '{{ tpl .Values.global.postgresHost $ }}'
+
+  postgresqlInstallationName: '{{ tpl .Values.global.postgresqlHost $ }}'
   mailInstallationName: '{{ .Release.Name }}-mail'
 
   # Default
@@ -89,6 +116,7 @@ odk-central:
   oidcClientSecretKey: 'client_secret'
 
   s3BlobsEnabled: true
+  s3ServerUrl: 'http://{{ tpl .Values.global.minioInstallationName $ }}:3000'
 
   odk-central-enketo:
     enabled: true
@@ -96,10 +124,22 @@ odk-central:
       # Here we pointing to the same redis instance for both. This redis does not have
       # persistence. This is ok since we use the online form feature for testing and
       # not full fledged used in production. ODK is mostly used in offline mode.
-      REDIS_MAIN_HOST: '{{ tpl .Values.global.redisInstallationName $ }}'
-      REDIS_CACHE_HOST: '{{ tpl .Values.global.redisInstallationName $ }}'
+      REDIS_MAIN_HOST: '{{ tpl .Values.global.redisInstallationName $ }}-master'
+      REDIS_CACHE_HOST: '{{ tpl .Values.global.redisInstallationName $ }}-master'
 
   backend:
+    initContainers:
+    - name: wait-for-minio
+      image: busybox:1.36
+      imagePullPolicy: IfNotPresent
+      command:
+        - sh
+        - -c
+        - |
+          until nc -zv {{ tpl .Values.global.minioInstallationName $ }} 9000; do
+            echo "Waiting for MinIO..."
+            sleep 2
+          done
     envVars:
       OIDC_ENABLED: true
       OIDC_ISSUER_URL: '{{ tpl .Values.global.keycloakIssuerUrl $ }}'
@@ -108,6 +148,7 @@ odk-central:
     envVarsFrom:
       DB_PASSWORD:
         secretKeyRef:
+          # MUST MATCH one defined under postgres-init
           name: odk-db-user
           key: odk-db-user-password
       OIDC_CLIENT_SECRET:
@@ -115,6 +156,7 @@ odk-central:
           name: '{{ tpl .Values.oidcClientSecret $ }}'
           key: '{{ tpl .Values.oidcClientSecretKey $ }}'
 
+# Redis without auth enabled.
 redis:
   # Default name of the redis service is .Release.Name-redis-master
   enabled: true
@@ -130,8 +172,25 @@ redis:
     persistence:
       enabled: false
 
+# Redis with authentication enabled required by services like eSignet
+redis-auth:
+  enabled: true
+  # We override the name here
+  nameOverride: "redis-auth"
+  architecture: standalone
+  image:
+    registry: docker.io
+    repository: openg2p/redis
+    tag: 7.2.5-debian-12-r4
+  auth:
+    enabled: true
+  master:
+    resourcesPreset: none
+    persistence:
+      enabled: false
+
 minio:
-  enabled: false
+  enabled: true
   hostname: minio.qa.openg2p.org
   persistence:
     enabled: true
@@ -188,7 +247,7 @@ minio:
         credentialName: ""
 
 opensearch:
-  enabled: false
+  enabled: true
   hostname: opensearch.qa.openg2p.org
 
   oidcWellKnownConfigUrl: '{{ tpl .Values.global.keycloakIssuerUrl $ }}/.well-known/openid-configuration'
@@ -383,7 +442,7 @@ opensearch:
         credentialName: ""
 
 kafka:
-  enabled: false
+  enabled: true
   heapOpts: ""
   extraConfig: |-
     log.retention.hours=2
@@ -415,7 +474,7 @@ kafka:
       client: 9092
 
 kafkaUi:
-  enabled: false 
+  enabled: true
   # kafka.nameOverride will apply here too.
   hostname: kafka.qa.openg2p.org
 
@@ -636,31 +695,40 @@ reporting:
     enabled: true
 
 artifactory:
-  enabled: false
+  enabled: true
   image:
     repository: mosipid/artifactory-server
     tag: 1.4.1-ES
   resources: {}
 
 softhsm:
-  enabled: false
+  enabled: true
   # Hardcoding this for now. else every upgrade will reset the pin
   securityPIN: MTYwMzIyMjg=
   resources: {}
 
 keymanager:
-  enabled: false
+  enabled: true
   hostname: keymanager.qa.openg2p.org
+  # Disabling for now. TODO - understand the implications
   authEnabled: false
+  # For country deployments we may for file based keystore instead of SoftHSM
+  keystoreType: PKCS12
+  p12KeystorePass: ''
+  # Postgres Init is important
+  skipPostgresInitCheck: false
+  # Keymanager should come up even if Keygen has not run. The idea is to have keygen run by individuals
+  skipKeygenCheck: true
+  postgresqlInstallationName: '{{ tpl .Values.global.postgresqlHost $ }}'
   istio:
     enabled: false
-  keystoreType: PKCS12
   springConfig:
     names: application,kernel
     profile: default
     gitRepo:
       enabled: true
       repoUrl: https://github.com/openg2p/mosip-config
+      # This branch has user name as per our conventions here
       branch: master
     rawConfig: ""
   envVars:
@@ -669,17 +737,23 @@ keymanager:
   envVarsFrom:
     db_dbuser_password:
       secretKeyRef:
-        name: '{{ .Release.Name }}-postgresql-addl-user-passwords'
-        key: keymgruser
+        name: keymgr-db-user
+        key: keymgr-db-user-password
   postgresInit:
+    enabled: true
+    #forceRun: true
     commonAnnotations:
       "helm.sh/hook-weight": "0"
+    envVars:
+      DB_USER: keymgruser
     envVarsFrom:
       DBUSER_PWD:
+        # Must be same as above
         secretKeyRef:
-          name: '{{ .Release.Name }}-postgresql-addl-user-passwords'
-          key: keymgruser
+          name: keymgr-db-user
+          key: keymgr-db-user-password
   keygen:
+    enabled: true
     commonAnnotations:
       "helm.sh/hook-weight": "1"
     appIdsList:
@@ -705,7 +779,7 @@ keymanager:
     enabled: true
 
 superset:
-  enabled: false
+  enabled: true
   hostname: superset.qa.openg2p.org
 
   oidcIssuerUrl: '{{ tpl .Values.global.keycloakIssuerUrl $ }}'
@@ -719,8 +793,13 @@ superset:
     valueFrom:
       secretKeyRef:
         # TODO: Currently hardcoded due to super helm chart not supporting templates,
-        name: openg2p-supserset-qa
+        name: openg2p-superset-qa
         key: client_secret
+  - name: DB_PASS
+    valueFrom:
+      secretKeyRef:
+        name: superset-db-user
+        key: superset-db-user-password
 
   init:
     createAdmin: false
@@ -737,8 +816,8 @@ superset:
 
   supersetNode:
     connections:
-      redis_host: '{{ tpl .Values.global.redisInstallationName $ }}'
-      db_host: '{{ .Release.Name }}-postgresql'
+      redis_host: '{{ tpl .Values.global.redisInstallationName $ }}-master'
+      db_host: '{{ tpl .Values.global.postgresqlHost $ }}'
 
   bootstrapScript: |
     #!/bin/bash
@@ -831,7 +910,7 @@ superset:
         credentialName: ""
 
 esignet:
-  enabled: false
+  enabled: true
   hostname: esignet.qa.openg2p.org
 
   captchaEnabled: false
@@ -842,25 +921,34 @@ esignet:
     JDK_JAVA_OPTIONS: "-XX:-UseContainerSupport -Dspring.jmx.enabled=false"
   # TODO: read from a common variable in global.
   artifactoryInstallationName: '{{ .Release.Name }}-artifactory'
-  redisInstallationName: '{{ .Release.Name }}-esignet-redis'
+  # Note Redis Auth used here
+  redisInstallationName: '{{ tpl .Values.global.redisAuthInstallationName $ }}'
   kafkaInstallationName: '{{ .Release.Name }}-kafka'
   mockIdentitySystemInstallationName: '{{ .Release.Name }}-mock-identity-system'
   softhsmInstallationName: '{{ .Release.Name }}-softhsm'
+  postgresqlInstallationName: '{{ tpl .Values.global.postgresqlHost $ }}'
 
   envVarsFrom:
     db_dbuser_password:
       secretKeyRef:
-        name: '{{ tpl .Values.global.postgresHost $ }}-addl-user-passwords'
-        key: esignetuser
+        # Must match postgres-init
+        name: esignet-db-user
+        key: esignet-db-user-password
+    spring_redis_password:
+      secretKeyRef:
+        name: '{{ tpl .Values.redisInstallationName $ }}'
+        # In our common Redis, auth is disabled, so we have created this manaully with random password
+        key: redis-password
 
   postgresInit:
     commonAnnotations:
+      "helm.sh/hook": post-install,post-upgrade
       "helm.sh/hook-weight": "0"
     envVarsFrom:
       DBUSER_PWD:
         secretKeyRef:
-          name: '{{ tpl .Values.global.postgresHost $ }}-addl-user-passwords'
-          key: esignetuser
+          name: esignet-db-user
+          key: esignet-db-user-password
 
   springConfig:
     names: application,esignet
@@ -872,7 +960,7 @@ esignet:
     rawConfig: ""
 
 mock-identity-system:
-  enabled: false
+  enabled: true
   hostname: esignet.qa.openg2p.org
 
   envVars:
@@ -880,18 +968,22 @@ mock-identity-system:
 
   envVarsFrom:
     db_dbuser_password:
+      # MUST MATCH what is specified in postgres-init
       secretKeyRef:
-        name: '{{ tpl .Values.global.postgresHost $ }}-addl-user-passwords'
-        key: mockidsystemuser
+        name: mockid-db-user
+        key: mockid-db-user-password
 
+  postgresqlInstallationName: '{{ tpl .Values.global.postgresqlHost $ }}'
   postgresInit:
     commonAnnotations:
       "helm.sh/hook-weight": "0"
+      "helm.sh/hook": post-install,post-upgrade
     envVarsFrom:
       DBUSER_PWD:
+        # Same as above
         secretKeyRef:
-          name: '{{ tpl .Values.global.postgresHost $ }}-addl-user-passwords'
-          key: mockidsystemuser
+          name: mockid-db-user
+          key: mockid-db-user-password
 
   springConfig:
     names: application,mock-identity-system
