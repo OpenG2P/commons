@@ -136,8 +136,11 @@ keymanager:
         key: keymgr-db-user-password
   postgresInit:
     enabled: true
-    # Remove hook annotations so Rancher doesn't skip these jobs.
-    commonAnnotations: {}
+    # Nullify hook annotations so these run as regular resources (Rancher skips hooks).
+    commonAnnotations:
+      "helm.sh/hook": null
+      "helm.sh/hook-weight": null
+      "helm.sh/hook-delete-policy": null
     #forceRun: true
     envVars:
       DB_USER: keymgruser
@@ -149,8 +152,11 @@ keymanager:
           key: keymgr-db-user-password
   keygen:
     enabled: true
-    # Remove hook annotations so Rancher doesn't skip these jobs.
-    commonAnnotations: {}
+    # Nullify hook annotations so these run as regular resources (Rancher skips hooks).
+    commonAnnotations:
+      "helm.sh/hook": null
+      "helm.sh/hook-weight": null
+      "helm.sh/hook-delete-policy": null
     appIdsList:
       - OPENG2P_SR
       - OPENG2P_SR_NID
@@ -339,8 +345,11 @@ esignet:
         key: redis-password
 
   postgresInit:
-    # Remove hook annotations so Rancher doesn't skip these jobs.
-    commonAnnotations: {}
+    # Nullify hook annotations so these run as regular resources (Rancher skips hooks).
+    commonAnnotations:
+      "helm.sh/hook": null
+      "helm.sh/hook-weight": null
+      "helm.sh/hook-delete-policy": null
     envVarsFrom:
       DBUSER_PWD:
         secretKeyRef:
@@ -375,8 +384,11 @@ mock-identity-system:
 
   postgresqlInstallationName: '{{ tpl .Values.global.postgresqlHost $ }}'
   postgresInit:
-    # Remove hook annotations so Rancher doesn't skip these jobs.
-    commonAnnotations: {}
+    # Nullify hook annotations so these run as regular resources (Rancher skips hooks).
+    commonAnnotations:
+      "helm.sh/hook": null
+      "helm.sh/hook-weight": null
+      "helm.sh/hook-delete-policy": null
     envVarsFrom:
       DBUSER_PWD:
         # Same as above
