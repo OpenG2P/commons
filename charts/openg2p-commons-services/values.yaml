@@ -3,19 +3,18 @@ global:
   keycloakBaseUrl: https://keycloak.openg2p.org
   keycloakIssuerUrl: '{{ tpl .Values.global.keycloakBaseUrl $ }}/realms/master'
 
-  # IMPORTANT: These reference services from openg2p-commons-base.
-  # The install.sh passes the correct base release name via --set.
-  # If installing manually, set these to match the base chart's release name.
-  # e.g., if base was installed as "commons-base", set postgresqlHost to "commons-base-postgresql"
-  postgresqlHost: ''
-  mailInstallationName: ''
-  minioInstallationName: ''
+  # These reference services from openg2p-commons-base.
+  # Defaults assume base release name is 'commons'. If your base release has a
+  # different name, override these (install.sh does this automatically).
+  postgresqlHost: commons-postgresql
+  mailInstallationName: commons-mail
+  minioInstallationName: commons-minio
 
   sysAdminEmail: admin@openg2p.sandbox.org
-  redisInstallationName: ''
-  redisAuthInstallationName: ''
-  kafkaInstallationName: ''
-  softhsmInstallationName: ''
+  redisInstallationName: commons-redis
+  redisAuthInstallationName: commons-redis-auth
+  kafkaInstallationName: commons-kafka
+  softhsmInstallationName: commons-softhsm
 
 masterData:
   enabled: true
@@ -33,6 +32,7 @@ odk-central:
   hostname: 'odk.{{ .Values.global.baseDomain }}'
 
   postgresqlInstallationName: '{{ tpl .Values.global.postgresqlHost $ }}'
+  minioInstallationName: '{{ tpl .Values.global.minioInstallationName $ }}'
   mailInstallationName: '{{ tpl .Values.global.mailInstallationName $ }}'
 
   # Default
@@ -88,8 +88,10 @@ reporting:
   enabled: false
   debezium:
     enabled: true
+    kafkaInstallationName: '{{ tpl .Values.global.kafkaInstallationName $ }}'
   opensearch-kafka-connector:
     enabled: true
+    kafkaInstallationName: '{{ tpl .Values.global.kafkaInstallationName $ }}'
 
 artifactory:
   enabled: true
@@ -111,6 +113,8 @@ keymanager:
   # Keymanager should come up even if Keygen has not run. The idea is to have keygen run by individuals
   skipKeygenCheck: true
   postgresqlInstallationName: '{{ tpl .Values.global.postgresqlHost $ }}'
+  softhsmInstallationName: '{{ tpl .Values.global.softhsmInstallationName $ }}'
+  artifactoryInstallationName: '{{ .Release.Name }}-artifactory'
   istio:
     enabled: false
   springConfig:
@@ -347,6 +351,9 @@ esignet:
 mock-identity-system:
   enabled: true
   hostname: 'esignet.{{ .Values.global.baseDomain }}'
+
+  softhsmInstallationName: '{{ tpl .Values.global.softhsmInstallationName $ }}'
+  artifactoryInstallationName: '{{ .Release.Name }}-artifactory'
 
   envVars:
     JDK_JAVA_OPTIONS: "-XX:-UseContainerSupport -Dspring.jmx.enabled=false"
