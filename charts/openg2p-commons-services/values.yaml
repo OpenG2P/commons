@@ -136,6 +136,8 @@ keymanager:
         key: keymgr-db-user-password
   postgresInit:
     enabled: true
+    # Remove hook annotations so Rancher doesn't skip these jobs.
+    commonAnnotations: {}
     #forceRun: true
     envVars:
       DB_USER: keymgruser
@@ -147,6 +149,8 @@ keymanager:
           key: keymgr-db-user-password
   keygen:
     enabled: true
+    # Remove hook annotations so Rancher doesn't skip these jobs.
+    commonAnnotations: {}
     appIdsList:
       - OPENG2P_SR
       - OPENG2P_SR_NID
@@ -193,6 +197,8 @@ superset:
 
   init:
     createAdmin: false
+    # Remove hook annotations so Rancher doesn't skip the init job.
+    jobAnnotations: {}
 
   # Tell Superset chart not to install Postgresql
   postgresql:
@@ -333,6 +339,8 @@ esignet:
         key: redis-password
 
   postgresInit:
+    # Remove hook annotations so Rancher doesn't skip these jobs.
+    commonAnnotations: {}
     envVarsFrom:
       DBUSER_PWD:
         secretKeyRef:
@@ -367,6 +375,8 @@ mock-identity-system:
 
   postgresqlInstallationName: '{{ tpl .Values.global.postgresqlHost $ }}'
   postgresInit:
+    # Remove hook annotations so Rancher doesn't skip these jobs.
+    commonAnnotations: {}
     envVarsFrom:
       DBUSER_PWD:
         # Same as above
