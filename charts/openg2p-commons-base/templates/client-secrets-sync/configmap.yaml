@@ -4,10 +4,6 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: {{ .Release.Name }}-client-secrets-sync
-  annotations:
-    "helm.sh/hook": post-install,post-upgrade
-    "helm.sh/hook-weight": "5"
-    "helm.sh/hook-delete-policy": before-hook-creation
 data:
   sync.sh: |
     #!/bin/sh
@@ -45,7 +41,6 @@ data:
         | jq -r '.[0].id // empty')
 
       if [ -z "$client_uuid" ]; then
-        echo "WARN: Client ${client_id} not found in Keycloak. Skipping." >&2
         return 1
       fi
 
@@ -109,11 +104,21 @@ data:
     {{- range (index .Values "keycloak-init" "clients") }}
     CLIENT_ID="{{ tpl .clientId (dict "suffix" $suffix) }}"
     echo "Processing ${CLIENT_ID}..."
-    SECRET_VALUE=$(get_client_secret "${CLIENT_ID}" "${TOKEN}") || { ERRORS=$((ERRORS+1)); continue; }
+    # Retry fetching client secret (keycloak-init may still be creating clients)
+    SECRET_VALUE=""
+    for attempt in $(seq 1 20); do
+      SECRET_VALUE=$(get_client_secret "${CLIENT_ID}" "${TOKEN}") && [ -n "$SECRET_VALUE" ] && break
+      echo "  Client ${CLIENT_ID} not ready yet (attempt ${attempt}/20). Waiting..."
+      sleep 10
+      # Refresh token every 5 attempts
+      if [ $((attempt % 5)) -eq 0 ]; then
+        TOKEN=$(get_token) || true
+      fi
+    done
     if [ -n "$SECRET_VALUE" ]; then
       upsert_secret "${CLIENT_ID}" "${SECRET_VALUE}"
     else
-      echo "WARN: Empty secret for ${CLIENT_ID}. Skipping."
+      echo "WARN: Could not fetch secret for ${CLIENT_ID} after retries. Skipping."
       ERRORS=$((ERRORS+1))
     fi
     {{- end }}
@@ -137,7 +142,7 @@ data:
         -d "${RESTART_PATCH}" \
         "${K8S_API}/apis/apps/v1/namespaces/${NAMESPACE}/deployments/${DEPLOY}" > /dev/null 2>&1 \
         && echo "Restarted ${DEPLOY}" \
-        || echo "WARN: Could not restart ${DEPLOY} (may not exist)"
+        || echo "WARN: Could not restart ${DEPLOY} (may not exist yet)"
     done
     echo "Done."
 {{- end }}

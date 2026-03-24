@@ -1,0 +1,33 @@
+dependencies:
+- name: postgresql
+  repository: https://openg2p.github.io/openg2p-helm
+  version: 15.5.38
+- name: postgres-init
+  repository: https://openg2p.github.io/openg2p-helm
+  version: 1.1.0
+- name: mail
+  repository: https://openg2p.github.io/openg2p-helm
+  version: 1.2.1
+- name: minio
+  repository: https://openg2p.github.io/openg2p-helm
+  version: 12.12.2
+- name: opensearch
+  repository: https://openg2p.github.io/openg2p-helm
+  version: 1.2.0
+- name: kafka
+  repository: https://openg2p.github.io/openg2p-helm
+  version: 29.3.14
+- name: softhsm
+  repository: https://mosip.github.io/mosip-helm
+  version: 12.0.1
+- name: redis
+  repository: https://openg2p.github.io/openg2p-helm
+  version: 19.6.4
+- name: redis
+  repository: https://openg2p.github.io/openg2p-helm
+  version: 19.6.4
+- name: keycloak-init
+  repository: https://openg2p.github.io/openg2p-helm
+  version: 0.0.0-develop
+digest: sha256:c81cebd2bce81a51db2ec2ec75776ac5caea588d93a7384ffdfe6a466eb5388a
+generated: "2026-03-24T05:42:52.753992+05:30"

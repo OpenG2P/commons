@@ -1,0 +1,49 @@
+apiVersion: v2
+name: openg2p-commons-base
+description: "Helm chart for OpenG2P Commons infrastructure (databases, message queues, init jobs)"
+type: application
+version: 2.0.0-develop
+dependencies:
+  - name: postgresql
+    version: 15.5.38
+    repository: https://openg2p.github.io/openg2p-helm
+    condition: postgresql.enabled
+  - name: postgres-init
+    version: 1.1.0
+    repository: https://openg2p.github.io/openg2p-helm
+    condition: postgres-init.enabled
+  - name: mail
+    version: 1.2.1
+    repository: https://openg2p.github.io/openg2p-helm
+    condition: mail.enabled
+  - name: minio
+    version: 12.12.2
+    repository: https://openg2p.github.io/openg2p-helm
+    condition: minio.enabled
+  - name: opensearch
+    version: 1.2.0
+    repository: https://openg2p.github.io/openg2p-helm
+    condition: opensearch.enabled
+  - name: kafka
+    version: 29.3.14
+    repository: https://openg2p.github.io/openg2p-helm
+    condition: kafka.enabled
+  - name: softhsm
+    version: 12.0.1
+    repository: https://mosip.github.io/mosip-helm
+    condition: softhsm.enabled
+  - name: redis
+    version: 19.6.4
+    repository: https://openg2p.github.io/openg2p-helm
+  - name: redis
+    version: 19.6.4
+    repository: https://openg2p.github.io/openg2p-helm
+    alias: redis-auth
+  - name: keycloak-init
+    version: 0.0.0-develop
+    repository: https://openg2p.github.io/openg2p-helm
+    condition: keycloak-init.enabled
+icon: https://openg2p.github.io/openg2p-helm/openg2p-logo.png
+annotations:
+  catalog.cattle.io/display-name: "OpenG2P Commons Base"
+  openg2p.org/add-to-rancher: "openg2p.org/add-to-rancher"

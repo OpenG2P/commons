@@ -1,19 +1,19 @@
 #!/usr/bin/env bash
-# Install openg2p-commons Helm chart.
+# Install openg2p-commons-base Helm chart (infrastructure layer).
 set -euo pipefail
 
 if [ $# -lt 6 ]; then
   echo "Usage: $0 <namespace> <release-name> <base-domain> <keycloak-url> <keycloak-username> <keycloak-password> [extra-helm-args...]"
   echo "  namespace          : Kubernetes namespace"
-  echo "  release-name       : Helm release name"
+  echo "  release-name       : Helm release name (e.g. commons-base)"
   echo "  base-domain        : Base domain (e.g. mysandbox.openg2p.org)"
   echo "  keycloak-url       : Full Keycloak base URL (e.g. https://keycloak.openg2p.org)"
-  echo "  keycloak-username  : Keycloak client-manager username (must have manage-clients, query-clients, view-clients roles in master realm)"
+  echo "  keycloak-username  : Keycloak client-manager username"
   echo "  keycloak-password  : Keycloak client-manager password"
   echo "  extra args         : Any additional --set or flags passed to helm install"
   echo ""
   echo "Example:"
-  echo "  $0 trial commons mysandbox.openg2p.org https://keycloak.openg2p.org client-manager@openg2p.org mypassword"
+  echo "  $0 trial commons-base mysandbox.openg2p.org https://keycloak.openg2p.org client-manager@openg2p.org mypassword"
   exit 1
 fi
 
@@ -41,7 +41,9 @@ else
 fi
 
 echo ""
-echo "=== Installing '$RELEASE' in namespace '$NAMESPACE' (domain: $BASE_DOMAIN, keycloak: $KEYCLOAK_URL) ==="
+echo "=== Installing base infrastructure '$RELEASE' in namespace '$NAMESPACE' ==="
+echo "    Domain: $BASE_DOMAIN | Keycloak: $KEYCLOAK_URL"
+echo ""
 
 helm install "$RELEASE" "$SCRIPT_DIR" \
   -n "$NAMESPACE" \
@@ -53,34 +55,44 @@ helm install "$RELEASE" "$SCRIPT_DIR" \
   "$@"
 
 echo ""
-echo "=== Helm install submitted. Waiting for resources to be ready... ==="
+echo "=== Helm install submitted. Waiting for infrastructure to be ready... ==="
 
-# Poll until all deployments are available or timeout
+# Poll until PostgreSQL and other statefulsets/deployments are ready
 TIMEOUT=900  # 15 minutes
 INTERVAL=15
 ELAPSED=0
 
 while [ $ELAPSED -lt $TIMEOUT ]; do
-  NOT_READY=$(kubectl get deployments -n "$NAMESPACE" -o json 2>/dev/null \
-    | jq -r '.items[] | select(.status.availableReplicas != .status.replicas) | .metadata.name' 2>/dev/null)
+  NOT_READY=""
+
+  # Check deployments
+  DEPLOY_NOT_READY=$(kubectl get deployments -n "$NAMESPACE" -o json 2>/dev/null \
+    | jq -r '.items[] | select(.status.availableReplicas != .status.replicas) | .metadata.name' 2>/dev/null || true)
+
+  # Check statefulsets
+  STS_NOT_READY=$(kubectl get statefulsets -n "$NAMESPACE" -o json 2>/dev/null \
+    | jq -r '.items[] | select(.status.readyReplicas != .status.replicas) | .metadata.name' 2>/dev/null || true)
+
+  NOT_READY="${DEPLOY_NOT_READY} ${STS_NOT_READY}"
+  NOT_READY=$(echo "$NOT_READY" | xargs)  # trim whitespace
 
   if [ -z "$NOT_READY" ]; then
     echo ""
-    echo "=== All deployments are ready ==="
+    echo "=== All infrastructure resources are ready ==="
     break
   fi
 
-  echo "Waiting for deployments: $(echo "$NOT_READY" | tr '\n' ' ')... (${ELAPSED}s/${TIMEOUT}s)"
+  echo "Waiting for: ${NOT_READY}... (${ELAPSED}s/${TIMEOUT}s)"
   sleep $INTERVAL
   ELAPSED=$((ELAPSED + INTERVAL))
 done
 
 if [ $ELAPSED -ge $TIMEOUT ]; then
   echo ""
-  echo "WARNING: Timed out waiting for deployments. Check status:"
+  echo "WARNING: Timed out waiting for resources. Check status:"
   kubectl get pods -n "$NAMESPACE" --field-selector=status.phase!=Running 2>/dev/null
   exit 1
 fi
 
 echo ""
-echo "=== Install complete ==="
+echo "=== Base infrastructure install complete ==="

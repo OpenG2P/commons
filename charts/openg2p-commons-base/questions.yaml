@@ -51,12 +51,6 @@ questions:
   label: Keycloak Client Manager Password
   group: Keycloak
 
-# Master data
-- variable: masterData.enabled
-  type: boolean
-  label: Enable Master Data service
-  group: Master Data
-
 # PostgreSQL
 - variable: postgresql.enabled
   description: Disable for external PostgreSQL server
@@ -91,13 +85,6 @@ questions:
   label: Mail Server Hostname
   group: Mail
 
-# ODK
-- variable: odk-central.enabled
-  description: This installs ODK Central
-  type: boolean
-  label: Install ODK Central?
-  group: ODK
-
 # Minio
 - variable: minio.enabled
   description: This installs Minio for document store.
@@ -124,68 +111,3 @@ questions:
   type: boolean
   label: Install Kafka UI?
   group: Kafka
-
-# Reporting
-- variable: reporting.enabled
-  description: This installs Reporting Framework.
-  type: boolean
-  label: Install Reporting Framework?
-  group: Reporting
-
-# Keymanager
-- variable: keymanager.enabled
-  description: This installs Keymanager.
-  type: boolean
-  label: Install Keymanager?
-  group: Keymanager
-
-- variable: keymanager.istio.enabled
-  label: Expose Keymanager APIs
-  description: >-
-    Enable this to manually download/upload certificates to Keymanager.
-    This exposes Keymanager APIs publicly outside Kubernetes.
-  type: boolean
-  group: Keymanager
-
-- variable: keymanager.keystoreType
-  label: Keystore Type
-  description: PKCS11 for HSM. PKCS12 for storing into local p12 file.
-  type: enum
-  options:
-    - PKCS11
-    - PKCS12
-  group: Keymanager
-
-- variable: keymanager.persistence.enabled
-  label: Persistence Enabled
-  description: Enable this if Keystore Type is PKCS12.
-  type: boolean
-  group: Keymanager
-
-- variable: softhsm.enabled
-  label: Install Softhsm?
-  description: Enable this if Keystore Type is PKCS11.
-  type: boolean
-  group: Keymanager
-
-# Superset
-- variable: superset.enabled
-  description: Install Superset
-  type: boolean
-  label: Install Superset?
-  group: Superset
-
-
-# eSignet
-- variable: esignet.enabled
-  description: This installs eSignet for mocking user authentication
-  type: boolean
-  label: Install eSignet?
-  group: eSignet
-
-# Mock Identity Settings
-- variable: mock-identity-system.enabled
-  description: This installs Mock Identity System. Install only when eSignet is installed
-  type: boolean
-  label: Install Mock Identity System?
-  group: eSignet

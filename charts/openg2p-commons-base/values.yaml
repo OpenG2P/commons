@@ -15,10 +15,10 @@ keycloak-init:
   enabled: true
   keycloak:
     # NOTE: keycloak-init subchart does not support tpl on this value.
-    # Must be set explicitly via --set or install.sh.
+    # Must be set explicitly via --set or install-base.sh.
     url: ''
     user: ''
-    # Password can be passed directly (used by install.sh to create the secret).
+    # Password can be passed directly (used by install-base.sh to create the secret).
     # If empty, the chart expects the existingSecret to already exist.
     password: ''
     realm: master
@@ -92,16 +92,8 @@ postgresql:
 
 postgres-init:
   enabled: true
-  job:
-    annotations:
-      "helm.sh/hook": post-install,post-upgrade
-      "helm.sh/hook-weight": "0"
-      "helm.sh/hook-delete-policy": before-hook-creation
-  serviceAccount:
-    annotations:
-      "helm.sh/hook": post-install,post-upgrade
-      "helm.sh/hook-weight": "0"
-      "helm.sh/hook-delete-policy": before-hook-creation
+  # NO hook annotations — runs as a regular Job.
+  # postgres-init has built-in pg_isready loops to wait for PostgreSQL.
   postgresql:
     host: '{{ tpl .Values.global.postgresqlHost $ }}'
     port: 5432
@@ -135,83 +127,9 @@ postgres-init:
       secret: esignet-db-user
       secretUserPasswordKey: esignet-db-user-password
 
-masterData:
-  enabled: true
-  global:
-    masterDataHostname: 'master-data.{{ .Values.global.baseDomain }}'
-  postgres-init:
-    serviceAccount:
-      # Use a unique name to avoid collision with the main postgres-init ServiceAccount.
-      # Both subcharts produce the same default name (commons-postgres-init).
-      name: master-data-postgres-init
-      annotations:
-        "helm.sh/hook": post-install,post-upgrade
-        "helm.sh/hook-weight": "0"
-        "helm.sh/hook-delete-policy": before-hook-creation
-    job:
-      annotations:
-        "helm.sh/hook": post-install,post-upgrade
-        "helm.sh/hook-weight": "0"
-        "helm.sh/hook-delete-policy": before-hook-creation
 mail:
   enabled: false
   mailname: admin@openg2p.sandbox.org
-
-odk-central:
-  enabled: true
-  hostname: 'odk.{{ .Values.global.baseDomain }}'
-
-  postgresqlInstallationName: '{{ tpl .Values.global.postgresqlHost $ }}'
-  mailInstallationName: '{{ .Release.Name }}-mail'
-
-  # Default
-  oidcClientId: 'openg2p-odk-{{ .Release.Namespace }}'
-  # Name of the secret in Kuberentes containing (DO NOT password directly here)
-  # Same name as client id by convention.
-  oidcClientSecret: '{{ tpl .Values.oidcClientId $ }}'
-  # Key containing client password. Hardcoded in Keycloak Init script
-  oidcClientSecretKey: 'client_secret'
-
-  s3BlobsEnabled: true
-  s3ServerUrl: 'http://{{ tpl .Values.global.minioInstallationName $ }}:3000'
-
-  odk-central-enketo:
-    enabled: true
-    envVars:
-      # Here we pointing to the same redis instance for both. This redis does not have
-      # persistence. This is ok since we use the online form feature for testing and
-      # not full fledged used in production. ODK is mostly used in offline mode.
-      REDIS_MAIN_HOST: '{{ tpl .Values.global.redisInstallationName $ }}-master'
-      REDIS_CACHE_HOST: '{{ tpl .Values.global.redisInstallationName $ }}-master'
-
-  backend:
-    initContainers:
-    - name: wait-for-minio
-      image: busybox:1.36
-      imagePullPolicy: IfNotPresent
-      command:
-        - sh
-        - -c
-        - |
-          until nc -zv {{ tpl .Values.global.minioInstallationName $ }} 9000; do
-            echo "Waiting for MinIO..."
-            sleep 2
-          done
-    envVars:
-      OIDC_ENABLED: true
-      OIDC_ISSUER_URL: '{{ tpl .Values.global.keycloakIssuerUrl $ }}'
-      OIDC_CLIENT_ID: '{{ tpl .Values.oidcClientId $ }}'
-
-    envVarsFrom:
-      DB_PASSWORD:
-        secretKeyRef:
-          # MUST MATCH one defined under postgres-init
-          name: odk-db-user
-          key: odk-db-user-password
-      OIDC_CLIENT_SECRET:
-        secretKeyRef:
-          name: '{{ tpl .Values.oidcClientSecret $ }}'
-          key: '{{ tpl .Values.oidcClientSecretKey $ }}'
 
 # Redis without auth enabled.
 redis:
@@ -326,8 +244,6 @@ opensearch:
 
   data:
     replicaCount: 0
-    # persistence:
-    #   size: 8Gi
 
   coordinating:
     replicaCount: 0
@@ -742,316 +658,8 @@ kafkaUi:
         mode: SIMPLE
         credentialName: ""
 
-reporting:
-  enabled: false
-  debezium:
-    enabled: true
-  opensearch-kafka-connector:
-    enabled: true
-
-artifactory:
-  enabled: true
-  image:
-    repository: mosipid/artifactory-server
-    tag: 1.4.1-ES
-  resources: {}
-
 softhsm:
   enabled: true
   # Hardcoding this for now. else every upgrade will reset the pin
   securityPIN: MTYwMzIyMjg=
   resources: {}
-
-keymanager:
-  enabled: true
-  hostname: 'keymanager.{{ .Values.global.baseDomain }}'
-  # Disabling for now. TODO - understand the implications
-  authEnabled: false
-  # For country deployments we may for file based keystore instead of SoftHSM
-  keystoreType: PKCS12
-  p12KeystorePass: ''
-  # Postgres Init is important
-  skipPostgresInitCheck: false
-  # Keymanager should come up even if Keygen has not run. The idea is to have keygen run by individuals
-  skipKeygenCheck: true
-  postgresqlInstallationName: '{{ tpl .Values.global.postgresqlHost $ }}'
-  istio:
-    enabled: false
-  springConfig:
-    names: application,kernel
-    profile: default
-    gitRepo:
-      enabled: true
-      repoUrl: https://github.com/openg2p/mosip-config
-      # This branch has user name as per our conventions here
-      branch: master
-    rawConfig: ""
-  envVars:
-    JDK_JAVA_OPTIONS: "-XX:-UseContainerSupport -Dspring.jmx.enabled=false -Dcom.sun.management.jmxremote=false"
-    auth_server_admin_allowed_audience: 'openg2p-registry,openg2p-registry-{{ .Release.Namespace }},openg2p-pbms,openg2p-pbms-{{ .Release.Namespace }},openg2p-spar,openg2p-spar-{{ .Release.Namespace }},openg2p-g2p-bridge,openg2p-g2p-bridge-{{ .Release.Namespace }}'
-  envVarsFrom:
-    db_dbuser_password:
-      secretKeyRef:
-        name: keymgr-db-user
-        key: keymgr-db-user-password
-  postgresInit:
-    enabled: true
-    #forceRun: true
-    commonAnnotations:
-      "helm.sh/hook": post-install,post-upgrade
-      "helm.sh/hook-weight": "2"
-      "helm.sh/hook-delete-policy": before-hook-creation
-    envVars:
-      DB_USER: keymgruser
-    envVarsFrom:
-      DBUSER_PWD:
-        # Must be same as above
-        secretKeyRef:
-          name: keymgr-db-user
-          key: keymgr-db-user-password
-  keygen:
-    enabled: true
-    appIdsList:
-      - OPENG2P_SR
-      - OPENG2P_SR_NID
-      - OPENG2P_SPAR
-      - OPENG2P_SPAR_NID
-      - OPENG2P_PBMS
-      - OPENG2P_PBMS_NID
-
-    baseKeysList:
-      - OPENG2P_SR:ENCRYPT
-      - OPENG2P_SR_NID:ENCRYPT
-      - OPENG2P_SPAR:ENCRYPT
-      - OPENG2P_SPAR_NID:ENCRYPT
-      - OPENG2P_PBMS:ENCRYPT
-      - OPENG2P_PBMS_NID:ENCRYPT
-
-    envVars:
-      JDK_JAVA_OPTIONS: "-XX:-UseContainerSupport -Dspring.jmx.enabled=false -Dcom.sun.management.jmxremote=false"
-
-  persistence:
-    enabled: true
-
-superset:
-  enabled: true
-  hostname: 'superset.{{ .Values.global.baseDomain }}'
-
-  oidcIssuerUrl: '{{ tpl .Values.global.keycloakIssuerUrl $ }}'
-  # Default name
-  oidcClientId: 'openg2p-superset-{{ .Release.Namespace }}'
-
-  supersetSecretKey: ''
-
-  # envFromSecrets supports tpl (unlike extraEnvRaw), so we can use dynamic names.
-  # All keys from these secrets are loaded as env vars.
-  envFromSecrets:
-    - 'openg2p-superset-{{ .Release.Namespace }}'
-
-  extraEnvRaw:
-  - name: DB_PASS
-    valueFrom:
-      secretKeyRef:
-        name: superset-db-user
-        key: superset-db-user-password
-
-  init:
-    createAdmin: false
-    jobAnnotations:
-      "helm.sh/hook": post-install,post-upgrade
-      "helm.sh/hook-weight": "5"
-      "helm.sh/hook-delete-policy": before-hook-creation
-
-  # Tell Superset chart not to install Postgresql
-  postgresql:
-    enabled: false
-
-  # Since we have a common Redis, we tell Superset chart not to install Redis
-  redis:
-    enabled: false
-
-  supersetNode:
-    connections:
-      redis_host: '{{ tpl .Values.global.redisInstallationName $ }}-master'
-      db_host: '{{ tpl .Values.global.postgresqlHost $ }}'
-      # db_pass intentionally empty — the real password comes from extraEnvRaw
-      # (secret superset-db-user created by postgres-init). This prevents the
-      # commons-superset-env secret from containing a stale/wrong DB_PASS.
-      db_pass: ''
-
-  bootstrapScript: |
-    #!/bin/bash
-    pip install authlib==1.3.0
-
-  configOverrides:
-    enable_oauth: |
-      import os
-      SECRET_KEY = '{{ tpl .Values.supersetSecretKey $ }}' or 'OPENG2P_SUPER_SECRET_KEY'
-
-      # This will make sure the redirect_uri is properly computed, even with SSL offloading
-      ENABLE_PROXY_FIX = True
-
-      from flask_appbuilder.security.manager import AUTH_OAUTH
-      AUTH_TYPE = AUTH_OAUTH
-      OAUTH_PROVIDERS = [
-        {
-          "name": "keycloak",
-          "icon": "fa-key",
-          "token_key": "access_token",
-          "remote_app": {
-            "client_id": "{{ tpl .Values.oidcClientId $ }}",
-            "client_secret": os.getenv("client_secret"),
-            "api_base_url": "{{ tpl .Values.oidcIssuerUrl $ }}/protocol/openid-connect",
-            "client_kwargs": {"scope": "email profile openid"},
-            "access_token_url": "{{ tpl .Values.oidcIssuerUrl $ }}/protocol/openid-connect/token",
-            "jwks_uri": "{{ tpl .Values.oidcIssuerUrl $ }}/protocol/openid-connect/certs",
-            "authorize_url": "{{ tpl .Values.oidcIssuerUrl $ }}/protocol/openid-connect/auth",
-            "request_token_url": None
-          },
-        }
-      ]
-
-      # Map Authlib roles to superset roles
-      AUTH_ROLES_MAPPING = {
-        "Public": ["Public"],
-        "Admin": ["Admin"],
-      }
-
-      AUTH_ROLES_SYNC_AT_LOGIN = True
-
-      # Will allow user self registration, allowing to create Flask users from Authorized User
-      AUTH_USER_REGISTRATION = True
-
-      # The default user self registration role
-      # AUTH_USER_REGISTRATION_ROLE = "Public"
-
-      from superset.security import SupersetSecurityManager
-      class CustomSsoSecurityManager(SupersetSecurityManager):
-        def oauth_user_info(self, provider, response=None):
-          if provider == "keycloak":
-            me = self.appbuilder.sm.oauth_remotes[provider].get(
-              "openid-connect/userinfo"
-            )
-            me.raise_for_status()
-            data = me.json()
-            return {
-              "username": data.get("preferred_username", ""),
-              "first_name": data.get("given_name", ""),
-              "last_name": data.get("family_name", ""),
-              "email": data.get("email", ""),
-              "role_keys": data.get("client_roles", []),
-            }
-          return {}
-
-      CUSTOM_SECURITY_MANAGER = CustomSsoSecurityManager
-      SESSION_COOKIE_HTTPONLY = True
-      SESSION_COOKIE_SECURE = True
-      SESSION_COOKIE_SAMESITE = None
-      TALISMAN_ENABLED = False
-
-  istio:
-    enabled: true
-    virtualservice:
-      enabled: true
-      host: ""
-      gateway: "internal"
-      destination: '{{ include "superset.fullname" . }}'
-      destinationPort: '{{ .Values.service.port }}'
-    gateway:
-      enabled: false
-      host: ""
-      ingressController:
-        istio: ingressgateway
-      httpTlsRedirect: true
-      httpEnabled: true
-      httpsEnabled: false
-      tls:
-        mode: SIMPLE
-        credentialName: ""
-
-esignet:
-  enabled: true
-  hostname: 'esignet.{{ .Values.global.baseDomain }}'
-
-  captchaEnabled: false
-
-  envVars:
-    esignet_captcha_site_key: ''
-    esignet_captcha_secret_key: ''
-    JDK_JAVA_OPTIONS: "-XX:-UseContainerSupport -Dspring.jmx.enabled=false"
-  # TODO: read from a common variable in global.
-  artifactoryInstallationName: '{{ .Release.Name }}-artifactory'
-  # Note Redis Auth used here
-  redisInstallationName: '{{ tpl .Values.global.redisAuthInstallationName $ }}'
-  kafkaInstallationName: '{{ .Release.Name }}-kafka'
-  mockIdentitySystemInstallationName: '{{ .Release.Name }}-mock-identity-system'
-  softhsmInstallationName: '{{ .Release.Name }}-softhsm'
-  postgresqlInstallationName: '{{ tpl .Values.global.postgresqlHost $ }}'
-
-  envVarsFrom:
-    db_dbuser_password:
-      secretKeyRef:
-        # Must match postgres-init
-        name: esignet-db-user
-        key: esignet-db-user-password
-    spring_redis_password:
-      secretKeyRef:
-        name: '{{ tpl .Values.redisInstallationName $ }}'
-        # In our common Redis, auth is disabled, so we have created this manaully with random password
-        key: redis-password
-
-  postgresInit:
-    commonAnnotations:
-      "helm.sh/hook": post-install,post-upgrade
-      "helm.sh/hook-weight": "2"
-      "helm.sh/hook-delete-policy": before-hook-creation
-    envVarsFrom:
-      DBUSER_PWD:
-        secretKeyRef:
-          name: esignet-db-user
-          key: esignet-db-user-password
-
-  springConfig:
-    names: application,esignet
-    profile: default
-    gitRepo:
-      enabled: true
-      repoUrl: https://github.com/openg2p/mosip-config
-      branch: master
-    rawConfig: ""
-
-mock-identity-system:
-  enabled: true
-  hostname: 'esignet.{{ .Values.global.baseDomain }}'
-
-  envVars:
-    JDK_JAVA_OPTIONS: "-XX:-UseContainerSupport -Dspring.jmx.enabled=false"
-
-  envVarsFrom:
-    db_dbuser_password:
-      # MUST MATCH what is specified in postgres-init
-      secretKeyRef:
-        name: mockid-db-user
-        key: mockid-db-user-password
-
-  postgresqlInstallationName: '{{ tpl .Values.global.postgresqlHost $ }}'
-  postgresInit:
-    commonAnnotations:
-      "helm.sh/hook": post-install,post-upgrade
-      "helm.sh/hook-weight": "2"
-      "helm.sh/hook-delete-policy": before-hook-creation
-    envVarsFrom:
-      DBUSER_PWD:
-        # Same as above
-        secretKeyRef:
-          name: mockid-db-user
-          key: mockid-db-user-password
-
-  springConfig:
-    names: application,mock-identity-system
-    profile: default
-    gitRepo:
-      enabled: true
-      repoUrl: https://github.com/openg2p/mosip-config
-      branch: master
-    rawConfig: ""

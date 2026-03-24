@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Cleanly uninstall openg2p-commons: chart, hooks, secrets, PVCs, and released PVs.
+# Cleanly uninstall openg2p-commons-base: chart, hooks, secrets, PVCs, and released PVs.
 set -euo pipefail
 
 if [ $# -lt 2 ]; then
@@ -12,10 +12,9 @@ if [ $# -lt 2 ]; then
   echo "    - ALL Secrets in the namespace (including Keycloak client secrets)"
   echo "    - ALL PVCs in the namespace"
   echo "    - ALL PVs that were bound to those PVCs"
-  echo "    - All orphaned hook Jobs and ServiceAccounts"
+  echo "    - All orphaned Jobs and ServiceAccounts"
   echo ""
-  echo "  This action is IRREVERSIBLE. Keycloak client secrets will need to be"
-  echo "  re-synced from the Keycloak server on the next install."
+  echo "  This action is IRREVERSIBLE."
   exit 1
 fi
 
@@ -26,8 +25,8 @@ echo ""
 echo "╔══════════════════════════════════════════════════════════════════╗"
 echo "║  WARNING: DESTRUCTIVE OPERATION                                ║"
 echo "║                                                                ║"
-echo "║  This will PERMANENTLY DELETE all resources in namespace       ║"
-echo "║  '$NAMESPACE' including:                                       "
+echo "║  This will PERMANENTLY DELETE all base infrastructure in       ║"
+echo "║  namespace '$NAMESPACE' including:                             "
 echo "║    - Helm release '$RELEASE'                                   "
 echo "║    - ALL Secrets (including Keycloak client secrets)           ║"
 echo "║    - ALL PVCs and their associated PVs                        ║"
@@ -42,7 +41,7 @@ if [ "$CONFIRM" != "yes" ]; then
 fi
 
 echo ""
-echo "=== Uninstalling release '$RELEASE' from namespace '$NAMESPACE' ==="
+echo "=== Uninstalling base release '$RELEASE' from namespace '$NAMESPACE' ==="
 
 # 1. Uninstall the Helm release
 echo ""
@@ -54,47 +53,35 @@ else
   echo "Helm release '$RELEASE' not found. Skipping."
 fi
 
-# 2. Delete orphaned hook resources (Jobs, ServiceAccounts) left behind by Helm hooks
+# 2. Delete orphaned Jobs left behind
 echo ""
-echo "--- Cleaning up hook Jobs and ServiceAccounts ---"
-kubectl delete jobs -n "$NAMESPACE" -l app.kubernetes.io/managed-by=Helm --ignore-not-found
-# Also delete known hook jobs/SAs that may not have labels
+echo "--- Cleaning up Jobs and ServiceAccounts ---"
 HOOK_RESOURCES=(
   "${RELEASE}-postgres-init"
-  "${RELEASE}-esignet-postgres-init"
-  "${RELEASE}-mock-identity-system-postgres-init"
-  "${RELEASE}-keymanager-postgres-init"
-  "${RELEASE}-keymanager-keygen"
-  "${RELEASE}-master-data-postgres-init"
-  "master-data-postgres-init"
   "${RELEASE}-keycloak-init"
+  "${RELEASE}-client-secrets-sync"
 )
 for name in "${HOOK_RESOURCES[@]}"; do
   kubectl delete job "$name" -n "$NAMESPACE" --ignore-not-found 2>/dev/null
   kubectl delete serviceaccount "$name" -n "$NAMESPACE" --ignore-not-found 2>/dev/null
   kubectl delete configmap "$name" -n "$NAMESPACE" --ignore-not-found 2>/dev/null
 done
-# keycloak-init jobs include revision number in name (e.g. commons-keycloak-init-1)
+# keycloak-init jobs include revision number
 kubectl delete jobs -n "$NAMESPACE" -l app.kubernetes.io/name=keycloak-init --ignore-not-found 2>/dev/null
-# Superset init-db job and client-secrets-sync jobs
-kubectl delete jobs -n "$NAMESPACE" "${RELEASE}-superset-init-db" --ignore-not-found 2>/dev/null
-kubectl delete jobs -n "$NAMESPACE" -l job-name="${RELEASE}-client-secrets-sync" --ignore-not-found 2>/dev/null
 # Catch-all: delete ALL remaining jobs in the namespace
 kubectl delete jobs -n "$NAMESPACE" --all --ignore-not-found 2>/dev/null
-# Clean up hook ConfigMaps, ServiceAccounts, Roles, RoleBindings
-kubectl delete configmap "${RELEASE}-client-secrets-sync" -n "$NAMESPACE" --ignore-not-found 2>/dev/null
-kubectl delete serviceaccount "${RELEASE}-client-secrets-sync" -n "$NAMESPACE" --ignore-not-found 2>/dev/null
+# Clean up RBAC resources
 kubectl delete rolebinding "${RELEASE}-client-secrets-sync" -n "$NAMESPACE" --ignore-not-found 2>/dev/null
 kubectl delete role "${RELEASE}-client-secrets-sync" -n "$NAMESPACE" --ignore-not-found 2>/dev/null
-echo "Hook resources cleaned up."
+echo "Orphaned resources cleaned up."
 
-# 3. Delete ALL Secrets in the namespace (including Keycloak client secrets)
+# 3. Delete ALL Secrets in the namespace
 echo ""
 echo "--- Deleting ALL Secrets in namespace '$NAMESPACE' ---"
 kubectl delete secrets -n "$NAMESPACE" --all --ignore-not-found
 echo "All secrets deleted."
 
-# 4. Delete all PVCs in the namespace, and collect bound PV names first
+# 4. Delete all PVCs in the namespace
 echo ""
 echo "--- Deleting PVCs in namespace '$NAMESPACE' ---"
 PV_NAMES=$(kubectl get pvc -n "$NAMESPACE" -o jsonpath='{.items[*].spec.volumeName}' 2>/dev/null || true)
@@ -105,7 +92,6 @@ echo "PVCs deleted."
 echo ""
 echo "--- Cleaning up PVs ---"
 if [ -n "$PV_NAMES" ]; then
-  # Wait for PV status to update after PVC deletion
   sleep 5
   for pv in $PV_NAMES; do
     PV_STATUS=$(kubectl get pv "$pv" -o jsonpath='{.status.phase}' 2>/dev/null || true)
@@ -121,4 +107,4 @@ else
 fi
 
 echo ""
-echo "=== Uninstall complete ==="
+echo "=== Base infrastructure uninstall complete ==="
