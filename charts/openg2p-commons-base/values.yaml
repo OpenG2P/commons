@@ -1,7 +1,11 @@
 global:
   baseDomain: qa.openg2p.org
   keycloakBaseUrl: https://keycloak.openg2p.org
-  keycloakIssuerUrl: '{{ tpl .Values.global.keycloakBaseUrl $ }}/realms/master'
+  # Internal URL for pod-to-Keycloak communication (HTTP, no TLS).
+  # Set to http://keycloak.keycloak-system.svc.cluster.local for local/self-signed setups.
+  # Leave empty to use keycloakBaseUrl (works when pods can reach the external HTTPS URL).
+  keycloakInternalUrl: ""
+  keycloakIssuerUrl: '{{ (tpl (.Values.global.keycloakInternalUrl | default .Values.global.keycloakBaseUrl) $) }}/realms/master'
 
   postgresqlHost: '{{ .Release.Name }}-postgresql'
   mailInstallationName: '{{ .Release.Name }}-mail'
