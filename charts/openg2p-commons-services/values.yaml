@@ -412,3 +412,22 @@ mock-identity-system:
       repoUrl: https://github.com/openg2p/mosip-config
       branch: master
     rawConfig: ""
+
+openg2p-iam-service:
+  enabled: true
+  global:
+    iamHostname: 'iam.{{ .Values.global.baseDomain }}'
+    postgresqlHost: '{{ tpl .Values.global.postgresqlHost $ }}'
+    keycloakBaseUrl: '{{ tpl .Values.global.keycloakBaseUrl $ }}'
+    keycloakIssuerUrl: '{{ tpl .Values.global.keycloakIssuerUrl $ }}'
+  postgres-init:
+    enabled: true
+    commonAnnotations:
+      "helm.sh/hook": null
+      "helm.sh/hook-weight": null
+      "helm.sh/hook-delete-policy": null
+    postgresql:
+      host: '{{ tpl .Values.global.postgresqlHost $ }}'
+      port: 5432
+      existingSecret: commons-postgresql
+      existingSecretPostgresPasswordKey: postgres-password
