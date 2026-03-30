@@ -25,8 +25,7 @@ global:
 keycloak-init:
   enabled: true
   keycloak:
-    # NOTE: keycloak-init subchart does not support tpl on this value.
-    # Must be set explicitly via --set or install-base.sh.
+    # Falls back to global.keycloakBaseUrl if empty.
     url: ''
     user: ''
     # Password can be passed directly (used by install-base.sh to create the secret).
