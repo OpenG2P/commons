@@ -17,8 +17,6 @@ spec:
           env:
             - name: KEYCLOAK_URL
               value: {{ tpl (index .Values "keycloak-init" "keycloak" "url") . | quote }}
-            - name: KEYCLOAK_REALM
-              value: {{ index .Values "keycloak-init" "keycloak" "realm" | quote }}
             - name: KEYCLOAK_USER
               value: {{ index .Values "keycloak-init" "keycloak" "user" | quote }}
             - name: KEYCLOAK_PASSWORD

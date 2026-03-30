@@ -1,16 +1,18 @@
 global:
-  baseDomain: qa.openg2p.org
-  keycloakBaseUrl: https://keycloak.openg2p.org
+  baseDomain: trial.openg2p.org
+  keycloakBaseUrl: https://keycloak2.openg2p.org
   # Internal URL for pod-to-Keycloak communication (HTTP, no TLS).
   # Set to http://keycloak.keycloak-system.svc.cluster.local for local/self-signed setups.
   # Leave empty to use keycloakBaseUrl (works when pods can reach the external HTTPS URL).
   keycloakInternalUrl: ""
+  # Keycloak realm where OIDC clients live (staff-<namespace>).
+  keycloakRealm: 'staff-{{ .Release.Namespace }}'
   # Internal issuer URL — used by backend pods for OIDC discovery, JWK fetching, token validation.
   # Uses keycloakInternalUrl (HTTP) when set, otherwise falls back to keycloakBaseUrl (HTTPS).
-  keycloakIssuerUrl: '{{ (tpl (.Values.global.keycloakInternalUrl | default .Values.global.keycloakBaseUrl) $) }}/realms/master'
+  keycloakIssuerUrl: '{{ (tpl (.Values.global.keycloakInternalUrl | default .Values.global.keycloakBaseUrl) $) }}/realms/{{ tpl .Values.global.keycloakRealm $ }}'
   # External issuer URL — used for browser-facing OAuth redirects (authorize endpoint, login redirects).
   # Always uses keycloakBaseUrl so the browser can reach it.
-  keycloakExternalIssuerUrl: '{{ tpl .Values.global.keycloakBaseUrl $ }}/realms/master'
+  keycloakExternalIssuerUrl: '{{ tpl .Values.global.keycloakBaseUrl $ }}/realms/{{ tpl .Values.global.keycloakRealm $ }}'
 
   postgresqlHost: '{{ .Release.Name }}-postgresql'
   mailInstallationName: '{{ .Release.Name }}-mail'
@@ -30,33 +32,37 @@ keycloak-init:
     # Password can be passed directly (used by install-base.sh to create the secret).
     # If empty, the chart expects the existingSecret to already exist.
     password: ''
-    realm: master
     existingSecret: keycloak-client-manager
     existingSecretKey: keycloak-client-manager-password
   job:
     backoffLimit: 3
     ttlSecondsAfterFinished: 600
+  # Suffix appended to realm names (e.g. staff -> staff-qa).
+  suffix: '{{ .Release.Namespace }}'
   # Only commons-related clients. Other module clients are added by their own charts.
-  clients:
-    - clientId: 'openg2p-superset-{{ .suffix }}'
-      name: 'Superset {{ .suffix }}'
-      redirectUris: ["*"]
-      clientRoles: ["Admin"]
-    - clientId: 'openg2p-opensearch-{{ .suffix }}'
-      name: 'OpenSearch {{ .suffix }}'
-      redirectUris: ["*"]
-      clientRoles: ["admin"]
-    - clientId: 'openg2p-kafka-{{ .suffix }}'
-      name: 'Kafka {{ .suffix }}'
-      redirectUris: ["*"]
-      clientRoles: ["Admin"]
-    - clientId: 'openg2p-minio-{{ .suffix }}'
-      name: 'MinIO {{ .suffix }}'
-      redirectUris: ["*"]
-      clientRoles: ["consoleAdmin"]
-    - clientId: 'openg2p-odk-{{ .suffix }}'
-      name: 'ODK {{ .suffix }}'
-      redirectUris: ["*"]
+  # Clients are created without namespace suffix; realm names carry the suffix.
+  realms:
+    staff-{{ .suffix }}:
+      clients:
+        - clientId: openg2p-superset
+          name: Superset
+          redirectUris: ["*"]
+          clientRoles: ["Admin"]
+        - clientId: openg2p-opensearch
+          name: OpenSearch
+          redirectUris: ["*"]
+          clientRoles: ["admin"]
+        - clientId: openg2p-kafka
+          name: Kafka
+          redirectUris: ["*"]
+          clientRoles: ["Admin"]
+        - clientId: openg2p-minio
+          name: MinIO
+          redirectUris: ["*"]
+          clientRoles: ["consoleAdmin"]
+        - clientId: openg2p-odk
+          name: ODK
+          redirectUris: ["*"]
 
 postgresql:
   enabled: true
@@ -181,9 +187,9 @@ minio:
     size: 16Gi
 
   oidcWellKnownConfigUrl: '{{ tpl .Values.global.keycloakIssuerUrl $ }}/.well-known/openid-configuration'
-  # Default
-  oidcClientId: 'openg2p-minio-{{ .Release.Namespace }}'
-  # Name of the secret in Kuberentes containing (DO NOT password directly here)
+  # Default — no namespace suffix; matches keycloak-init client name
+  oidcClientId: openg2p-minio
+  # Name of the secret in Kubernetes containing (DO NOT put password directly here)
   # Same name as client id by convention.
   oidcClientSecret: '{{ tpl .Values.oidcClientId $ }}'
   # Key containing client password. Hardcoded in Keycloak Init script
@@ -235,9 +241,9 @@ opensearch:
   hostname: 'opensearch.{{ .Values.global.baseDomain }}'
 
   oidcWellKnownConfigUrl: '{{ tpl .Values.global.keycloakIssuerUrl $ }}/.well-known/openid-configuration'
-  # Default
-  oidcClientId: 'openg2p-opensearch-{{ .Release.Namespace }}'
-  # Name of the secret in Kuberentes containing (DO NOT password directly here)
+  # Default — no namespace suffix; matches keycloak-init client name
+  oidcClientId: openg2p-opensearch
+  # Name of the secret in Kubernetes containing (DO NOT put password directly here)
   # Same name as client id by convention.
   oidcClientSecret: '{{ tpl .Values.oidcClientId $ }}'
   # Key containing client password. Hardcoded in Keycloak Init script
@@ -467,8 +473,8 @@ kafkaUi:
   opensearchKafkaConnectorAddress: '{{ .Release.Name }}-reporting-os-kafka-connector'
 
   oidcIssuerUrl: '{{ tpl .Values.global.keycloakIssuerUrl $ }}'
-  # Default name
-  oidcClientId: 'openg2p-kafka-{{ .Release.Namespace }}'
+  # Default — no namespace suffix; matches keycloak-init client name
+  oidcClientId: openg2p-kafka
   # Name of the secret in Kubernetes containing (DO NOT put password directly here)
   # Same name as client id by convention.
   oidcClientSecret: '{{ tpl .Values.kafkaUi.oidcClientId $ }}'

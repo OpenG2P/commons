@@ -10,7 +10,6 @@ data:
     set -e
 
     KEYCLOAK_URL="${KEYCLOAK_URL}"
-    KEYCLOAK_REALM="${KEYCLOAK_REALM}"
     KEYCLOAK_USER="${KEYCLOAK_USER}"
     KEYCLOAK_PASSWORD="${KEYCLOAK_PASSWORD}"
     NAMESPACE="${NAMESPACE}"
@@ -28,16 +27,17 @@ data:
         -d "grant_type=password" | jq -r '.access_token'
     }
 
-    # Fetch client secret from Keycloak
+    # Fetch client secret from Keycloak for a given realm
     get_client_secret() {
-      local client_id="$1"
-      local token="$2"
+      local realm="$1"
+      local client_id="$2"
+      local token="$3"
 
       # Find client UUID by clientId
       local client_uuid
       client_uuid=$(curl -sfk \
         -H "Authorization: Bearer ${token}" \
-        "${KEYCLOAK_URL}/admin/realms/${KEYCLOAK_REALM}/clients?clientId=${client_id}" \
+        "${KEYCLOAK_URL}/admin/realms/${realm}/clients?clientId=${client_id}" \
         | jq -r '.[0].id // empty')
 
       if [ -z "$client_uuid" ]; then
@@ -47,7 +47,7 @@ data:
       # Get client secret
       curl -sfk \
         -H "Authorization: Bearer ${token}" \
-        "${KEYCLOAK_URL}/admin/realms/${KEYCLOAK_REALM}/clients/${client_uuid}/client-secret" \
+        "${KEYCLOAK_URL}/admin/realms/${realm}/clients/${client_uuid}/client-secret" \
         | jq -r '.value // empty'
     }
 
@@ -101,13 +101,16 @@ data:
 
     echo "Syncing client secrets from Keycloak to namespace ${NAMESPACE}..."
     ERRORS=0
-    {{- range (index .Values "keycloak-init" "clients") }}
-    CLIENT_ID="{{ tpl .clientId (dict "suffix" $suffix) }}"
-    echo "Processing ${CLIENT_ID}..."
+    {{- range $realmName, $realmCfg := (index .Values "keycloak-init" "realms") }}
+    {{- $resolvedRealm := tpl $realmName (dict "suffix" $suffix) }}
+    {{- range $realmCfg.clients }}
+    REALM="{{ $resolvedRealm }}"
+    CLIENT_ID="{{ .clientId }}"
+    echo "Processing ${CLIENT_ID} in realm ${REALM}..."
     # Retry fetching client secret (keycloak-init may still be creating clients)
     SECRET_VALUE=""
     for attempt in $(seq 1 20); do
-      SECRET_VALUE=$(get_client_secret "${CLIENT_ID}" "${TOKEN}") && [ -n "$SECRET_VALUE" ] && break
+      SECRET_VALUE=$(get_client_secret "${REALM}" "${CLIENT_ID}" "${TOKEN}") && [ -n "$SECRET_VALUE" ] && break
       echo "  Client ${CLIENT_ID} not ready yet (attempt ${attempt}/20). Waiting..."
       sleep 10
       # Refresh token every 5 attempts
@@ -121,6 +124,7 @@ data:
       echo "WARN: Could not fetch secret for ${CLIENT_ID} after retries. Skipping."
       ERRORS=$((ERRORS+1))
     fi
+    {{- end }}
     {{- end }}
 
     if [ $ERRORS -gt 0 ]; then
