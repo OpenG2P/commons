@@ -1,10 +1,10 @@
 global:
   baseDomain: qa.openg2p.org
-  keycloakBaseUrl: https://keycloak.openg2p.org
-  # Internal URL for pod-to-Keycloak communication (HTTP, no TLS).
-  # Set to http://keycloak.keycloak-system.svc.cluster.local for local/self-signed setups.
-  # Leave empty to use keycloakBaseUrl (works when pods can reach the external HTTPS URL).
-  keycloakInternalUrl: ""
+  # Derived from baseDomain. Override only when using an external Keycloak.
+  keycloakBaseUrl: 'https://keycloak.{{ .Values.global.baseDomain }}'
+  # Internal (in-cluster) URL for pod-to-Keycloak communication (HTTP, no TLS).
+  # Defaults assume base release name is 'commons'.
+  keycloakInternalUrl: 'http://commons-keycloak:80'
   # Internal issuer URL — used by backend pods for OIDC discovery, JWK fetching, token validation.
   keycloakRealm: 'staff-{{ .Release.Namespace }}'
   keycloakIssuerUrl: '{{ (tpl (.Values.global.keycloakInternalUrl | default .Values.global.keycloakBaseUrl) $) }}/realms/{{ tpl .Values.global.keycloakRealm $ }}'
@@ -137,6 +137,8 @@ keymanager:
   envVars:
     JDK_JAVA_OPTIONS: "-XX:-UseContainerSupport -Dspring.jmx.enabled=false -Dcom.sun.management.jmxremote=false"
     auth_server_admin_allowed_audience: 'openg2p-registry,openg2p-registry-{{ .Release.Namespace }},openg2p-pbms,openg2p-pbms-{{ .Release.Namespace }},openg2p-spar,openg2p-spar-{{ .Release.Namespace }},openg2p-g2p-bridge,openg2p-g2p-bridge-{{ .Release.Namespace }}'
+    keycloak_internal_url: '{{ tpl .Values.global.keycloakInternalUrl $ }}'
+    keycloak_external_url: '{{ tpl .Values.global.keycloakBaseUrl $ }}'
   envVarsFrom:
     db_dbuser_password:
       secretKeyRef:
@@ -331,7 +333,8 @@ esignet:
     esignet_captcha_site_key: ''
     esignet_captcha_secret_key: ''
     JDK_JAVA_OPTIONS: "-XX:-UseContainerSupport -Dspring.jmx.enabled=false"
-  # TODO: read from a common variable in global.
+    keycloak_internal_url: '{{ tpl .Values.global.keycloakInternalUrl $ }}'
+    keycloak_external_url: '{{ tpl .Values.global.keycloakBaseUrl $ }}'
   artifactoryInstallationName: '{{ .Release.Name }}-artifactory'
   # Note Redis Auth used here
   redisInstallationName: '{{ tpl .Values.global.redisAuthInstallationName $ }}'
@@ -418,8 +421,10 @@ openg2p-iam-service:
   global:
     iamHostname: 'iam.{{ .Values.global.baseDomain }}'
     postgresqlHost: '{{ tpl .Values.global.postgresqlHost $ }}'
-    keycloakBaseUrl: '{{ tpl .Values.global.keycloakBaseUrl $ }}'
-    keycloakIssuerUrl: '{{ tpl .Values.global.keycloakIssuerUrl $ }}'
+    # NOTE: These must be plain strings — the iam-service subchart does not tpl them.
+    # Override via --set or install.sh for the correct domain.
+    keycloakBaseUrl: 'https://keycloak.qa.openg2p.org'
+    keycloakIssuerUrl: 'http://commons-keycloak:80/realms/staff-{{ .Release.Namespace }}'
   postgres-init:
     enabled: true
     commonAnnotations:

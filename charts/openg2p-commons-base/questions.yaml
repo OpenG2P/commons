@@ -11,36 +11,28 @@ questions:
   group: General
 
 # Keycloak
+- variable: keycloak.enabled
+  description: >-
+    Install a per-environment Keycloak instance. Disable only when using
+    an external Keycloak and set global.keycloakBaseUrl accordingly.
+  type: boolean
+  label: Install Keycloak?
+  group: Keycloak
+
 - variable: global.keycloakBaseUrl
-  description: Keycloak Base URL used in all components (e.g. https://keycloak.openg2p.org)
+  description: >-
+    Keycloak Base URL used in all components. Defaults to
+    https://keycloak.<baseDomain>. Override only for external Keycloak.
   type: string
-  label: Keycloak Base URL
+  label: Keycloak Base URL (override)
   group: Keycloak
 
 - variable: keycloak-init.enabled
   description: >-
-    Enable Keycloak client initialization. Creates OIDC clients and secrets
-    for Superset, OpenSearch, Kafka, MinIO, and ODK.
+    Enable Keycloak client initialization. Creates OIDC realms, clients,
+    and secrets for Superset, OpenSearch, Kafka, MinIO, and ODK.
   type: boolean
   label: Run Keycloak Init?
-  group: Keycloak
-
-- variable: keycloak-init.keycloak.user
-  description: >-
-    Keycloak user with client management permissions (roles: manage-clients,
-    query-clients, view-clients in master realm).
-  type: string
-  label: Keycloak Client Manager Username
-  required: true
-  group: Keycloak
-
-- variable: keycloak-init.keycloak.password
-  description: >-
-    Password for the Keycloak client manager user. If provided, the chart
-    creates the keycloak-client-manager Kubernetes secret automatically.
-    Leave blank if you have already created the secret manually.
-  type: password
-  label: Keycloak Client Manager Password
   group: Keycloak
 
 # PostgreSQL

@@ -3,19 +3,18 @@
 # PREREQUISITE: openg2p-commons-base must be installed first in the same namespace.
 set -euo pipefail
 
-if [ $# -lt 5 ]; then
-  echo "Usage: $0 <namespace> <release-name> <base-release-name> <base-domain> <keycloak-url> [extra-helm-args...]"
+if [ $# -lt 4 ]; then
+  echo "Usage: $0 <namespace> <release-name> <base-release-name> <base-domain> [extra-helm-args...]"
   echo "  namespace          : Kubernetes namespace (must match base chart namespace)"
   echo "  release-name       : Helm release name for apps (e.g. commons)"
   echo "  base-release-name  : Release name used for openg2p-commons-base (e.g. commons-base)"
-  echo "  base-domain        : Base domain (e.g. mysandbox.openg2p.org)"
-  echo "  keycloak-url       : Full Keycloak base URL (e.g. https://keycloak.openg2p.org)"
+  echo "  base-domain        : Base domain (e.g. trial.openg2p.org)"
   echo "  extra args         : Any additional --set or flags passed to helm install"
   echo ""
   echo "PREREQUISITE: openg2p-commons-base must be installed in the same namespace first."
   echo ""
   echo "Example:"
-  echo "  $0 trial commons commons-base mysandbox.openg2p.org https://keycloak.openg2p.org"
+  echo "  $0 trial commons commons-base trial.openg2p.org"
   exit 1
 fi
 
@@ -23,8 +22,7 @@ NAMESPACE="$1"
 RELEASE="$2"
 BASE_RELEASE="$3"
 BASE_DOMAIN="$4"
-KEYCLOAK_URL="$5"
-shift 5
+shift 4
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
@@ -43,14 +41,17 @@ fi
 
 echo ""
 echo "=== Installing application services '$RELEASE' in namespace '$NAMESPACE' ==="
-echo "    Base release: $BASE_RELEASE | Domain: $BASE_DOMAIN | Keycloak: $KEYCLOAK_URL"
+echo "    Base release: $BASE_RELEASE | Domain: $BASE_DOMAIN"
 echo ""
 
 # Derive infrastructure service names from the base release name
 helm install "$RELEASE" "$SCRIPT_DIR" \
   -n "$NAMESPACE" \
   --set global.baseDomain="$BASE_DOMAIN" \
-  --set global.keycloakBaseUrl="$KEYCLOAK_URL" \
+  --set global.keycloakInternalUrl="http://${BASE_RELEASE}-keycloak:80" \
+  --set global.keycloakBaseUrl="https://keycloak.${BASE_DOMAIN}" \
+  --set openg2p-iam-service.global.keycloakBaseUrl="https://keycloak.${BASE_DOMAIN}" \
+  --set openg2p-iam-service.global.keycloakIssuerUrl="http://${BASE_RELEASE}-keycloak:80/realms/staff-${NAMESPACE}" \
   --set global.postgresqlHost="${BASE_RELEASE}-postgresql" \
   --set global.redisInstallationName="${BASE_RELEASE}-redis" \
   --set global.redisAuthInstallationName="${BASE_RELEASE}-redis-auth" \

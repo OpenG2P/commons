@@ -2,55 +2,36 @@
 # Install openg2p-commons-base Helm chart (infrastructure layer).
 set -euo pipefail
 
-if [ $# -lt 6 ]; then
-  echo "Usage: $0 <namespace> <release-name> <base-domain> <keycloak-url> <keycloak-username> <keycloak-password> [extra-helm-args...]"
+if [ $# -lt 3 ]; then
+  echo "Usage: $0 <namespace> <release-name> <base-domain> [extra-helm-args...]"
   echo "  namespace          : Kubernetes namespace"
-  echo "  release-name       : Helm release name (e.g. commons-base)"
-  echo "  base-domain        : Base domain (e.g. mysandbox.openg2p.org)"
-  echo "  keycloak-url       : Full Keycloak base URL (e.g. https://keycloak.openg2p.org)"
-  echo "  keycloak-username  : Keycloak client-manager username"
-  echo "  keycloak-password  : Keycloak client-manager password"
+  echo "  release-name       : Helm release name (e.g. commons)"
+  echo "  base-domain        : Base domain (e.g. trial.openg2p.org)"
   echo "  extra args         : Any additional --set or flags passed to helm install"
   echo ""
   echo "Example:"
-  echo "  $0 trial commons-base mysandbox.openg2p.org https://keycloak.openg2p.org client-manager@openg2p.org mypassword"
+  echo "  $0 trial commons trial.openg2p.org"
   exit 1
 fi
 
 NAMESPACE="$1"
 RELEASE="$2"
 BASE_DOMAIN="$3"
-KEYCLOAK_URL="$4"
-KC_USER="$5"
-KC_PASS="$6"
-shift 6
+shift 3
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 # Ensure namespace exists
 kubectl get namespace "$NAMESPACE" &>/dev/null || kubectl create namespace "$NAMESPACE"
 
-# Create or update keycloak-client-manager secret
-if ! kubectl get secret keycloak-client-manager -n "$NAMESPACE" &>/dev/null; then
-  kubectl create secret generic keycloak-client-manager \
-    -n "$NAMESPACE" \
-    --from-literal=keycloak-client-manager-password="$KC_PASS"
-  echo "Secret 'keycloak-client-manager' created in namespace '$NAMESPACE'."
-else
-  echo "Secret 'keycloak-client-manager' already exists in namespace '$NAMESPACE'. Skipping."
-fi
-
 echo ""
 echo "=== Installing base infrastructure '$RELEASE' in namespace '$NAMESPACE' ==="
-echo "    Domain: $BASE_DOMAIN | Keycloak: $KEYCLOAK_URL"
+echo "    Domain: $BASE_DOMAIN | Keycloak: https://keycloak.$BASE_DOMAIN"
 echo ""
 
 helm install "$RELEASE" "$SCRIPT_DIR" \
   -n "$NAMESPACE" \
   --set global.baseDomain="$BASE_DOMAIN" \
-  --set global.keycloakBaseUrl="$KEYCLOAK_URL" \
-  --set "keycloak-init.keycloak.url=$KEYCLOAK_URL" \
-  --set "keycloak-init.keycloak.user=$KC_USER" \
   --timeout 20m \
   "$@"
 

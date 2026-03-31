@@ -1,10 +1,9 @@
 global:
   baseDomain: trial.openg2p.org
-  keycloakBaseUrl: https://keycloak2.openg2p.org
-  # Internal URL for pod-to-Keycloak communication (HTTP, no TLS).
-  # Set to http://keycloak.keycloak-system.svc.cluster.local for local/self-signed setups.
-  # Leave empty to use keycloakBaseUrl (works when pods can reach the external HTTPS URL).
-  keycloakInternalUrl: ""
+  # Derived from baseDomain. Override only when using an external Keycloak.
+  keycloakBaseUrl: 'https://keycloak.{{ .Values.global.baseDomain }}'
+  # Internal (in-cluster) URL for pod-to-Keycloak communication (HTTP, no TLS).
+  keycloakInternalUrl: 'http://{{ .Release.Name }}-keycloak:80'
   # Keycloak realm where OIDC clients live (staff-<namespace>).
   keycloakRealm: 'staff-{{ .Release.Namespace }}'
   # Internal issuer URL — used by backend pods for OIDC discovery, JWK fetching, token validation.
@@ -25,17 +24,17 @@ global:
 keycloak-init:
   enabled: true
   keycloak:
-    # Falls back to global.keycloakBaseUrl if empty.
-    url: ''
-    user: ''
-    # Password can be passed directly (used by install-base.sh to create the secret).
-    # If empty, the chart expects the existingSecret to already exist.
+    # Internal URL for keycloak-init to reach Keycloak. Falls back to global.keycloakBaseUrl if empty.
+    url: 'http://{{ .Release.Name }}-keycloak:80'
+    # Uses the Keycloak admin user — no separate client-manager needed.
+    user: admin
     password: ''
-    existingSecret: keycloak-client-manager
-    existingSecretKey: keycloak-client-manager-password
+    # Points to the Keycloak chart's auto-created admin secret.
+    existingSecret: '{{ .Release.Name }}-keycloak'
+    existingSecretKey: admin-password
   job:
     backoffLimit: 3
-    ttlSecondsAfterFinished: 600
+    ttlSecondsAfterFinished: 86400
   # Suffix appended to realm names (e.g. staff -> staff-qa).
   suffix: '{{ .Release.Namespace }}'
   # Only commons-related clients. Other module clients are added by their own charts.
@@ -140,6 +139,10 @@ postgres-init:
       user: esignetuser
       secret: esignet-db-user
       secretUserPasswordKey: esignet-db-user-password
+    - name: keycloak
+      user: keycloakuser
+      secret: keycloak-db-user
+      secretUserPasswordKey: keycloak-db-user-password
 
 mail:
   enabled: false
@@ -184,6 +187,19 @@ minio:
   persistence:
     enabled: true
     size: 16Gi
+
+  initContainers:
+    - name: wait-for-keycloak
+      image: busybox:1.36
+      imagePullPolicy: IfNotPresent
+      command:
+        - sh
+        - -c
+        - |
+          until wget -qO- {{ tpl .Values.global.keycloakInternalUrl $ }}/realms/master > /dev/null 2>&1; do
+            echo "Waiting for Keycloak..."
+            sleep 3
+          done
 
   oidcWellKnownConfigUrl: '{{ tpl .Values.global.keycloakIssuerUrl $ }}/.well-known/openid-configuration'
   # Default — no namespace suffix; matches keycloak-init client name
@@ -674,6 +690,45 @@ kafkaUi:
       tls:
         mode: SIMPLE
         credentialName: ""
+
+keycloak:
+  enabled: true
+  auth:
+    adminUser: admin
+  # Disable bundled PostgreSQL — use the shared commons PostgreSQL instance.
+  postgresql:
+    enabled: false
+  externalDatabase:
+    host: '{{ tpl .Values.global.postgresqlHost $ }}'
+    port: 5432
+    database: keycloak
+    user: keycloakuser
+    existingSecret: keycloak-db-user
+    existingSecretPasswordKey: keycloak-db-user-password
+  production: true
+  proxy: edge
+  proxyHeaders: xforwarded
+  service:
+    type: ClusterIP
+  ingress:
+    enabled: false
+  extraEnvVars:
+    - name: KC_HOSTNAME
+      value: 'keycloak.{{ .Values.global.baseDomain }}'
+    - name: KC_HOSTNAME_STRICT
+      value: "false"
+  replicaCount: 1
+  resources:
+    limits: {}
+    requests:
+      cpu: 200m
+      memory: 1000Mi
+  rbac:
+    create: true
+    rules:
+      - apiGroups: [""]
+        resources: ["pods"]
+        verbs: ["get", "list"]
 
 softhsm:
   enabled: true

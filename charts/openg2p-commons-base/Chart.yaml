@@ -39,6 +39,10 @@ dependencies:
     version: 19.6.4
     repository: https://openg2p.github.io/openg2p-helm
     alias: redis-auth
+  - name: keycloak
+    version: 21.4.5
+    repository: https://openg2p.github.io/openg2p-helm
+    condition: keycloak.enabled
   - name: keycloak-init
     version: 0.0.0-develop
     repository: https://openg2p.github.io/openg2p-helm
