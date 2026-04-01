@@ -26,7 +26,6 @@ keycloak-init:
   keycloak:
     # Internal URL for keycloak-init to reach Keycloak. Falls back to global.keycloakBaseUrl if empty.
     url: 'http://{{ .Release.Name }}-keycloak:80'
-    # Uses the Keycloak admin user — no separate client-manager needed.
     user: admin
     password: ''
     # Points to the Keycloak chart's auto-created admin secret.
@@ -35,12 +34,9 @@ keycloak-init:
   job:
     backoffLimit: 3
     ttlSecondsAfterFinished: 86400
-  # Suffix appended to realm names (e.g. staff -> staff-qa).
-  suffix: '{{ .Release.Namespace }}'
   # Only commons-related clients. Other module clients are added by their own charts.
-  # Clients are created without namespace suffix; realm names carry the suffix.
   realms:
-    staff-{{ .suffix }}:
+    staff:
       clients:
         - clientId: openg2p-superset
           name: Superset
@@ -61,6 +57,9 @@ keycloak-init:
         - clientId: openg2p-odk
           name: ODK
           redirectUris: ["*"]
+    # Null out subchart defaults we don't need
+    agent: null
+    beneficiary: null
 
 postgresql:
   enabled: true
@@ -202,7 +201,6 @@ minio:
           done
 
   oidcWellKnownConfigUrl: '{{ tpl .Values.global.keycloakIssuerUrl $ }}/.well-known/openid-configuration'
-  # Default — no namespace suffix; matches keycloak-init client name
   oidcClientId: openg2p-minio
   # Name of the secret in Kubernetes containing (DO NOT put password directly here)
   # Same name as client id by convention.
@@ -256,7 +254,6 @@ opensearch:
   hostname: 'opensearch.{{ .Values.global.baseDomain }}'
 
   oidcWellKnownConfigUrl: '{{ tpl .Values.global.keycloakIssuerUrl $ }}/.well-known/openid-configuration'
-  # Default — no namespace suffix; matches keycloak-init client name
   oidcClientId: openg2p-opensearch
   # Name of the secret in Kubernetes containing (DO NOT put password directly here)
   # Same name as client id by convention.
@@ -488,7 +485,6 @@ kafkaUi:
   opensearchKafkaConnectorAddress: '{{ .Release.Name }}-reporting-os-kafka-connector'
 
   oidcIssuerUrl: '{{ tpl .Values.global.keycloakIssuerUrl $ }}'
-  # Default — no namespace suffix; matches keycloak-init client name
   oidcClientId: openg2p-kafka
   # Name of the secret in Kubernetes containing (DO NOT put password directly here)
   # Same name as client id by convention.

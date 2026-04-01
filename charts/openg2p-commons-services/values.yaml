@@ -43,7 +43,6 @@ odk-central:
   minioInstallationName: '{{ tpl .Values.global.minioInstallationName $ }}'
   mailInstallationName: '{{ tpl .Values.global.mailInstallationName $ }}'
 
-  # Default — no namespace suffix; matches keycloak-init client name
   oidcClientId: openg2p-odk
   # Name of the secret in Kubernetes containing (DO NOT put password directly here)
   # Same name as client id by convention.
@@ -194,7 +193,6 @@ superset:
   hostname: 'superset.{{ .Values.global.baseDomain }}'
 
   oidcIssuerUrl: '{{ tpl .Values.global.keycloakIssuerUrl $ }}'
-  # Default — no namespace suffix; matches keycloak-init client name
   oidcClientId: openg2p-superset
 
   supersetSecretKey: ''
