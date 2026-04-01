@@ -5,7 +5,7 @@ global:
   # Internal (in-cluster) URL for pod-to-Keycloak communication (HTTP, no TLS).
   keycloakInternalUrl: 'http://{{ .Release.Name }}-keycloak:80'
   # Keycloak realm where OIDC clients live (staff-<namespace>).
-  keycloakRealm: 'staff-{{ .Release.Namespace }}'
+  keycloakRealm: staff
   # Internal issuer URL — used by backend pods for OIDC discovery, JWK fetching, token validation.
   # Uses keycloakInternalUrl (HTTP) when set, otherwise falls back to keycloakBaseUrl (HTTPS).
   keycloakIssuerUrl: '{{ (tpl (.Values.global.keycloakInternalUrl | default .Values.global.keycloakBaseUrl) $) }}/realms/{{ tpl .Values.global.keycloakRealm $ }}'
@@ -57,9 +57,6 @@ keycloak-init:
         - clientId: openg2p-odk
           name: ODK
           redirectUris: ["*"]
-    # Null out subchart defaults we don't need
-    agent: null
-    beneficiary: null
 
 postgresql:
   enabled: true

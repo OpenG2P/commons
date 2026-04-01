@@ -29,7 +29,7 @@ echo "=== Installing base infrastructure '$RELEASE' in namespace '$NAMESPACE' ==
 echo "    Domain: $BASE_DOMAIN | Keycloak: https://keycloak.$BASE_DOMAIN"
 echo ""
 
-helm install "$RELEASE" "$SCRIPT_DIR" \
+helm upgrade --install "$RELEASE" "$SCRIPT_DIR" \
   -n "$NAMESPACE" \
   --set global.baseDomain="$BASE_DOMAIN" \
   --timeout 20m \

@@ -45,13 +45,13 @@ echo "    Base release: $BASE_RELEASE | Domain: $BASE_DOMAIN"
 echo ""
 
 # Derive infrastructure service names from the base release name
-helm install "$RELEASE" "$SCRIPT_DIR" \
+helm upgrade --install "$RELEASE" "$SCRIPT_DIR" \
   -n "$NAMESPACE" \
   --set global.baseDomain="$BASE_DOMAIN" \
   --set global.keycloakInternalUrl="http://${BASE_RELEASE}-keycloak:80" \
   --set global.keycloakBaseUrl="https://keycloak.${BASE_DOMAIN}" \
   --set openg2p-iam-service.global.keycloakBaseUrl="https://keycloak.${BASE_DOMAIN}" \
-  --set openg2p-iam-service.global.keycloakIssuerUrl="http://${BASE_RELEASE}-keycloak:80/realms/staff-${NAMESPACE}" \
+  --set openg2p-iam-service.global.keycloakIssuerUrl="http://${BASE_RELEASE}-keycloak:80/realms/staff" \
   --set global.postgresqlHost="${BASE_RELEASE}-postgresql" \
   --set global.redisInstallationName="${BASE_RELEASE}-redis" \
   --set global.redisAuthInstallationName="${BASE_RELEASE}-redis-auth" \
