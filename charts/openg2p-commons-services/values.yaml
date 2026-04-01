@@ -416,6 +416,10 @@ mock-identity-system:
 
 openg2p-iam-service:
   enabled: true
+  iamStaffPortalApi:
+    image:
+      repository: openg2p/iam-staff-portal-api
+      tag: "1.0"
   global:
     iamHostname: 'iam.{{ .Values.global.baseDomain }}'
     postgresqlHost: '{{ tpl .Values.global.postgresqlHost $ }}'
