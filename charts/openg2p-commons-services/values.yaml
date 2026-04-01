@@ -419,12 +419,17 @@ openg2p-iam-service:
   global:
     iamHostname: 'iam.{{ .Values.global.baseDomain }}'
     postgresqlHost: '{{ tpl .Values.global.postgresqlHost $ }}'
+    iamDB: '{{ printf "%s_iam" .Release.Name | replace "-" "_" }}'
+    iamDBUser: '{{ printf "%s_iam_user" .Release.Name | replace "-" "_" }}'
+    iamDBSecret: '{{ .Release.Name }}-iam'
+    iamDBUserPasswordKey: '{{ .Release.Name }}-iam-db-user'
     # NOTE: These must be plain strings — the iam-service subchart does not tpl them.
     # Override via --set or install.sh for the correct domain.
     keycloakBaseUrl: 'https://keycloak.qa.openg2p.org'
-    keycloakIssuerUrl: 'http://commons-keycloak:80/realms/staff-{{ .Release.Namespace }}'
+    keycloakIssuerUrl: 'http://commons-keycloak:80/realms/staff'
   postgres-init:
     enabled: true
+    nameOverride: iam-pg-init
     commonAnnotations:
       "helm.sh/hook": null
       "helm.sh/hook-weight": null
