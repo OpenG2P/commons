@@ -57,6 +57,9 @@ keycloak-init:
         - clientId: openg2p-odk
           name: ODK
           redirectUris: ["*"]
+        - clientId: staff-portal
+          name: Staff Portal
+          redirectUris: ["*"]
 
 postgresql:
   enabled: true
