@@ -423,7 +423,6 @@ openg2p-iam-service:
   global:
     iamHostname: 'iam.{{ .Values.global.baseDomain }}'
     postgresqlHost: '{{ tpl .Values.global.postgresqlHost $ }}'
-    redisInstallationName: '{{ tpl .Values.global.redisInstallationName $ }}-master'
     iamDB: '{{ printf "%s_iam" .Release.Name | replace "-" "_" }}'
     iamDBUser: '{{ printf "%s_iam_user" .Release.Name | replace "-" "_" }}'
     iamDBSecret: '{{ .Release.Name }}-iam'
