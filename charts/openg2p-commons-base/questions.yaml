@@ -27,6 +27,13 @@ questions:
   label: Keycloak Base URL (override)
   group: Keycloak
 
+- variable: keycloak.image.tag
+  description: >-
+    Docker image tag for Keycloak. Uses openg2p/keycloak image from the chart.
+  type: string
+  label: Keycloak Image Tag
+  group: Keycloak
+
 - variable: keycloak-init.enabled
   description: >-
     Enable Keycloak client initialization. Creates OIDC realms, clients,
