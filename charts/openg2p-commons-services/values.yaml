@@ -423,14 +423,19 @@ openg2p-iam-service:
   global:
     iamHostname: 'iam.{{ .Values.global.baseDomain }}'
     postgresqlHost: '{{ tpl .Values.global.postgresqlHost $ }}'
+    redisInstallationName: '{{ tpl .Values.global.redisInstallationName $ }}-master'
     iamDB: '{{ printf "%s_iam" .Release.Name | replace "-" "_" }}'
     iamDBUser: '{{ printf "%s_iam_user" .Release.Name | replace "-" "_" }}'
     iamDBSecret: '{{ .Release.Name }}-iam'
     iamDBUserPasswordKey: '{{ .Release.Name }}-iam-db-user'
-    # NOTE: These must be plain strings — the iam-service subchart does not tpl them.
+    # NOTE: keycloakBaseUrl must be a plain string — the iam-service subchart does not tpl it.
     # Override via --set or install.sh for the correct domain.
     keycloakBaseUrl: 'https://keycloak.qa.openg2p.org'
     keycloakIssuerUrl: 'http://commons-keycloak:80/realms/staff'
+    staffPortalDefaultRedirectUri: 'https://staff-portal.{{ .Values.global.baseDomain }}'
+    keycloakApplicationUrl: 'https://keycloak.{{ .Values.global.baseDomain }}'
+    registryApplicationUrl: 'https://registry.{{ .Values.global.baseDomain }}'
+    minioApplicationUrl: 'https://minio.{{ .Values.global.baseDomain }}'
   postgres-init:
     enabled: true
     nameOverride: iam-pg-init
