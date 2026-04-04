@@ -358,6 +358,19 @@ opensearch:
 
     resourcesPreset: "none"
 
+    startupProbe:
+      enabled: true
+      httpGet:
+        path: "/"
+        port: 5601
+      initialDelaySeconds: 10
+      periodSeconds: 10
+      failureThreshold: 30
+    readinessProbe:
+      initialDelaySeconds: 10
+    livenessProbe:
+      initialDelaySeconds: 30
+
     extraEnvVars:
     - name: OIDC_CLIENT_SECRET
       valueFrom:
