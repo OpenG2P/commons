@@ -430,7 +430,6 @@ openg2p-iam-service:
     # NOTE: keycloakBaseUrl must be a plain string — the iam-service subchart does not tpl it.
     # Override via --set or install.sh for the correct domain.
     keycloakBaseUrl: 'https://keycloak.qa.openg2p.org'
-    keycloakIssuerUrl: 'http://commons-keycloak:80/realms/staff'
     staffPortalDefaultRedirectUri: 'https://staff-portal.{{ .Values.global.baseDomain }}'
     keycloakApplicationUrl: 'https://keycloak.{{ .Values.global.baseDomain }}'
     registryApplicationUrl: 'https://registry.{{ .Values.global.baseDomain }}'
