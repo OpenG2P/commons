@@ -244,7 +244,10 @@ minio:
       host: ""
       gateway: "internal"
       destination: '{{ include "common.names.fullname" . }}'
+      # Console UI port (default route)
       destinationPort: "9001"
+      # S3 API port (served under /api/ prefix)
+      apiPort: "9000"
     gateway:
       enabled: false
       host: ""
