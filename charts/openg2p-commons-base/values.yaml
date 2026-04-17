@@ -241,12 +241,15 @@ minio:
     enabled: true
     virtualservice:
       enabled: true
-      host: ""
+      # Console UI hostname
+      host: 'minio.{{ .Values.global.baseDomain }}'
+      # S3 API hostname
+      apiHost: 'minio-api.{{ .Values.global.baseDomain }}'
       gateway: "internal"
       destination: '{{ include "common.names.fullname" . }}'
-      # Console UI port (default route)
+      # Console UI port
       destinationPort: "9001"
-      # S3 API port (served under /api/ prefix)
+      # S3 API port
       apiPort: "9000"
     gateway:
       enabled: false
