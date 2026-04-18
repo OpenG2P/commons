@@ -40,6 +40,11 @@ if ! helm status "$BASE_RELEASE" -n "$NAMESPACE" &>/dev/null; then
 fi
 
 echo ""
+echo "=== Updating Helm dependencies (clean pull) ==="
+rm -rf "$SCRIPT_DIR/charts/"*.tgz "$SCRIPT_DIR/Chart.lock" 2>/dev/null || true
+helm dependency update "$SCRIPT_DIR"
+
+echo ""
 echo "=== Installing application services '$RELEASE' in namespace '$NAMESPACE' ==="
 echo "    Base release: $BASE_RELEASE | Domain: $BASE_DOMAIN"
 echo ""

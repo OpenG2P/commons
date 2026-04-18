@@ -25,6 +25,11 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 kubectl get namespace "$NAMESPACE" &>/dev/null || kubectl create namespace "$NAMESPACE"
 
 echo ""
+echo "=== Updating Helm dependencies (clean pull) ==="
+rm -rf "$SCRIPT_DIR/charts/"*.tgz "$SCRIPT_DIR/Chart.lock" 2>/dev/null || true
+helm dependency update "$SCRIPT_DIR"
+
+echo ""
 echo "=== Installing base infrastructure '$RELEASE' in namespace '$NAMESPACE' ==="
 echo "    Domain: $BASE_DOMAIN | Keycloak: https://keycloak.$BASE_DOMAIN"
 echo ""
