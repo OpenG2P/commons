@@ -24,6 +24,19 @@ global:
   kafkaInstallationName: commons-kafka
   softhsmInstallationName: commons-softhsm
 
+logging:
+  enabled: true
+  # Name of the namespace-scoped Fluent Output resource (created by commons-base)
+  outputRef: commons-opensearch
+  # Container names whose logs should be captured.
+  # Must match the actual container names in the deployments.
+  containerNames:
+    - master-data-api
+    - iam-staff-portal-api
+    - odk-central-backend
+    - esignet
+    - keymanager
+
 masterData:
   enabled: true
   global:
