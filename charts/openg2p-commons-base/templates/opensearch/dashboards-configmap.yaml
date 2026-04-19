@@ -1,0 +1,13 @@
+{{- if .Values.opensearch.enabled }}
+{{- if .Values.opensearch.dashboards.enabled }}
+{{- if .Values.opensearch.defaultDashboards.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-opensearch-dashboards-import
+data:
+  default-logs-dashboard.ndjson: |
+{{ .Files.Get "dashboards/default-logs-dashboard.ndjson" | indent 4 }}
+{{- end }}
+{{- end }}
+{{- end }}

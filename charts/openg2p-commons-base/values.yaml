@@ -470,6 +470,13 @@ opensearch:
     retentionDays: 7
     indexPattern: "logstash-*"
 
+  # Pre-configured dashboards imported into OpenSearch Dashboards on install.
+  defaultDashboards:
+    enabled: true
+    overwrite: true
+    # OpenSearch Dashboards host (internal service)
+    dashboardsHost: '{{ include "common.names.fullname" . }}-dashboards'
+
   istio:
     enabled: true
     virtualservice:

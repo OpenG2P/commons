@@ -1,0 +1,78 @@
+{{- if .Values.opensearch.enabled }}
+{{- if .Values.opensearch.dashboards.enabled }}
+{{- if .Values.opensearch.defaultDashboards.enabled }}
+{{- $osdHost := include "common.tplvalues.render" (dict "value" .Values.opensearch.defaultDashboards.dashboardsHost "context" .Subcharts.opensearch) }}
+{{- $secretName := include "common.tplvalues.render" (dict "value" .Values.opensearch.loggingOutput.passwordFrom.secretKeyRef.name "context" .Subcharts.opensearch) }}
+{{- $secretKey := include "common.tplvalues.render" (dict "value" .Values.opensearch.loggingOutput.passwordFrom.secretKeyRef.key "context" .Subcharts.opensearch) }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Release.Name }}-opensearch-dashboards-import-{{ .Release.Revision }}
+spec:
+  backoffLimit: 5
+  ttlSecondsAfterFinished: 86400
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: opensearch-dashboards-import
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        sidecar.istio.io/inject: "false"
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: import-dashboards
+          image: "docker.io/curlimages/curl:8.7.1"
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -e
+              OSD_URL="https://{{ $osdHost }}:5601"
+
+              echo "Waiting for OpenSearch Dashboards to be ready..."
+              for i in $(seq 1 60); do
+                HTTP_CODE=$(curl -sfk -o /dev/null -w "%{http_code}" \
+                  -u "${OSD_USER}:${OSD_PASSWORD}" \
+                  "${OSD_URL}/api/status") && \
+                  [ "$HTTP_CODE" = "200" ] && echo "Dashboards is ready." && break
+                echo "  Attempt $i/60 - waiting for Dashboards (HTTP $HTTP_CODE)..."
+                sleep 10
+              done
+
+              echo "Importing saved objects..."
+              for f in /dashboards/*.ndjson; do
+                echo "  Importing $(basename $f)..."
+                HTTP_CODE=$(curl -sfk -o /tmp/response.json -w "%{http_code}" \
+                  -u "${OSD_USER}:${OSD_PASSWORD}" \
+                  -X POST "${OSD_URL}/api/saved_objects/_import?overwrite={{ .Values.opensearch.defaultDashboards.overwrite }}" \
+                  -H "osd-xsrf: true" \
+                  --form file=@"$f")
+
+                if [ "$HTTP_CODE" = "200" ]; then
+                  echo "  Imported successfully."
+                else
+                  echo "  Import returned HTTP $HTTP_CODE:"
+                  cat /tmp/response.json
+                fi
+              done
+
+              echo "Done. Dashboard import complete."
+          env:
+            - name: OSD_USER
+              value: {{ .Values.opensearch.loggingOutput.user | quote }}
+            - name: OSD_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $secretName }}
+                  key: {{ $secretKey }}
+          volumeMounts:
+            - name: dashboards
+              mountPath: /dashboards
+              readOnly: true
+      volumes:
+        - name: dashboards
+          configMap:
+            name: {{ .Release.Name }}-opensearch-dashboards-import
+{{- end }}
+{{- end }}
+{{- end }}
