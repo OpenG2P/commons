@@ -90,6 +90,21 @@ questions:
   label: Install OpenSearch?
   group: Opensearch
 
+- variable: opensearch.ismPolicy.enabled
+  description: >-
+    Enable automatic log retention. Deletes logstash indexes older than
+    the configured retention period.
+  type: boolean
+  label: Enable Log Retention Policy?
+  group: Opensearch
+
+- variable: opensearch.ismPolicy.retentionDays
+  description: >-
+    Number of days to retain log indexes before automatic deletion.
+  type: int
+  label: Log Retention (days)
+  group: Opensearch
+
 # Kafka
 - variable: kafka.enabled
   description: This installs Kafka.

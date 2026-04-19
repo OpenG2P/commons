@@ -448,6 +448,13 @@ opensearch:
         flush_interval: 10s
         flush_mode: interval
 
+  # ISM (Index State Management) policy for automatic log retention.
+  # Deletes logstash-* indexes older than retentionDays.
+  ismPolicy:
+    enabled: true
+    retentionDays: 7
+    indexPattern: "logstash-*"
+
   istio:
     enabled: true
     virtualservice:
