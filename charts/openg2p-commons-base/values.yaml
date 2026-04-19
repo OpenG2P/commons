@@ -68,6 +68,19 @@ keycloak-init:
         - clientId: staff-portal
           name: Staff Portal
           redirectUris: ["*"]
+      users:
+        - username: admin
+          password: admin
+          email: admin@your.domain.com
+          clientRoleMappings:
+            openg2p-superset:
+              - "Admin"
+            openg2p-opensearch:
+              - "admin"
+            openg2p-kafka:
+              - "Admin"
+            openg2p-minio:
+              - "consoleAdmin"
 
 postgresql:
   enabled: true

@@ -42,6 +42,13 @@ questions:
   label: Run Keycloak Init?
   group: Keycloak
 
+- variable: keycloak-init.realms.staff.users[0].email
+  description: >-
+    Email address for the default admin user created in the staff realm.
+  type: string
+  label: Staff Admin Email
+  group: Keycloak
+
 # PostgreSQL
 - variable: postgresql.enabled
   description: Disable for external PostgreSQL server
