@@ -321,14 +321,14 @@ opensearch:
     replicaCount: 1
     # Sandbox defaults. For production, increase heapSize to 2-4g and memory limit accordingly.
     # Rule: heapSize should be ~50% of the memory limit.
-    heapSize: 512m
+    heapSize: 1g
     resourcesPreset: "none"
     resources:
       limits:
-        memory: 1Gi
+        memory: 2Gi
       requests:
         cpu: 200m
-        memory: 512Mi
+        memory: 1Gi
 
   data:
     replicaCount: 0
@@ -546,8 +546,8 @@ opensearch:
 
 kafka:
   enabled: true
-  # Sandbox defaults. For production, increase heap to -Xmx1g and memory limit to 2Gi.
-  heapOpts: "-Xmx512m"
+  # Sandbox defaults. For production, increase heap to -Xmx2g and memory limit to 4Gi.
+  heapOpts: "-Xmx1g"
   extraConfig: |-
     log.retention.hours=2
     default.replication.factor=1
@@ -557,23 +557,23 @@ kafka:
     delete.topic.enable=true
     num.partitions=3
   controller:
-    heapOpts: "-Xmx512m"
+    heapOpts: "-Xmx1g"
     replicaCount: 1
     resourcesPreset: "none"
     resources:
       limits:
-        memory: 1Gi
+        memory: 2Gi
       requests:
         cpu: 200m
-        memory: 256Mi
+        memory: 512Mi
   broker:
-    heapOpts: "-Xmx512m"
+    heapOpts: "-Xmx1g"
     resources:
       limits:
-        memory: 1Gi
+        memory: 2Gi
       requests:
         cpu: 200m
-        memory: 256Mi
+        memory: 512Mi
     persistence:
       enabled: false
   listeners:
