@@ -841,12 +841,12 @@ keycloak:
   # Do NOT set JAVA_OPTS_APPEND via extraEnvVars — it overwrites the chart's
   # JGroups DNS discovery settings and breaks Infinispan clustering.
   # The JVM auto-sizes heap based on the container memory limit.
-  resources:
-    limits:
-      memory: 2Gi
-    requests:
-      cpu: 200m
-      memory: 1Gi
+  #resources:
+  #  limits:
+  #    memory: 2Gi
+  #  requests:
+  #    cpu: 200m
+  #    memory: 1Gi
   rbac:
     create: true
     rules:
