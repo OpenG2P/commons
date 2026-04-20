@@ -118,12 +118,7 @@ artifactory:
   image:
     repository: mosipid/artifactory-server
     tag: 1.4.1-ES
-  resources:
-    limits:
-      memory: 512Mi
-    requests:
-      cpu: 100m
-      memory: 128Mi
+  resources: {}
 
 keymanager:
   enabled: true
