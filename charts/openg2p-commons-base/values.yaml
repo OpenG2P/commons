@@ -836,10 +836,11 @@ keycloak:
       value: 'keycloak.{{ .Values.global.baseDomain }}'
     - name: KC_HOSTNAME_STRICT
       value: "false"
-    - name: JAVA_OPTS_APPEND
-      value: "-Xms256m -Xmx512m"
   replicaCount: 1
-  # Sandbox defaults. For production, increase memory limit to 2Gi and set -Xmx1g.
+  # Sandbox defaults. For production, increase memory limit to 2Gi.
+  # Do NOT set JAVA_OPTS_APPEND via extraEnvVars — it overwrites the chart's
+  # JGroups DNS discovery settings and breaks Infinispan clustering.
+  # The JVM auto-sizes heap based on the container memory limit.
   resources:
     limits:
       memory: 1Gi
