@@ -1,0 +1,78 @@
+{{- if .Values.opensearch.enabled }}
+{{- if .Values.opensearch.indexTemplate.enabled }}
+{{- $opensearchHost := include "common.tplvalues.render" (dict "value" .Values.opensearch.loggingOutput.host "context" .Subcharts.opensearch) }}
+{{- $opensearchPort := include "common.tplvalues.render" (dict "value" .Values.opensearch.loggingOutput.port "context" .Subcharts.opensearch) }}
+{{- $secretName := include "common.tplvalues.render" (dict "value" .Values.opensearch.loggingOutput.passwordFrom.secretKeyRef.name "context" .Subcharts.opensearch) }}
+{{- $secretKey := include "common.tplvalues.render" (dict "value" .Values.opensearch.loggingOutput.passwordFrom.secretKeyRef.key "context" .Subcharts.opensearch) }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Release.Name }}-opensearch-index-template-{{ .Release.Revision }}
+spec:
+  backoffLimit: 5
+  ttlSecondsAfterFinished: 86400
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: opensearch-index-template
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        sidecar.istio.io/inject: "false"
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: apply-index-template
+          image: "docker.io/curlimages/curl:8.7.1"
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -e
+              OS_URL="https://{{ $opensearchHost }}:{{ $opensearchPort }}"
+              TEMPLATE_NAME="{{ .Values.opensearch.indexTemplate.name }}"
+
+              echo "Waiting for OpenSearch cluster to be ready..."
+              for i in $(seq 1 60); do
+                STATUS=$(curl -sfk -u "${OS_USER}:${OS_PASSWORD}" \
+                  "${OS_URL}/_cluster/health?wait_for_status=yellow&timeout=5s" \
+                  | grep -o '"status":"[^"]*"' | head -1) && \
+                  [ -n "$STATUS" ] && echo "Cluster health: $STATUS" && break
+                echo "  Attempt $i/60 - waiting..."
+                sleep 10
+              done
+
+              echo "Applying index template '${TEMPLATE_NAME}'..."
+              HTTP_CODE=$(curl -sfk -o /tmp/response.json -w "%{http_code}" \
+                -u "${OS_USER}:${OS_PASSWORD}" \
+                -X PUT "${OS_URL}/_index_template/${TEMPLATE_NAME}" \
+                -H "Content-Type: application/json" \
+                -d @/config/template.json)
+
+              if [ "$HTTP_CODE" = "200" ] || [ "$HTTP_CODE" = "201" ]; then
+                echo "Index template created/updated successfully."
+              else
+                echo "Index template PUT returned HTTP $HTTP_CODE:"
+                cat /tmp/response.json
+                exit 1
+              fi
+
+              echo "Done. Index template '${TEMPLATE_NAME}' applied."
+              echo "Note: template applies to NEW indexes only. Existing indexes"
+              echo "will roll off via ISM retention and be replaced with templated ones."
+          env:
+            - name: OS_USER
+              value: {{ .Values.opensearch.loggingOutput.user | quote }}
+            - name: OS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $secretName }}
+                  key: {{ $secretKey }}
+          volumeMounts:
+            - name: template
+              mountPath: /config
+              readOnly: true
+      volumes:
+        - name: template
+          configMap:
+            name: {{ .Release.Name }}-opensearch-index-template
+{{- end }}
+{{- end }}

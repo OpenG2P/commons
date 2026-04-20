@@ -470,12 +470,21 @@ opensearch:
     retentionDays: 7
     indexPattern: "logstash-*"
 
-  # Pre-configured dashboards imported into OpenSearch Dashboards on install.
-  defaultDashboards:
+  # Index template applied to logstash-* indexes.
+  # - Adds an ngram subfield on kubernetes.pod_name so users can type "odk"
+  #   in the Discover query bar and match any pod name containing "odk"
+  #   (no wildcard or field prefix required).
+  # - Sets index.query.default_field to kubernetes.pod_name.search so the
+  #   main query bar is scoped to pod name only (not message content).
+  # - Applies to new indexes only; existing indexes roll off via ISM (7 days).
+  indexTemplate:
     enabled: true
-    overwrite: true
-    # OpenSearch Dashboards host (internal service)
-    dashboardsHost: '{{ include "common.names.fullname" . }}-dashboards'
+    name: logstash_template
+    indexPattern: "logstash-*"
+    # ngram bounds for substring matching on pod name.
+    # Users typing 3+ chars get substring matches; shorter queries fall back to default behavior.
+    ngramMinGram: 3
+    ngramMaxGram: 10
 
   istio:
     enabled: true

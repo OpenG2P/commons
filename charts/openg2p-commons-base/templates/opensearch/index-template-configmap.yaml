@@ -1,0 +1,57 @@
+{{- if .Values.opensearch.enabled }}
+{{- if .Values.opensearch.indexTemplate.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-opensearch-index-template
+data:
+  template.json: |
+    {
+      "index_patterns": ["{{ .Values.opensearch.indexTemplate.indexPattern }}"],
+      "priority": 100,
+      "template": {
+        "settings": {
+          "index": {
+            "query": {
+              "default_field": ["kubernetes.pod_name.search"]
+            }
+          },
+          "analysis": {
+            "analyzer": {
+              "pod_substring_analyzer": {
+                "type": "custom",
+                "tokenizer": "pod_ngram_tokenizer",
+                "filter": ["lowercase"]
+              }
+            },
+            "tokenizer": {
+              "pod_ngram_tokenizer": {
+                "type": "ngram",
+                "min_gram": {{ .Values.opensearch.indexTemplate.ngramMinGram }},
+                "max_gram": {{ .Values.opensearch.indexTemplate.ngramMaxGram }},
+                "token_chars": ["letter", "digit"]
+              }
+            }
+          }
+        },
+        "mappings": {
+          "properties": {
+            "kubernetes": {
+              "properties": {
+                "pod_name": {
+                  "type": "keyword",
+                  "fields": {
+                    "search": {
+                      "type": "text",
+                      "analyzer": "pod_substring_analyzer"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+{{- end }}
+{{- end }}
