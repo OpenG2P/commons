@@ -756,6 +756,10 @@ keycloak:
     pullPolicy: Always
   auth:
     adminUser: admin
+  # Local cache only — no Infinispan cluster discovery (safe for replicaCount=1).
+  # For HA production with multiple replicas, set to true.
+  cache:
+    enabled: false
   # Disable bundled PostgreSQL — use the shared commons PostgreSQL instance.
   postgresql:
     enabled: false
