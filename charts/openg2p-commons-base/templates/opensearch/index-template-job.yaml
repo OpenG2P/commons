@@ -2,8 +2,8 @@
 {{- if .Values.opensearch.indexTemplate.enabled }}
 {{- $opensearchHost := include "common.tplvalues.render" (dict "value" .Values.opensearch.loggingOutput.host "context" .Subcharts.opensearch) }}
 {{- $opensearchPort := include "common.tplvalues.render" (dict "value" .Values.opensearch.loggingOutput.port "context" .Subcharts.opensearch) }}
-{{- $secretName := include "common.tplvalues.render" (dict "value" .Values.opensearch.loggingOutput.passwordFrom.secretKeyRef.name "context" .Subcharts.opensearch) }}
-{{- $secretKey := include "common.tplvalues.render" (dict "value" .Values.opensearch.loggingOutput.passwordFrom.secretKeyRef.key "context" .Subcharts.opensearch) }}
+{{- $secretName := include "common.tplvalues.render" (dict "value" .Values.opensearch.adminCredentials.passwordFrom.secretKeyRef.name "context" .Subcharts.opensearch) }}
+{{- $secretKey := include "common.tplvalues.render" (dict "value" .Values.opensearch.adminCredentials.passwordFrom.secretKeyRef.key "context" .Subcharts.opensearch) }}
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -60,7 +60,7 @@ spec:
               echo "will roll off via ISM retention and be replaced with templated ones."
           env:
             - name: OS_USER
-              value: {{ .Values.opensearch.loggingOutput.user | quote }}
+              value: {{ .Values.opensearch.adminCredentials.user | quote }}
             - name: OS_PASSWORD
               valueFrom:
                 secretKeyRef:

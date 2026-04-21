@@ -461,6 +461,16 @@ opensearch:
         flush_interval: 10s
         flush_mode: interval
 
+  # Admin credentials used by setup Jobs (ISM policy, index template).
+  # The `logstash` user only has write permissions for log ingestion and
+  # cannot create ISM policies or index templates (requires cluster admin).
+  adminCredentials:
+    user: admin
+    passwordFrom:
+      secretKeyRef:
+        key: opensearch-password
+        name: '{{ include "common.names.fullname" . }}'
+
   # ISM (Index State Management) policy for automatic log retention.
   # Deletes logstash-* indexes older than retentionDays.
   ismPolicy:
