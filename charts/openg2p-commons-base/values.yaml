@@ -494,6 +494,30 @@ opensearch:
     ngramMinGram: 3
     ngramMaxGram: 10
 
+  # Saved search imported into OpenSearch Dashboards on install.
+  # The NDJSON at dashboards/saved-search.ndjson is exported from a dev
+  # cluster once and committed to the chart. It includes the index pattern,
+  # the saved search (columns, sort, query-language), and any pre-saved
+  # disabled filter pills (e.g., level: ERROR) for one-click toggle.
+  savedSearch:
+    enabled: true
+    # If true, re-imports the saved search on every helm upgrade and overwrites any manual changes.
+    # Set false in environments where users may customize the search.
+    overwrite: true
+    # OpenSearch Dashboards host (internal service)
+    dashboardsHost: '{{ include "common.names.fullname" . }}-dashboards'
+    # Set OpenSearch Dashboards' defaultRoute advanced setting so users
+    # landing on the Dashboards root are taken to this saved search with
+    # 10-second auto-refresh already active.
+    setAsDefaultRoute: true
+    # The saved search's UUID (from the NDJSON export).
+    savedSearchId: "b0a70290-3d71-11f1-9ac4-0b4ae4a6a713"
+    # The URL path that Dashboards' defaultRoute should point at.
+    # _g sets global state: 10s auto-refresh, default time range of Last 1 hour.
+    # NOTE: if OSD is upgraded or the saved-search route path changes,
+    # adjust this URL accordingly.
+    defaultRoute: "/app/data-explorer/discover#/view/b0a70290-3d71-11f1-9ac4-0b4ae4a6a713?_g=(refreshInterval:(pause:!f,value:10000),time:(from:now-1h,to:now))"
+
   istio:
     enabled: true
     virtualservice:
