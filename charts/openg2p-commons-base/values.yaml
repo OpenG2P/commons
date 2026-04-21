@@ -72,7 +72,7 @@ keycloak-init:
         - username: admin
           password: admin
           firstName: Admin
-          lastName: Admin
+          lastName: User
           email: admin@your.domain.com
           clientRoleMappings:
             openg2p-superset:
