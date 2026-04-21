@@ -42,7 +42,8 @@ spec:
               done
 
               echo "Applying ISM policy '${POLICY_ID}'..."
-              HTTP_CODE=$(curl -sfk -o /tmp/response.json -w "%{http_code}" \
+              # Drop -f so curl doesn't exit non-zero on HTTP errors; we handle status ourselves.
+              HTTP_CODE=$(curl -sk -o /tmp/response.json -w "%{http_code}" \
                 -u "${OS_USER}:${OS_PASSWORD}" \
                 -X PUT "${OS_URL}/_plugins/_ism/policies/${POLICY_ID}" \
                 -H "Content-Type: application/json" \

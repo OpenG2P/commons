@@ -12,6 +12,7 @@ data:
       "template": {
         "settings": {
           "index": {
+            "max_ngram_diff": {{ sub (int .Values.opensearch.indexTemplate.ngramMaxGram) (int .Values.opensearch.indexTemplate.ngramMinGram) }},
             "query": {
               "default_field": ["kubernetes.pod_name.search"]
             }

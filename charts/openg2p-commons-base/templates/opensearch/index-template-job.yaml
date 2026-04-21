@@ -41,7 +41,8 @@ spec:
               done
 
               echo "Applying index template '${TEMPLATE_NAME}'..."
-              HTTP_CODE=$(curl -sfk -o /tmp/response.json -w "%{http_code}" \
+              # Drop -f so curl doesn't exit non-zero on HTTP errors; we handle status ourselves.
+              HTTP_CODE=$(curl -sk -o /tmp/response.json -w "%{http_code}" \
                 -u "${OS_USER}:${OS_PASSWORD}" \
                 -X PUT "${OS_URL}/_index_template/${TEMPLATE_NAME}" \
                 -H "Content-Type: application/json" \
