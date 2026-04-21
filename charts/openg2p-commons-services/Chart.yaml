@@ -2,7 +2,7 @@ apiVersion: v2
 name: openg2p-commons-services
 description: Helm chart for OpenG2P Commons application services
 type: application
-version: 2.0.0-develop
+version: 2.0.0
 dependencies:
 - name: openg2p-master-data
   version: 0.0.0-develop
