@@ -119,6 +119,40 @@ questions:
   label: Install Kafka?
   group: Kafka
 
+- variable: kafka.controller.replicaCount
+  description: >-
+    Number of Kafka controller replicas. Use 1 for sandbox, 3 for production
+    (quorum-based consensus requires odd number, minimum 3).
+  type: int
+  label: Kafka Controller Replicas
+  group: Kafka
+
+- variable: kafka.broker.replicaCount
+  description: >-
+    Number of Kafka broker replicas. Use 1 for sandbox, 3 for production
+    (matches replication factor and provides fault tolerance).
+  type: int
+  label: Kafka Broker Replicas
+  group: Kafka
+
+- variable: kafka.broker.persistence.enabled
+  description: >-
+    Enable persistent storage for Kafka brokers. Must be true in production
+    to prevent data loss on pod restart.
+  type: boolean
+  label: Kafka Broker Persistence?
+  group: Kafka
+
+- variable: kafka.extraConfig
+  description: >-
+    Kafka server.properties overrides. For production, set:
+    default.replication.factor=3, offsets.topic.replication.factor=3,
+    transaction.state.log.replication.factor=3, transaction.state.log.min.isr=2,
+    min.insync.replicas=2, log.retention.hours=168.
+  type: multiline
+  label: Kafka Extra Config
+  group: Kafka
+
 - variable: kafkaUi.enabled
   description: This installs Kafka UI
   type: boolean
