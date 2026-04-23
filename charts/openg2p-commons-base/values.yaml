@@ -96,8 +96,14 @@ postgresql:
       max_wal_senders = 20
       max_replication_slots = 300
       max_connections = 500
-    # TODO: Set resource limits for production.
+    # Based on observed usage ~320Mi. For production, increase limit to 2-4Gi.
     resourcesPreset: "none"
+    resources:
+      limits:
+        memory: 1Gi
+      requests:
+        cpu: 100m
+        memory: 512Mi
     extraEnvVars:
       - name: POSTGRES_POSTGRES_PASSWORD
         valueFrom:
@@ -182,6 +188,13 @@ redis:
     enabled: false
   master:
     resourcesPreset: none
+    # Redis is lightweight (~3Mi observed). Limit ample for growth.
+    resources:
+      limits:
+        memory: 128Mi
+      requests:
+        cpu: 50m
+        memory: 32Mi
     persistence:
       enabled: false
 
@@ -199,6 +212,12 @@ redis-auth:
     enabled: true
   master:
     resourcesPreset: none
+    resources:
+      limits:
+        memory: 128Mi
+      requests:
+        cpu: 50m
+        memory: 32Mi
     persistence:
       enabled: false
 
@@ -208,6 +227,13 @@ minio:
   persistence:
     enabled: true
     size: 16Gi
+  # Based on observed usage ~100Mi. Increase for heavy S3 workloads.
+  resources:
+    limits:
+      memory: 512Mi
+    requests:
+      cpu: 50m
+      memory: 128Mi
   initContainers:
     - name: wait-for-keycloak
       image: busybox:1.36
@@ -293,8 +319,15 @@ opensearch:
     persistence:
       size: 8Gi
     replicaCount: 1
-    heapSize: 256m
+    # Based on observed usage ~740Mi. Heap ~50% of memory limit.
+    heapSize: 1g
     resourcesPreset: "none"
+    resources:
+      limits:
+        memory: 2Gi
+      requests:
+        cpu: 100m
+        memory: 1Gi
 
   data:
     replicaCount: 0
@@ -375,7 +408,14 @@ opensearch:
     enabled: true
     replicaCount: 1
 
+    # Based on observed usage ~176Mi.
     resourcesPreset: "none"
+    resources:
+      limits:
+        memory: 512Mi
+      requests:
+        cpu: 50m
+        memory: 256Mi
 
     startupProbe:
       enabled: true
@@ -552,9 +592,22 @@ kafka:
   controller:
     heapOpts: ""
     replicaCount: 1
+    # Based on observed usage ~455Mi.
     resourcesPreset: "none"
+    resources:
+      limits:
+        memory: 1Gi
+      requests:
+        cpu: 100m
+        memory: 512Mi
   broker:
     heapOpts: ""
+    resources:
+      limits:
+        memory: 1Gi
+      requests:
+        cpu: 100m
+        memory: 512Mi
     persistence:
       enabled: false
   listeners:
@@ -652,7 +705,13 @@ kafkaUi:
 
   hostAliases: []
 
-  resources: {}
+  # Based on observed usage ~420Mi.
+  resources:
+    limits:
+      memory: 1Gi
+    requests:
+      cpu: 50m
+      memory: 512Mi
   javaOpts: ""
 
   containerSecurityContext:
@@ -813,11 +872,16 @@ keycloak:
     - name: KC_HOSTNAME_STRICT
       value: "false"
   replicaCount: 1
+  # Based on observed usage ~922Mi. Keycloak needs generous headroom (Quarkus
+  # re-augmentation uses extra memory). Do NOT set JAVA_OPTS_APPEND here —
+  # it overwrites the chart's JGroups DNS discovery settings.
+  # For production, increase limit to 4Gi.
   resources:
-    limits: {}
+    limits:
+      memory: 2Gi
     requests:
-      cpu: 200m
-      memory: 1000Mi
+      cpu: 100m
+      memory: 1Gi
   rbac:
     create: true
     rules:
@@ -829,4 +893,9 @@ softhsm:
   enabled: true
   # Hardcoding this for now. else every upgrade will reset the pin
   securityPIN: MTYwMzIyMjg=
-  resources: {}
+  resources:
+    limits:
+      memory: 128Mi
+    requests:
+      cpu: 10m
+      memory: 32Mi
