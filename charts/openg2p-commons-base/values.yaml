@@ -899,8 +899,6 @@ keycloak:
   # it overwrites the chart's JGroups DNS discovery settings.
   # For production, increase limit to 4Gi.
   resources:
-    limits:
-      memory: 2Gi
     requests:
       cpu: 100m
       memory: 1Gi
