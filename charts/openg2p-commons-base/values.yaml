@@ -14,6 +14,28 @@ global:
   keycloakExternalIssuerUrl: '{{ tpl .Values.global.keycloakBaseUrl $ }}/realms/{{ tpl .Values.global.keycloakRealm $ }}'
 
   postgresqlHost: '{{ .Release.Name }}-postgresql'
+  # PostgreSQL superuser secret. Defaults to the embedded chart's auto-created secret.
+  #
+  # ── External PostgreSQL ─────────────────────────────────────────────────────
+  # When using an external PostgreSQL (postgresql.enabled=false), you MUST
+  # pre-create a Kubernetes secret holding the superuser password BEFORE
+  # running `helm install`. Helm cannot create this secret on the fly because
+  # subcharts (postgres-init, keycloak, etc.) reference it during render.
+  #
+  #   kubectl create secret generic external-pg-superuser \
+  #     -n <namespace> \
+  #     --from-literal=postgres-password='<superuser-password>'
+  #
+  # Then install with:
+  #   --set postgresql.enabled=false \
+  #   --set global.postgresqlHost=<external-host> \
+  #   --set global.postgresqlSecret=external-pg-superuser
+  #
+  # If your secret uses a different key name, also override:
+  #   --set global.postgresqlSecretKey=<your-key-name>
+  # ────────────────────────────────────────────────────────────────────────────
+  postgresqlSecret: '{{ .Release.Name }}-postgresql'
+  postgresqlSecretKey: postgres-password
   mailInstallationName: '{{ .Release.Name }}-mail'
   minioInstallationName: '{{ .Release.Name }}-minio'
 
@@ -137,8 +159,8 @@ postgres-init:
   postgresql:
     host: '{{ tpl .Values.global.postgresqlHost $ }}'
     port: 5432
-    existingSecret: '{{ .Release.Name }}-postgresql'
-    existingSecretPostgresPasswordKey: postgres-password
+    existingSecret: '{{ tpl .Values.global.postgresqlSecret $ }}'
+    existingSecretPostgresPasswordKey: '{{ tpl .Values.global.postgresqlSecretKey $ }}'
   databases:
     # We are creating the following databases as the respective charts don't create on their own.
     # Note that Keymanager creates DB on its own.

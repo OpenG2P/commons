@@ -15,6 +15,10 @@ global:
   # Defaults assume base release name is 'commons'. If your base release has a
   # different name, override these (install.sh does this automatically).
   postgresqlHost: commons-postgresql
+  # PostgreSQL superuser secret (created by base chart's PostgreSQL or pre-created
+  # for external PostgreSQL). install.sh sets this from BASE_RELEASE.
+  postgresqlSecret: commons-postgresql
+  postgresqlSecretKey: postgres-password
   mailInstallationName: commons-mail
   minioInstallationName: commons-minio
 
@@ -219,6 +223,13 @@ keymanager:
     envVars:
       DB_USER: keymgruser
     envVarsFrom:
+      # Override SU_USER_PWD so it uses the configurable global secret instead of
+      # the subchart default (which derives from postgresqlInstallationName).
+      # Critical for external PostgreSQL where secret name differs from host.
+      SU_USER_PWD:
+        secretKeyRef:
+          name: '{{ tpl .Values.global.postgresqlSecret $ }}'
+          key: '{{ tpl .Values.global.postgresqlSecretKey $ }}'
       DBUSER_PWD:
         # Must be same as above
         secretKeyRef:
@@ -453,6 +464,11 @@ esignet:
       "helm.sh/hook-weight": null
       "helm.sh/hook-delete-policy": null
     envVarsFrom:
+      # Override SU_USER_PWD for external PG support (see keymanager comment).
+      SU_USER_PWD:
+        secretKeyRef:
+          name: '{{ tpl .Values.global.postgresqlSecret $ }}'
+          key: '{{ tpl .Values.global.postgresqlSecretKey $ }}'
       DBUSER_PWD:
         secretKeyRef:
           name: esignet-db-user
@@ -499,6 +515,11 @@ mock-identity-system:
       "helm.sh/hook-weight": null
       "helm.sh/hook-delete-policy": null
     envVarsFrom:
+      # Override SU_USER_PWD for external PG support (see keymanager comment).
+      SU_USER_PWD:
+        secretKeyRef:
+          name: '{{ tpl .Values.global.postgresqlSecret $ }}'
+          key: '{{ tpl .Values.global.postgresqlSecretKey $ }}'
       DBUSER_PWD:
         # Same as above
         secretKeyRef:
@@ -551,8 +572,8 @@ openg2p-iam-service:
     postgresql:
       host: '{{ tpl .Values.global.postgresqlHost $ }}'
       port: 5432
-      existingSecret: commons-postgresql
-      existingSecretPostgresPasswordKey: postgres-password
+      existingSecret: '{{ tpl .Values.global.postgresqlSecret $ }}'
+      existingSecretPostgresPasswordKey: '{{ tpl .Values.global.postgresqlSecretKey $ }}'
 
 openg2p-audit-manager:
   enabled: true
@@ -568,7 +589,9 @@ openg2p-audit-manager:
     kafkaBootstrapServers: 'commons-kafka:9092'
   postgres-init:
     enabled: true
-    nameOverride: auditmanager-pg-init
+    # Short nameOverride to keep total Job name under 63 chars
+    # (Job = <release>-<nameOverride>-<release>-<dbName>).
+    nameOverride: audit-pg-init
     commonAnnotations:
       "helm.sh/hook": null
       "helm.sh/hook-weight": null
@@ -576,8 +599,8 @@ openg2p-audit-manager:
     postgresql:
       host: '{{ tpl .Values.global.postgresqlHost $ }}'
       port: 5432
-      existingSecret: commons-postgresql
-      existingSecretPostgresPasswordKey: postgres-password
+      existingSecret: '{{ tpl .Values.global.postgresqlSecret $ }}'
+      existingSecretPostgresPasswordKey: '{{ tpl .Values.global.postgresqlSecretKey $ }}'
   auditManager:
     enabled: true
     # Service name becomes <release-name>-auditmanager (e.g. commons-services-auditmanager)

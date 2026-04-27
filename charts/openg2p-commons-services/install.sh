@@ -45,6 +45,24 @@ rm -rf "$SCRIPT_DIR/charts/"*.tgz "$SCRIPT_DIR/Chart.lock" 2>/dev/null || true
 helm dependency update "$SCRIPT_DIR"
 
 echo ""
+echo "=== Pre-flight check: resource name lengths ==="
+# Kubernetes resource names must be <= 63 chars (DNS-1123 label).
+# A subchart Job name like <release>-<nameOverride>-<release>-<dbName> can
+# easily exceed this. Catch it before install.
+LONG_NAMES=$(helm template "$RELEASE" "$SCRIPT_DIR" \
+  --set global.baseDomain="$BASE_DOMAIN" \
+  -n "$NAMESPACE" 2>/dev/null \
+  | grep -E '^  name: ' | sed 's/^  name: //' | sed 's/"//g' \
+  | awk '{ if (length($0) > 63) print length($0), $0 }')
+if [ -n "$LONG_NAMES" ]; then
+  echo "ERROR: Resource names exceed Kubernetes 63-char limit:"
+  echo "$LONG_NAMES"
+  echo "Shorten the corresponding nameOverride in values.yaml."
+  exit 1
+fi
+echo "All resource names within 63-char limit."
+
+echo ""
 echo "=== Installing application services '$RELEASE' in namespace '$NAMESPACE' ==="
 echo "    Base release: $BASE_RELEASE | Domain: $BASE_DOMAIN"
 echo ""
@@ -58,6 +76,7 @@ helm upgrade --install "$RELEASE" "$SCRIPT_DIR" \
   --set openg2p-iam-service.global.keycloakBaseUrl="https://keycloak.${BASE_DOMAIN}" \
   --set openg2p-audit-manager.global.kafkaBootstrapServers="${BASE_RELEASE}-kafka:9092" \
   --set global.postgresqlHost="${BASE_RELEASE}-postgresql" \
+  --set global.postgresqlSecret="${BASE_RELEASE}-postgresql" \
   --set global.redisInstallationName="${BASE_RELEASE}-redis" \
   --set global.redisAuthInstallationName="${BASE_RELEASE}-redis-auth" \
   --set global.minioInstallationName="${BASE_RELEASE}-minio" \

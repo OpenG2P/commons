@@ -62,12 +62,21 @@ questions:
   label: PostgreSQL Hostname
   group: Postgres
 
-- variable: postgres-init.postgresql.existingSecret
+- variable: global.postgresqlSecret
   description: >-
     Name of the Kubernetes secret containing the PostgreSQL superuser password.
-    Change this when using an external PostgreSQL server.
+    For embedded PostgreSQL this is auto-created. For external PostgreSQL,
+    pre-create this secret manually and set the name here.
   type: string
-  label: PostgreSQL Password Secret Name
+  label: PostgreSQL Superuser Secret Name
+  group: Postgres
+
+- variable: global.postgresqlSecretKey
+  description: >-
+    Key inside the superuser secret that holds the password. Defaults to
+    'postgres-password'. Change if your external secret uses a different key.
+  type: string
+  label: PostgreSQL Superuser Secret Key
   group: Postgres
 
 # Mail

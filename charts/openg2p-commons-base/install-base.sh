@@ -30,6 +30,39 @@ rm -rf "$SCRIPT_DIR/charts/"*.tgz "$SCRIPT_DIR/Chart.lock" 2>/dev/null || true
 helm dependency update "$SCRIPT_DIR"
 
 echo ""
+echo "=== Pre-flight check: resource name lengths ==="
+# Kubernetes resource names must be <= 63 chars (DNS-1123 label).
+LONG_NAMES=$(helm template "$RELEASE" "$SCRIPT_DIR" \
+  --set global.baseDomain="$BASE_DOMAIN" \
+  -n "$NAMESPACE" 2>/dev/null \
+  | grep -E '^  name: ' | sed 's/^  name: //' | sed 's/"//g' \
+  | awk '{ if (length($0) > 63) print length($0), $0 }')
+if [ -n "$LONG_NAMES" ]; then
+  echo "ERROR: Resource names exceed Kubernetes 63-char limit:"
+  echo "$LONG_NAMES"
+  echo "Shorten the corresponding nameOverride in values.yaml."
+  exit 1
+fi
+echo "All resource names within 63-char limit."
+
+# If external PostgreSQL is requested (postgresql.enabled=false in any --set arg),
+# verify the superuser secret exists before install. Helm cannot create it on the fly.
+if echo "$@" | grep -qE 'postgresql\.enabled=false'; then
+  EXT_PG_SECRET=$(echo "$@" | grep -oE 'global\.postgresqlSecret=[^ ]+' | cut -d= -f2)
+  EXT_PG_SECRET="${EXT_PG_SECRET:-${RELEASE}-postgresql}"
+  echo ""
+  echo "=== Pre-flight check: external PostgreSQL secret ==="
+  if ! kubectl get secret "$EXT_PG_SECRET" -n "$NAMESPACE" &>/dev/null; then
+    echo "ERROR: External PostgreSQL secret '$EXT_PG_SECRET' not found in namespace '$NAMESPACE'."
+    echo "Pre-create it before installing:"
+    echo "  kubectl create secret generic $EXT_PG_SECRET -n $NAMESPACE \\"
+    echo "    --from-literal=postgres-password='<superuser-password>'"
+    exit 1
+  fi
+  echo "Found external PostgreSQL secret '$EXT_PG_SECRET'."
+fi
+
+echo ""
 echo "=== Installing base infrastructure '$RELEASE' in namespace '$NAMESPACE' ==="
 echo "    Domain: $BASE_DOMAIN | Keycloak: https://keycloak.$BASE_DOMAIN"
 echo ""
