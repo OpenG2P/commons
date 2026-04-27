@@ -36,6 +36,7 @@ logging:
     - odk-central-backend
     - esignet
     - keymanager
+    - audit-manager
 
 masterData:
   enabled: true
@@ -552,3 +553,52 @@ openg2p-iam-service:
       port: 5432
       existingSecret: commons-postgresql
       existingSecretPostgresPasswordKey: postgres-password
+
+openg2p-audit-manager:
+  enabled: true
+  global:
+    auditManagerHostname: 'auditmanager.{{ .Values.global.baseDomain }}'
+    postgresqlHost: '{{ tpl .Values.global.postgresqlHost $ }}'
+    auditManagerDB: '{{ printf "%s_auditmanager" .Release.Name | replace "-" "_" }}'
+    auditManagerDBUser: '{{ printf "%s_auditmanager_user" .Release.Name | replace "-" "_" }}'
+    auditManagerDBSecret: '{{ .Release.Name }}-auditmanager'
+    auditManagerDBUserPasswordKey: '{{ .Release.Name }}-auditmanager-db-user'
+    # NOTE: Audit-manager subchart does not tpl this value. Default assumes
+    # base release name is 'commons'. Override via --set or install.sh.
+    kafkaBootstrapServers: 'commons-kafka:9092'
+  postgres-init:
+    enabled: true
+    nameOverride: auditmanager-pg-init
+    commonAnnotations:
+      "helm.sh/hook": null
+      "helm.sh/hook-weight": null
+      "helm.sh/hook-delete-policy": null
+    postgresql:
+      host: '{{ tpl .Values.global.postgresqlHost $ }}'
+      port: 5432
+      existingSecret: commons-postgresql
+      existingSecretPostgresPasswordKey: postgres-password
+  auditManager:
+    enabled: true
+    # Service name becomes <release-name>-auditmanager (e.g. commons-services-auditmanager)
+    nameOverride: auditmanager
+    # Sandbox: single replica, no autoscaling. For production, increase replicaCount
+    # to match Kafka topic partitions and enable HPA.
+    replicaCount: 1
+    autoscaling:
+      enabled: false
+    # Based on the chart's commented-out reference values.
+    resources:
+      limits:
+        memory: 512Mi
+      requests:
+        cpu: 50m
+        memory: 256Mi
+    # Kafka topic provisioning runs as a Helm hook by default (Rancher skips hooks).
+    # Nullify hook annotations so the topic-init Job runs as a regular resource.
+    topicInit:
+      enabled: true
+      commonAnnotations:
+        "helm.sh/hook": null
+        "helm.sh/hook-weight": null
+        "helm.sh/hook-delete-policy": null

@@ -56,6 +56,7 @@ helm upgrade --install "$RELEASE" "$SCRIPT_DIR" \
   --set global.keycloakInternalUrl="http://${BASE_RELEASE}-keycloak:80" \
   --set global.keycloakBaseUrl="https://keycloak.${BASE_DOMAIN}" \
   --set openg2p-iam-service.global.keycloakBaseUrl="https://keycloak.${BASE_DOMAIN}" \
+  --set openg2p-audit-manager.global.kafkaBootstrapServers="${BASE_RELEASE}-kafka:9092" \
   --set global.postgresqlHost="${BASE_RELEASE}-postgresql" \
   --set global.redisInstallationName="${BASE_RELEASE}-redis" \
   --set global.redisAuthInstallationName="${BASE_RELEASE}-redis-auth" \
