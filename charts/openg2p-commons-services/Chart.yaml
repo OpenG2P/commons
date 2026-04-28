@@ -45,6 +45,10 @@ dependencies:
   version: 0.0.0-develop
   repository: https://openg2p.github.io/openg2p-helm
   condition: openg2p-audit-manager.enabled
+- name: openg2p-staff-portal-ui
+  version: 0.0.0-develop
+  repository: https://openg2p.github.io/openg2p-helm
+  condition: openg2p-staff-portal-ui.enabled
 icon: https://openg2p.github.io/openg2p-helm/openg2p-logo.png
 annotations:
   catalog.cattle.io/display-name: "OpenG2P Commons Services"

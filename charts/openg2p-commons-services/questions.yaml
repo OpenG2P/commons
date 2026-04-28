@@ -17,6 +17,31 @@ questions:
   label: Keycloak Base URL
   group: Keycloak
 
+# Staff Portal UI
+- variable: global.staffPortalHostname
+  description: >-
+    Hostname for the Staff Portal UI. Defaults to staff-portal.<baseDomain>.
+    Override if your environment uses a different convention
+    (e.g. staff-portal.<env>.openg2p.org).
+  type: string
+  label: Staff Portal Hostname
+  group: Staff Portal UI
+
+- variable: global.staffPortalCookieDomain
+  description: >-
+    Cookie domain shared between Staff Portal UI and the IAM API.
+    Should be the parent domain so cookies are accessible to both.
+    Defaults to .<baseDomain>.
+  type: string
+  label: Staff Portal Cookie Domain
+  group: Staff Portal UI
+
+- variable: openg2p-staff-portal-ui.enabled
+  description: Install OpenG2P Staff Portal UI
+  type: boolean
+  label: Install Staff Portal UI?
+  group: Staff Portal UI
+
 # Infrastructure references (from openg2p-commons-base)
 - variable: global.postgresqlHost
   description: >-

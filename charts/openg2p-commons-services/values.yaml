@@ -28,6 +28,15 @@ global:
   kafkaInstallationName: commons-kafka
   softhsmInstallationName: commons-softhsm
 
+  # ── Staff Portal UI ─────────────────────────────────────────────────────────
+  # Defaults assume the standard pattern <service>.<baseDomain>. Override these
+  # if your environment uses a different convention (e.g. staff-portal.<env>.openg2p.org).
+  staffPortalHostname: 'staff-portal.{{ .Values.global.baseDomain }}'
+  staffPortalCookieDomain: '.{{ .Values.global.baseDomain }}'
+  # Internal cluster URL of the IAM staff portal API. Default assumes services
+  # release is 'commons-services'. install.sh overrides this with the actual release name.
+  iamServiceUrl: 'http://commons-services-iam-staff-portal-api'
+
 logging:
   enabled: true
   # Name of the namespace-scoped Fluent Output resource (created by commons-base)
@@ -41,6 +50,7 @@ logging:
     - esignet
     - keymanager
     - audit-manager
+    - staff-portal-ui
 
 masterData:
   enabled: true
@@ -625,3 +635,26 @@ openg2p-audit-manager:
         "helm.sh/hook": null
         "helm.sh/hook-weight": null
         "helm.sh/hook-delete-policy": null
+
+openg2p-staff-portal-ui:
+  enabled: true
+  global:
+    # All values are templated; they get resolved via tpl in the subchart's env-var
+    # rendering. Override any of these via --set or in commons globals (top-level
+    # globals are also exposed in questions.yaml).
+    staffPortalHostname: '{{ tpl .Values.global.staffPortalHostname $ }}'
+    cookieDomain: '{{ tpl .Values.global.staffPortalCookieDomain $ }}'
+    keycloakBaseUrl: '{{ tpl .Values.global.keycloakBaseUrl $ }}'
+    keycloakRealm: '{{ tpl .Values.global.keycloakRealm $ }}'
+    iamServiceUrl: '{{ tpl .Values.global.iamServiceUrl $ }}'
+  staffPortalUi:
+    enabled: true
+    nameOverride: staff-portal-ui
+    replicaCount: 1
+    # Lightweight Node.js UI.
+    resources:
+      limits:
+        memory: 256Mi
+      requests:
+        cpu: 50m
+        memory: 64Mi
