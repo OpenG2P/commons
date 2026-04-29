@@ -45,10 +45,28 @@ questions:
 # Infrastructure references (from openg2p-commons-base)
 - variable: global.postgresqlHost
   description: >-
-    Hostname of PostgreSQL from the base chart. Set to <base-release-name>-postgresql.
+    Hostname or IP address of PostgreSQL. For embedded PG set to <base-release-name>-postgresql.
+    For external PostgreSQL, set to the hostname or IP of the external server.
   type: string
   label: PostgreSQL Hostname
   required: true
+  group: Infrastructure
+
+- variable: global.postgresqlSecret
+  description: >-
+    Name of the Kubernetes secret containing the PostgreSQL superuser password.
+    For embedded PG, set to <base-release-name>-postgresql. For external PG,
+    pre-create the secret manually and set its name here.
+  type: string
+  label: PostgreSQL Superuser Secret Name
+  group: Infrastructure
+
+- variable: global.postgresqlSecretKey
+  description: >-
+    Key inside the superuser secret that holds the password. Defaults to
+    'postgres-password'. Change if your external secret uses a different key.
+  type: string
+  label: PostgreSQL Superuser Secret Key
   group: Infrastructure
 
 - variable: global.redisInstallationName

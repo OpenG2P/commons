@@ -313,13 +313,14 @@ superset:
     enabled: false
 
   supersetNode:
-    # Based on observed usage ~187Mi.
+    # Increased from 512Mi after OOMs observed in practice.
+    # For production with heavy dashboard usage, consider 2Gi.
     resources:
       limits:
-        memory: 512Mi
+        memory: 1Gi
       requests:
         cpu: 50m
-        memory: 256Mi
+        memory: 512Mi
     connections:
       redis_host: '{{ tpl .Values.global.redisInstallationName $ }}-master'
       db_host: '{{ tpl .Values.global.postgresqlHost $ }}'
