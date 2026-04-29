@@ -33,7 +33,6 @@ data:
       local client_id="$2"
       local token="$3"
 
-      # Find client UUID by clientId
       local client_uuid
       client_uuid=$(curl -sfk \
         -H "Authorization: Bearer ${token}" \
@@ -44,7 +43,6 @@ data:
         return 1
       fi
 
-      # Get client secret
       curl -sfk \
         -H "Authorization: Bearer ${token}" \
         "${KEYCLOAK_URL}/admin/realms/${realm}/clients/${client_uuid}/client-secret" \
@@ -58,7 +56,6 @@ data:
       local encoded
       encoded=$(printf '%s' "${secret_value}" | base64)
 
-      # Check if secret exists
       local http_code
       http_code=$(curl -s -o /dev/null -w "%{http_code}" \
         --cacert "${CA_CERT}" \
@@ -66,7 +63,6 @@ data:
         "${K8S_API}/api/v1/namespaces/${NAMESPACE}/secrets/${secret_name}")
 
       if [ "$http_code" = "200" ]; then
-        # Patch existing secret
         curl -sf --cacert "${CA_CERT}" \
           -X PATCH \
           -H "Authorization: Bearer ${SA_TOKEN}" \
@@ -75,7 +71,6 @@ data:
           "${K8S_API}/api/v1/namespaces/${NAMESPACE}/secrets/${secret_name}" > /dev/null
         echo "Patched secret ${secret_name}"
       else
-        # Create new secret
         curl -sf --cacert "${CA_CERT}" \
           -X POST \
           -H "Authorization: Bearer ${SA_TOKEN}" \
@@ -107,13 +102,11 @@ data:
     REALM="{{ $resolvedRealm }}"
     CLIENT_ID="{{ .clientId }}"
     echo "Processing ${CLIENT_ID} in realm ${REALM}..."
-    # Retry fetching client secret (keycloak-init may still be creating clients)
     SECRET_VALUE=""
     for attempt in $(seq 1 20); do
       SECRET_VALUE=$(get_client_secret "${REALM}" "${CLIENT_ID}" "${TOKEN}") && [ -n "$SECRET_VALUE" ] && break
       echo "  Client ${CLIENT_ID} not ready yet (attempt ${attempt}/20). Waiting..."
       sleep 10
-      # Refresh token every 5 attempts
       if [ $((attempt % 5)) -eq 0 ]; then
         TOKEN=$(get_token) || true
       fi
@@ -133,11 +126,10 @@ data:
       echo "All client secrets synced successfully."
     fi
 
-    # Restart deployments that consume the synced OIDC client secrets.
-    # commons-base owns: kafka-ui, opensearch-dashboards, minio.
+    # Restart deployments that consume the synced OIDC client secrets
     echo "Restarting affected deployments..."
     RESTART_PATCH="{\"spec\":{\"template\":{\"metadata\":{\"annotations\":{\"client-secrets-sync/restartedAt\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}}}}}"
-    DEPLOYMENTS="{{ .Release.Name }}-kafka-ui {{ .Release.Name }}-opensearch-dashboards {{ .Release.Name }}-minio"
+    DEPLOYMENTS="{{ .Release.Name }}-superset {{ .Release.Name }}-superset-worker"
     for DEPLOY in $DEPLOYMENTS; do
       echo "Restarting deployment ${DEPLOY}..."
       curl -sf --cacert "${CA_CERT}" \

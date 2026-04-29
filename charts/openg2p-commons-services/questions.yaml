@@ -17,6 +17,43 @@ questions:
   label: Keycloak Base URL
   group: Keycloak
 
+- variable: global.keycloakAdminSecret
+  description: >-
+    Name of the K8s secret holding the Keycloak admin password (created by the
+    commons-base chart). Default assumes base release is 'commons'. Set this if
+    your base release has a different name (e.g. <base-release>-keycloak).
+  type: string
+  label: Keycloak Admin Secret Name
+  group: Keycloak
+
+- variable: global.keycloakAdminUser
+  description: Keycloak admin username (default 'admin').
+  type: string
+  label: Keycloak Admin User
+  group: Keycloak
+
+# Service hostnames (used both for service deployments and Keycloak redirect URIs)
+- variable: global.supersetHostname
+  description: >-
+    Hostname for Superset. Defaults to superset.<baseDomain>.
+  type: string
+  label: Superset Hostname
+  group: Service Hostnames
+
+- variable: global.odkHostname
+  description: >-
+    Hostname for ODK Central. Defaults to odk.<baseDomain>.
+  type: string
+  label: ODK Central Hostname
+  group: Service Hostnames
+
+- variable: global.iamHostname
+  description: >-
+    Hostname for the IAM service. Defaults to iam.<baseDomain>.
+  type: string
+  label: IAM Hostname
+  group: Service Hostnames
+
 # Staff Portal UI
 - variable: global.staffPortalHostname
   description: >-

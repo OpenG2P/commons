@@ -13,6 +13,12 @@ global:
   # Always uses keycloakBaseUrl so the browser can reach it.
   keycloakExternalIssuerUrl: '{{ tpl .Values.global.keycloakBaseUrl $ }}/realms/{{ tpl .Values.global.keycloakRealm $ }}'
 
+  # Service hostnames owned by commons-base — single source of truth used by both
+  # the actual service deployments and the keycloak-init redirect URIs below.
+  kafkaUiHostname: 'kafka.{{ .Values.global.baseDomain }}'
+  opensearchHostname: 'opensearch.{{ .Values.global.baseDomain }}'
+  minioHostname: 'minio.{{ .Values.global.baseDomain }}'
+
   postgresqlHost: '{{ .Release.Name }}-postgresql'
   # PostgreSQL superuser secret. Defaults to the embedded chart's auto-created secret.
   #
@@ -67,38 +73,34 @@ keycloak-init:
       themes:
         loginTheme: staff-portal
         adminTheme: staff-portal
+      # Only clients for services owned by commons-base (kafka-ui, opensearch
+       # dashboards, minio console). Service-owned clients (superset, odk,
+      # staff-portal) are created by commons-services keycloak-init.
       clients:
-        - clientId: openg2p-superset
-          name: Superset
-          redirectUris: ["*"]
-          clientRoles: ["Admin"]
         - clientId: openg2p-opensearch
           name: OpenSearch
-          redirectUris: ["*"]
+          redirectUris:
+            - 'https://{{ tpl .Values.global.opensearchHostname $ }}/*'
           clientRoles: ["admin"]
         - clientId: openg2p-kafka
           name: Kafka
-          redirectUris: ["*"]
+          redirectUris:
+            - 'https://{{ tpl .Values.global.kafkaUiHostname $ }}/*'
           clientRoles: ["Admin"]
         - clientId: openg2p-minio
           name: MinIO
-          redirectUris: ["*"]
+          redirectUris:
+            - 'https://{{ tpl .Values.global.minioHostname $ }}/*'
           clientRoles: ["consoleAdmin"]
-        - clientId: openg2p-odk
-          name: ODK
-          redirectUris: ["*"]
-        - clientId: staff-portal
-          name: Staff Portal
-          redirectUris: ["*"]
       users:
         - username: admin
           password: admin
           firstName: Admin
           lastName: User
           email: admin@your.domain.com
+          # Only mappings for clients owned by commons-base. The services chart's
+          # keycloak-init adds mappings for superset, odk, staff-portal.
           clientRoleMappings:
-            openg2p-superset:
-              - "Admin"
             openg2p-opensearch:
               - "admin"
             openg2p-kafka:
@@ -245,7 +247,7 @@ redis-auth:
 
 minio:
   enabled: true
-  hostname: 'minio.{{ .Values.global.baseDomain }}'
+  hostname: '{{ tpl .Values.global.minioHostname $ }}'
   persistence:
     enabled: true
     size: 16Gi
@@ -326,7 +328,7 @@ minio:
 
 opensearch:
   enabled: true
-  hostname: 'opensearch.{{ .Values.global.baseDomain }}'
+  hostname: '{{ tpl .Values.global.opensearchHostname $ }}'
 
   oidcWellKnownConfigUrl: '{{ tpl .Values.global.keycloakIssuerUrl $ }}/.well-known/openid-configuration'
   oidcClientId: openg2p-opensearch
@@ -670,7 +672,7 @@ kafka:
 kafkaUi:
   enabled: true
   # kafka.nameOverride will apply here too.
-  hostname: 'kafka.{{ .Values.global.baseDomain }}'
+  hostname: '{{ tpl .Values.global.kafkaUiHostname $ }}'
 
   basePath: ""
 

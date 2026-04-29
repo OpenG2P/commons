@@ -10,6 +10,28 @@ questions:
   required: true
   group: General
 
+# Service hostnames (used both for service deployments and Keycloak redirect URIs)
+- variable: global.kafkaUiHostname
+  description: >-
+    Hostname for Kafka UI. Defaults to kafka.<baseDomain>.
+  type: string
+  label: Kafka UI Hostname
+  group: Service Hostnames
+
+- variable: global.opensearchHostname
+  description: >-
+    Hostname for OpenSearch Dashboards. Defaults to opensearch.<baseDomain>.
+  type: string
+  label: OpenSearch Hostname
+  group: Service Hostnames
+
+- variable: global.minioHostname
+  description: >-
+    Hostname for the MinIO console. Defaults to minio.<baseDomain>.
+  type: string
+  label: MinIO Hostname
+  group: Service Hostnames
+
 # Keycloak
 - variable: keycloak.enabled
   description: >-

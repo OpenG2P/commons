@@ -28,14 +28,27 @@ global:
   kafkaInstallationName: commons-kafka
   softhsmInstallationName: commons-softhsm
 
-  # ── Staff Portal UI ─────────────────────────────────────────────────────────
-  # Defaults assume the standard pattern <service>.<baseDomain>. Override these
-  # if your environment uses a different convention (e.g. staff-portal.<env>.openg2p.org).
+  # ── Service hostnames owned by commons-services ─────────────────────────────
+  # Single source of truth used by both the actual service deployments and the
+  # keycloak-init redirect URIs below. Override these if your environment uses a
+  # different naming convention (e.g. <service>.<env>.<domain>).
+  supersetHostname: 'superset.{{ .Values.global.baseDomain }}'
+  odkHostname: 'odk.{{ .Values.global.baseDomain }}'
+  iamHostname: 'iam.{{ .Values.global.baseDomain }}'
   staffPortalHostname: 'staff-portal.{{ .Values.global.baseDomain }}'
   staffPortalCookieDomain: '.{{ .Values.global.baseDomain }}'
+
+  # ── Cross-chart references ─────────────────────────────────────────────────
   # Internal cluster URL of the IAM staff portal API. Default assumes services
   # release is 'commons-services'. install.sh overrides this with the actual release name.
   iamServiceUrl: 'http://commons-services-iam-staff-portal-api'
+
+  # Name of the K8s secret holding the Keycloak admin password — created by the
+  # commons-base chart. Used by services-chart keycloak-init and client-secrets-sync
+  # to authenticate to the Keycloak admin API. Default assumes base release is 'commons'.
+  keycloakAdminSecret: commons-keycloak
+  keycloakAdminSecretKey: admin-password
+  keycloakAdminUser: admin
 
 logging:
   enabled: true
@@ -73,7 +86,7 @@ masterData:
 
 odk-central:
   enabled: true
-  hostname: 'odk.{{ .Values.global.baseDomain }}'
+  hostname: '{{ tpl .Values.global.odkHostname $ }}'
 
   postgresqlInstallationName: '{{ tpl .Values.global.postgresqlHost $ }}'
   minioInstallationName: '{{ tpl .Values.global.minioInstallationName $ }}'
@@ -280,7 +293,7 @@ keymanager:
 
 superset:
   enabled: true
-  hostname: 'superset.{{ .Values.global.baseDomain }}'
+  hostname: '{{ tpl .Values.global.supersetHostname $ }}'
 
   oidcIssuerUrl: '{{ tpl .Values.global.keycloakIssuerUrl $ }}'
   oidcClientId: openg2p-superset
@@ -560,7 +573,7 @@ openg2p-iam-service:
         cpu: 50m
         memory: 256Mi
   global:
-    iamHostname: 'iam.{{ .Values.global.baseDomain }}'
+    iamHostname: '{{ tpl .Values.global.iamHostname $ }}'
     postgresqlHost: '{{ tpl .Values.global.postgresqlHost $ }}'
     iamDB: '{{ printf "%s_iam" .Release.Name | replace "-" "_" }}'
     iamDBUser: '{{ printf "%s_iam_user" .Release.Name | replace "-" "_" }}'
@@ -659,3 +672,52 @@ openg2p-staff-portal-ui:
       requests:
         cpu: 50m
         memory: 64Mi
+
+# ─────────────────────────────────────────────────────────────────────────────
+# keycloak-init for services-owned clients (superset, odk, staff-portal).
+# Runs alongside the commons-base keycloak-init job. Both create their respective
+# clients in the same Keycloak (idempotent — clients are checked before creation).
+# Each chart owns the redirect URIs for its own services.
+# ─────────────────────────────────────────────────────────────────────────────
+keycloak-init:
+  enabled: true
+  keycloak:
+    # Internal cluster URL of the Keycloak server (created by commons-base).
+    url: '{{ tpl .Values.global.keycloakInternalUrl $ }}'
+    # Subchart doesn't tpl this field — must be a literal string.
+    user: admin
+    password: ''
+    # Admin secret created by the commons-base Keycloak chart.
+    existingSecret: '{{ tpl .Values.global.keycloakAdminSecret $ }}'
+    # Subchart doesn't tpl this field — must be a literal string.
+    existingSecretKey: admin-password
+  job:
+    backoffLimit: 3
+    ttlSecondsAfterFinished: 86400
+  realms:
+    staff:
+      clients:
+        - clientId: openg2p-superset
+          name: Superset
+          redirectUris:
+            - 'https://{{ tpl .Values.global.supersetHostname $ }}/*'
+          clientRoles: ["Admin"]
+        - clientId: openg2p-odk
+          name: ODK
+          redirectUris:
+            - 'https://{{ tpl .Values.global.odkHostname $ }}/*'
+        - clientId: staff-portal
+          name: Staff Portal
+          # Used by IAM service for staff portal login flow.
+          redirectUris:
+            - 'https://{{ tpl .Values.global.iamHostname $ }}/*'
+            - 'https://{{ tpl .Values.global.staffPortalHostname $ }}/*'
+      users:
+        # Add admin role mappings for services-owned clients.
+        # The admin user itself is created by commons-base keycloak-init;
+        # this entry adds the role mappings idempotently.
+        - username: admin
+          email: admin@your.domain.com
+          clientRoleMappings:
+            openg2p-superset:
+              - "Admin"

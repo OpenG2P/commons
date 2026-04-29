@@ -76,6 +76,7 @@ helm upgrade --install "$RELEASE" "$SCRIPT_DIR" \
   --set openg2p-iam-service.global.keycloakBaseUrl="https://keycloak.${BASE_DOMAIN}" \
   --set openg2p-audit-manager.global.kafkaBootstrapServers="${BASE_RELEASE}-kafka:9092" \
   --set global.iamServiceUrl="http://${RELEASE}-iam-staff-portal-api" \
+  --set global.keycloakAdminSecret="${BASE_RELEASE}-keycloak" \
   --set global.postgresqlHost="${BASE_RELEASE}-postgresql" \
   --set global.postgresqlSecret="${BASE_RELEASE}-postgresql" \
   --set global.redisInstallationName="${BASE_RELEASE}-redis" \
