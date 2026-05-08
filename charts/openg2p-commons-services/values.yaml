@@ -100,7 +100,9 @@ odk-central:
   oidcClientSecretKey: 'client_secret'
 
   s3BlobsEnabled: true
-  s3ServerUrl: 'http://{{ tpl .Values.global.minioInstallationName $ }}:3000'
+  # MinIO S3 API port (the bitnami chart exposes S3 on 9000, console on 9001).
+  # Use the internal cluster service name — pod-to-pod, not via Istio.
+  s3ServerUrl: 'http://{{ tpl .Values.global.minioInstallationName $ }}:9000'
 
   odk-central-enketo:
     enabled: true
