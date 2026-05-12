@@ -69,6 +69,11 @@ masterData:
   enabled: true
   global:
     masterDataHostname: 'master-data.{{ .Values.global.baseDomain }}'
+    # Plain DB names (no release-name prefix). Only one instance per env.
+    masterDataDB: master_data
+    masterDataDBUser: master_data_user
+    masterDataDBSecret: master-data
+    masterDataDBUserPasswordKey: master-data-db-user
   # Based on observed usage ~442Mi.
   masterDataApi:
     resources:
@@ -577,10 +582,11 @@ openg2p-iam-service:
   global:
     iamHostname: '{{ tpl .Values.global.iamHostname $ }}'
     postgresqlHost: '{{ tpl .Values.global.postgresqlHost $ }}'
-    iamDB: '{{ printf "%s_iam" .Release.Name | replace "-" "_" }}'
-    iamDBUser: '{{ printf "%s_iam_user" .Release.Name | replace "-" "_" }}'
-    iamDBSecret: '{{ .Release.Name }}-iam'
-    iamDBUserPasswordKey: '{{ .Release.Name }}-iam-db-user'
+    # Plain DB names (no release-name prefix). Only one instance per env.
+    iamDB: iam
+    iamDBUser: iam_user
+    iamDBSecret: iam
+    iamDBUserPasswordKey: iam-db-user
     # NOTE: keycloakBaseUrl must be a plain string — the iam-service subchart does not tpl it.
     # Override via --set or install.sh for the correct domain.
     keycloakBaseUrl: 'https://keycloak.qa.openg2p.org'
@@ -606,10 +612,11 @@ openg2p-audit-manager:
   global:
     auditManagerHostname: 'auditmanager.{{ .Values.global.baseDomain }}'
     postgresqlHost: '{{ tpl .Values.global.postgresqlHost $ }}'
-    auditManagerDB: '{{ printf "%s_auditmanager" .Release.Name | replace "-" "_" }}'
-    auditManagerDBUser: '{{ printf "%s_auditmanager_user" .Release.Name | replace "-" "_" }}'
-    auditManagerDBSecret: '{{ .Release.Name }}-auditmanager'
-    auditManagerDBUserPasswordKey: '{{ .Release.Name }}-auditmanager-db-user'
+    # Plain DB names (no release-name prefix). Only one instance per env.
+    auditManagerDB: audit_manager
+    auditManagerDBUser: audit_manager_user
+    auditManagerDBSecret: audit-manager
+    auditManagerDBUserPasswordKey: audit-manager-db-user
     # NOTE: Audit-manager subchart does not tpl this value. Default assumes
     # base release name is 'commons'. Override via --set or install.sh.
     kafkaBootstrapServers: 'commons-kafka:9092'
