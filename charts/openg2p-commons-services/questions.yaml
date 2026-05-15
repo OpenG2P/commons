@@ -54,6 +54,15 @@ questions:
   label: IAM Hostname
   group: Service Hostnames
 
+- variable: global.staffPortalApiHostname
+  description: >-
+    Hostname of the IAM staff portal API. Defaults to staff-iam.<baseDomain>.
+    Used by both the IAM deployment and the Keycloak staff-portal client
+    redirect URI — keeping them in sync.
+  type: string
+  label: Staff Portal API Hostname
+  group: Service Hostnames
+
 # Staff Portal UI
 - variable: global.staffPortalHostname
   description: >-

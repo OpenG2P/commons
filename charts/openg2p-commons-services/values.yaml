@@ -34,7 +34,12 @@ global:
   # different naming convention (e.g. <service>.<env>.<domain>).
   supersetHostname: 'superset.{{ .Values.global.baseDomain }}'
   odkHostname: 'odk.{{ .Values.global.baseDomain }}'
+  # iamHostname is the family-level base (e.g. iam.<baseDomain>). Specific
+  # IAM service APIs are derived from it via a service-specific prefix.
   iamHostname: 'iam.{{ .Values.global.baseDomain }}'
+  # Hostname of the IAM staff portal API. Used by both the IAM service deployment
+  # and the Keycloak staff-portal client's redirect URI — single source of truth.
+  staffPortalApiHostname: 'staff-{{ tpl .Values.global.iamHostname $ }}'
   staffPortalHostname: 'staff-portal.{{ .Values.global.baseDomain }}'
   staffPortalCookieDomain: '.{{ .Values.global.baseDomain }}'
 
@@ -569,6 +574,9 @@ mock-identity-system:
 openg2p-iam-service:
   enabled: true
   iamStaffPortalApi:
+    # Override the subchart default ('staff-{{ iamHostname }}') with our global
+    # so the deployment hostname AND the Keycloak redirect URI stay in sync.
+    hostname: '{{ tpl .Values.global.staffPortalApiHostname $ }}'
     image:
       repository: openg2p/iam-staff-portal-api
       tag: "1.0.1"
@@ -717,9 +725,10 @@ keycloak-init:
             - 'https://{{ tpl .Values.global.odkHostname $ }}/*'
         - clientId: staff-portal
           name: Staff Portal
-          # Used by IAM service for staff portal login flow.
+          # Used by IAM staff portal API for the staff portal login flow.
+          # First URI = IAM API callback, second = staff portal UI.
           redirectUris:
-            - 'https://{{ tpl .Values.global.iamHostname $ }}/*'
+            - 'https://{{ tpl .Values.global.staffPortalApiHostname $ }}/*'
             - 'https://{{ tpl .Values.global.staffPortalHostname $ }}/*'
       users:
         # Add admin role mappings for services-owned clients.
