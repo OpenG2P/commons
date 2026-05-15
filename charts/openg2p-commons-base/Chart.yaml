@@ -13,7 +13,7 @@ dependencies:
     repository: https://openg2p.github.io/openg2p-helm
     condition: postgres-init.enabled
   - name: mail
-    version: 1.2.1
+    version: 1.2.2
     repository: https://openg2p.github.io/openg2p-helm
     condition: mail.enabled
   - name: minio
