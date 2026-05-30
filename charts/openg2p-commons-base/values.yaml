@@ -1,9 +1,47 @@
 global:
-  baseDomain: qa.openg2p.org
-  keycloakBaseUrl: https://keycloak.openg2p.org
-  keycloakIssuerUrl: '{{ tpl .Values.global.keycloakBaseUrl $ }}/realms/master'
+  baseDomain: trial.openg2p.org
+  # Derived from baseDomain. Override only when using an external Keycloak.
+  keycloakBaseUrl: 'https://keycloak.{{ .Values.global.baseDomain }}'
+  # Internal (in-cluster) URL for pod-to-Keycloak communication (HTTP, no TLS).
+  keycloakInternalUrl: 'http://{{ .Release.Name }}-keycloak:80'
+  # Keycloak realm where OIDC clients live (staff-<namespace>).
+  keycloakRealm: staff
+  # Internal issuer URL — used by backend pods for OIDC discovery, JWK fetching, token validation.
+  # Uses keycloakInternalUrl (HTTP) when set, otherwise falls back to keycloakBaseUrl (HTTPS).
+  keycloakIssuerUrl: '{{ (tpl (.Values.global.keycloakInternalUrl | default .Values.global.keycloakBaseUrl) $) }}/realms/{{ tpl .Values.global.keycloakRealm $ }}'
+  # External issuer URL — used for browser-facing OAuth redirects (authorize endpoint, login redirects).
+  # Always uses keycloakBaseUrl so the browser can reach it.
+  keycloakExternalIssuerUrl: '{{ tpl .Values.global.keycloakBaseUrl $ }}/realms/{{ tpl .Values.global.keycloakRealm $ }}'
+
+  # Service hostnames owned by commons-base — single source of truth used by both
+  # the actual service deployments and the keycloak-init redirect URIs below.
+  kafkaUiHostname: 'kafka.{{ .Values.global.baseDomain }}'
+  opensearchHostname: 'opensearch.{{ .Values.global.baseDomain }}'
+  minioHostname: 'minio.{{ .Values.global.baseDomain }}'
 
   postgresqlHost: '{{ .Release.Name }}-postgresql'
+  # PostgreSQL superuser secret. Defaults to the embedded chart's auto-created secret.
+  #
+  # ── External PostgreSQL ─────────────────────────────────────────────────────
+  # When using an external PostgreSQL (postgresql.enabled=false), you MUST
+  # pre-create a Kubernetes secret holding the superuser password BEFORE
+  # running `helm install`. Helm cannot create this secret on the fly because
+  # subcharts (postgres-init, keycloak, etc.) reference it during render.
+  #
+  #   kubectl create secret generic external-pg-superuser \
+  #     -n <namespace> \
+  #     --from-literal=postgres-password='<superuser-password>'
+  #
+  # Then install with:
+  #   --set postgresql.enabled=false \
+  #   --set global.postgresqlHost=<external-host> \
+  #   --set global.postgresqlSecret=external-pg-superuser
+  #
+  # If your secret uses a different key name, also override:
+  #   --set global.postgresqlSecretKey=<your-key-name>
+  # ────────────────────────────────────────────────────────────────────────────
+  postgresqlSecret: '{{ .Release.Name }}-postgresql'
+  postgresqlSecretKey: postgres-password
   mailInstallationName: '{{ .Release.Name }}-mail'
   minioInstallationName: '{{ .Release.Name }}-minio'
 
@@ -14,40 +52,61 @@ global:
 keycloak-init:
   enabled: true
   keycloak:
-    # NOTE: keycloak-init subchart does not support tpl on this value.
-    # Must be set explicitly via --set or install.sh.
-    url: ''
-    user: ''
-    # Password can be passed directly (used by install.sh to create the secret).
-    # If empty, the chart expects the existingSecret to already exist.
+    # Internal URL for keycloak-init to reach Keycloak. Falls back to global.keycloakBaseUrl if empty.
+    url: 'http://{{ .Release.Name }}-keycloak:80'
+    user: admin
     password: ''
-    realm: master
-    existingSecret: keycloak-client-manager
-    existingSecretKey: keycloak-client-manager-password
+    # Points to the Keycloak chart's auto-created admin secret.
+    existingSecret: '{{ .Release.Name }}-keycloak'
+    existingSecretKey: admin-password
   job:
     backoffLimit: 3
-    ttlSecondsAfterFinished: 600
+    ttlSecondsAfterFinished: 86400
   # Only commons-related clients. Other module clients are added by their own charts.
-  clients:
-    - clientId: 'openg2p-superset-{{ .suffix }}'
-      name: 'Superset {{ .suffix }}'
-      redirectUris: ["*"]
-      clientRoles: ["Admin"]
-    - clientId: 'openg2p-opensearch-{{ .suffix }}'
-      name: 'OpenSearch {{ .suffix }}'
-      redirectUris: ["*"]
-      clientRoles: ["admin"]
-    - clientId: 'openg2p-kafka-{{ .suffix }}'
-      name: 'Kafka {{ .suffix }}'
-      redirectUris: ["*"]
-      clientRoles: ["Admin"]
-    - clientId: 'openg2p-minio-{{ .suffix }}'
-      name: 'MinIO {{ .suffix }}'
-      redirectUris: ["*"]
-      clientRoles: ["consoleAdmin"]
-    - clientId: 'openg2p-odk-{{ .suffix }}'
-      name: 'ODK {{ .suffix }}'
-      redirectUris: ["*"]
+  realms:
+    master:
+      themes:
+        loginTheme: openg2p-admin
+        adminTheme: openg2p-admin
+      clients: []
+    staff:
+      themes:
+        loginTheme: staff-portal
+        adminTheme: staff-portal
+      # Only clients for services owned by commons-base (kafka-ui, opensearch
+       # dashboards, minio console). Service-owned clients (superset, odk,
+      # staff-portal) are created by commons-services keycloak-init.
+      clients:
+        - clientId: openg2p-opensearch
+          name: OpenSearch
+          redirectUris:
+            - 'https://{{ tpl .Values.global.opensearchHostname $ }}/*'
+          clientRoles: ["admin"]
+        - clientId: openg2p-kafka
+          name: Kafka
+          redirectUris:
+            - 'https://{{ tpl .Values.global.kafkaUiHostname $ }}/*'
+          clientRoles: ["Admin"]
+        - clientId: openg2p-minio
+          name: MinIO
+          redirectUris:
+            - 'https://{{ tpl .Values.global.minioHostname $ }}/*'
+          clientRoles: ["consoleAdmin"]
+      users:
+        - username: admin
+          password: admin
+          firstName: Admin
+          lastName: User
+          email: admin@your.domain.com
+          # Only mappings for clients owned by commons-base. The services chart's
+          # keycloak-init adds mappings for superset, odk, staff-portal.
+          clientRoleMappings:
+            openg2p-opensearch:
+              - "admin"
+            openg2p-kafka:
+              - "Admin"
+            openg2p-minio:
+              - "consoleAdmin"
 
 postgresql:
   enabled: true
@@ -61,9 +120,14 @@ postgresql:
       max_wal_senders = 20
       max_replication_slots = 300
       max_connections = 500
-    # Defaul resources is set to "nano" in original Helm chart. We don't set any limit here
-    # and let postgresql consume any amount of resources. Later we can limit it
+    # Based on observed usage ~320Mi. For production, increase limit to 2-4Gi.
     resourcesPreset: "none"
+    resources:
+      limits:
+        memory: 1Gi
+      requests:
+        cpu: 100m
+        memory: 512Mi
     extraEnvVars:
       - name: POSTGRES_POSTGRES_PASSWORD
         valueFrom:
@@ -92,21 +156,13 @@ postgresql:
 
 postgres-init:
   enabled: true
-  job:
-    annotations:
-      "helm.sh/hook": post-install,post-upgrade
-      "helm.sh/hook-weight": "0"
-      "helm.sh/hook-delete-policy": before-hook-creation
-  serviceAccount:
-    annotations:
-      "helm.sh/hook": post-install,post-upgrade
-      "helm.sh/hook-weight": "0"
-      "helm.sh/hook-delete-policy": before-hook-creation
+  # NO hook annotations — runs as a regular Job.
+  # postgres-init has built-in pg_isready loops to wait for PostgreSQL.
   postgresql:
     host: '{{ tpl .Values.global.postgresqlHost $ }}'
     port: 5432
-    existingSecret: '{{ .Release.Name }}-postgresql'
-    existingSecretPostgresPasswordKey: postgres-password
+    existingSecret: '{{ tpl .Values.global.postgresqlSecret $ }}'
+    existingSecretPostgresPasswordKey: '{{ tpl .Values.global.postgresqlSecretKey $ }}'
   databases:
     # We are creating the following databases as the respective charts don't create on their own.
     # Note that Keymanager creates DB on its own.
@@ -134,84 +190,14 @@ postgres-init:
       user: esignetuser
       secret: esignet-db-user
       secretUserPasswordKey: esignet-db-user-password
+    - name: keycloak
+      user: keycloakuser
+      secret: keycloak-db-user
+      secretUserPasswordKey: keycloak-db-user-password
 
-masterData:
-  enabled: true
-  global:
-    masterDataHostname: 'master-data.{{ .Values.global.baseDomain }}'
-  postgres-init:
-    serviceAccount:
-      # Use a unique name to avoid collision with the main postgres-init ServiceAccount.
-      # Both subcharts produce the same default name (commons-postgres-init).
-      name: master-data-postgres-init
-      annotations:
-        "helm.sh/hook": post-install,post-upgrade
-        "helm.sh/hook-weight": "0"
-        "helm.sh/hook-delete-policy": before-hook-creation
-    job:
-      annotations:
-        "helm.sh/hook": post-install,post-upgrade
-        "helm.sh/hook-weight": "0"
-        "helm.sh/hook-delete-policy": before-hook-creation
 mail:
   enabled: false
   mailname: admin@openg2p.sandbox.org
-
-odk-central:
-  enabled: true
-  hostname: 'odk.{{ .Values.global.baseDomain }}'
-
-  postgresqlInstallationName: '{{ tpl .Values.global.postgresqlHost $ }}'
-  mailInstallationName: '{{ .Release.Name }}-mail'
-
-  # Default
-  oidcClientId: 'openg2p-odk-{{ .Release.Namespace }}'
-  # Name of the secret in Kuberentes containing (DO NOT password directly here)
-  # Same name as client id by convention.
-  oidcClientSecret: '{{ tpl .Values.oidcClientId $ }}'
-  # Key containing client password. Hardcoded in Keycloak Init script
-  oidcClientSecretKey: 'client_secret'
-
-  s3BlobsEnabled: true
-  s3ServerUrl: 'http://{{ tpl .Values.global.minioInstallationName $ }}:3000'
-
-  odk-central-enketo:
-    enabled: true
-    envVars:
-      # Here we pointing to the same redis instance for both. This redis does not have
-      # persistence. This is ok since we use the online form feature for testing and
-      # not full fledged used in production. ODK is mostly used in offline mode.
-      REDIS_MAIN_HOST: '{{ tpl .Values.global.redisInstallationName $ }}-master'
-      REDIS_CACHE_HOST: '{{ tpl .Values.global.redisInstallationName $ }}-master'
-
-  backend:
-    initContainers:
-    - name: wait-for-minio
-      image: busybox:1.36
-      imagePullPolicy: IfNotPresent
-      command:
-        - sh
-        - -c
-        - |
-          until nc -zv {{ tpl .Values.global.minioInstallationName $ }} 9000; do
-            echo "Waiting for MinIO..."
-            sleep 2
-          done
-    envVars:
-      OIDC_ENABLED: true
-      OIDC_ISSUER_URL: '{{ tpl .Values.global.keycloakIssuerUrl $ }}'
-      OIDC_CLIENT_ID: '{{ tpl .Values.oidcClientId $ }}'
-
-    envVarsFrom:
-      DB_PASSWORD:
-        secretKeyRef:
-          # MUST MATCH one defined under postgres-init
-          name: odk-db-user
-          key: odk-db-user-password
-      OIDC_CLIENT_SECRET:
-        secretKeyRef:
-          name: '{{ tpl .Values.oidcClientSecret $ }}'
-          key: '{{ tpl .Values.oidcClientSecretKey $ }}'
 
 # Redis without auth enabled.
 redis:
@@ -226,6 +212,13 @@ redis:
     enabled: false
   master:
     resourcesPreset: none
+    # Redis is lightweight (~3Mi observed). Limit ample for growth.
+    resources:
+      limits:
+        memory: 128Mi
+      requests:
+        cpu: 50m
+        memory: 32Mi
     persistence:
       enabled: false
 
@@ -243,20 +236,44 @@ redis-auth:
     enabled: true
   master:
     resourcesPreset: none
+    resources:
+      limits:
+        memory: 128Mi
+      requests:
+        cpu: 50m
+        memory: 32Mi
     persistence:
       enabled: false
 
 minio:
   enabled: true
-  hostname: 'minio.{{ .Values.global.baseDomain }}'
+  hostname: '{{ tpl .Values.global.minioHostname $ }}'
   persistence:
     enabled: true
     size: 16Gi
+  # Based on observed usage ~100Mi. Increase for heavy S3 workloads.
+  resources:
+    limits:
+      memory: 512Mi
+    requests:
+      cpu: 50m
+      memory: 128Mi
+  initContainers:
+    - name: wait-for-keycloak
+      image: busybox:1.36
+      imagePullPolicy: IfNotPresent
+      command:
+        - sh
+        - -c
+        - |
+          until wget -qO- {{ tpl .Values.global.keycloakInternalUrl $ }}/realms/master > /dev/null 2>&1; do
+            echo "Waiting for Keycloak..."
+            sleep 3
+          done
 
   oidcWellKnownConfigUrl: '{{ tpl .Values.global.keycloakIssuerUrl $ }}/.well-known/openid-configuration'
-  # Default
-  oidcClientId: 'openg2p-minio-{{ .Release.Namespace }}'
-  # Name of the secret in Kuberentes containing (DO NOT password directly here)
+  oidcClientId: openg2p-minio
+  # Name of the secret in Kubernetes containing (DO NOT put password directly here)
   # Same name as client id by convention.
   oidcClientSecret: '{{ tpl .Values.oidcClientId $ }}'
   # Key containing client password. Hardcoded in Keycloak Init script
@@ -287,10 +304,16 @@ minio:
     enabled: true
     virtualservice:
       enabled: true
-      host: ""
+      # Console UI hostname
+      host: 'minio.{{ .Values.global.baseDomain }}'
+      # S3 API hostname
+      apiHost: 'minio-api.{{ .Values.global.baseDomain }}'
       gateway: "internal"
       destination: '{{ include "common.names.fullname" . }}'
+      # Console UI port
       destinationPort: "9001"
+      # S3 API port
+      apiPort: "9000"
     gateway:
       enabled: false
       host: ""
@@ -305,12 +328,11 @@ minio:
 
 opensearch:
   enabled: true
-  hostname: 'opensearch.{{ .Values.global.baseDomain }}'
+  hostname: '{{ tpl .Values.global.opensearchHostname $ }}'
 
   oidcWellKnownConfigUrl: '{{ tpl .Values.global.keycloakIssuerUrl $ }}/.well-known/openid-configuration'
-  # Default
-  oidcClientId: 'openg2p-opensearch-{{ .Release.Namespace }}'
-  # Name of the secret in Kuberentes containing (DO NOT password directly here)
+  oidcClientId: openg2p-opensearch
+  # Name of the secret in Kubernetes containing (DO NOT put password directly here)
   # Same name as client id by convention.
   oidcClientSecret: '{{ tpl .Values.oidcClientId $ }}'
   # Key containing client password. Hardcoded in Keycloak Init script
@@ -321,13 +343,18 @@ opensearch:
     persistence:
       size: 8Gi
     replicaCount: 1
-    heapSize: 256m
+    # Based on observed usage ~740Mi. Heap ~50% of memory limit.
+    heapSize: 1g
     resourcesPreset: "none"
+    resources:
+      limits:
+        memory: 2Gi
+      requests:
+        cpu: 100m
+        memory: 1Gi
 
   data:
     replicaCount: 0
-    # persistence:
-    #   size: 8Gi
 
   coordinating:
     replicaCount: 0
@@ -405,7 +432,27 @@ opensearch:
     enabled: true
     replicaCount: 1
 
+    # Based on observed usage ~176Mi.
     resourcesPreset: "none"
+    resources:
+      limits:
+        memory: 512Mi
+      requests:
+        cpu: 50m
+        memory: 256Mi
+
+    startupProbe:
+      enabled: true
+      httpGet:
+        path: "/"
+        port: 5601
+      initialDelaySeconds: 10
+      periodSeconds: 10
+      failureThreshold: 30
+    readinessProbe:
+      initialDelaySeconds: 10
+    livenessProbe:
+      initialDelaySeconds: 30
 
     extraEnvVars:
     - name: OIDC_CLIENT_SECRET
@@ -478,6 +525,63 @@ opensearch:
         flush_interval: 10s
         flush_mode: interval
 
+  # Admin credentials used by setup Jobs (ISM policy, index template).
+  # The `logstash` user only has write permissions for log ingestion and
+  # cannot create ISM policies or index templates (requires cluster admin).
+  adminCredentials:
+    user: admin
+    passwordFrom:
+      secretKeyRef:
+        key: opensearch-password
+        name: '{{ include "common.names.fullname" . }}'
+
+  # ISM (Index State Management) policy for automatic log retention.
+  # Deletes logstash-* indexes older than retentionDays.
+  ismPolicy:
+    enabled: true
+    retentionDays: 7
+    indexPattern: "logstash-*"
+
+  # Index template applied to logstash-* indexes.
+  # - Adds an ngram subfield on kubernetes.pod_name so users can type "odk"
+  #   in the Discover query bar and match any pod name containing "odk"
+  #   (no wildcard or field prefix required).
+  # - Sets index.query.default_field to kubernetes.pod_name.search so the
+  #   main query bar is scoped to pod name only (not message content).
+  # - Applies to new indexes only; existing indexes roll off via ISM (7 days).
+  indexTemplate:
+    enabled: true
+    name: logstash_template
+    indexPattern: "logstash-*"
+    # ngram bounds for substring matching on pod name.
+    # Users typing 3+ chars get substring matches; shorter queries fall back to default behavior.
+    ngramMinGram: 3
+    ngramMaxGram: 10
+
+  # Saved search imported into OpenSearch Dashboards on install.
+  # The NDJSON at dashboards/saved-search.ndjson is exported from a dev
+  # cluster once and committed to the chart. It includes the index pattern,
+  # the saved search (columns, sort, query-language), and any pre-saved
+  # disabled filter pills (e.g., level: ERROR) for one-click toggle.
+  savedSearch:
+    enabled: true
+    # If true, re-imports the saved search on every helm upgrade and overwrites any manual changes.
+    # Set false in environments where users may customize the search.
+    overwrite: true
+    # OpenSearch Dashboards host (internal service)
+    dashboardsHost: '{{ include "common.names.fullname" . }}-dashboards'
+    # Set OpenSearch Dashboards' defaultRoute advanced setting so users
+    # landing on the Dashboards root are taken to this saved search with
+    # 10-second auto-refresh already active.
+    setAsDefaultRoute: true
+    # The saved search's UUID (from the NDJSON export).
+    savedSearchId: "b0a70290-3d71-11f1-9ac4-0b4ae4a6a713"
+    # The URL path that Dashboards' defaultRoute should point at.
+    # _g sets global state: 10s auto-refresh, default time range of Last 1 hour.
+    # NOTE: if OSD is upgraded or the saved-search route path changes,
+    # adjust this URL accordingly.
+    defaultRoute: "/app/data-explorer/discover#/view/b0a70290-3d71-11f1-9ac4-0b4ae4a6a713?_g=(refreshInterval:(pause:!f,value:10000),time:(from:now-1h,to:now))"
+
   istio:
     enabled: true
     virtualservice:
@@ -501,6 +605,28 @@ opensearch:
 kafka:
   enabled: true
   heapOpts: ""
+  # Sandbox defaults (single replica, replication factor 1, no persistence).
+  # ──────────────────────────────────────────────────────────────────────────
+  # PRODUCTION CONFIGURATION:
+  #   extraConfig: |-
+  #     log.retention.hours=168
+  #     default.replication.factor=3
+  #     offsets.topic.replication.factor=3
+  #     transaction.state.log.replication.factor=3
+  #     transaction.state.log.min.isr=2
+  #     min.insync.replicas=2
+  #     auto.create.topics.enable=true
+  #     delete.topic.enable=true
+  #     num.partitions=3
+  #   controller:
+  #     replicaCount: 3
+  #     resourcesPreset: "small"   # or larger based on load
+  #   broker:
+  #     replicaCount: 3
+  #     persistence:
+  #       enabled: true
+  #       size: 20Gi
+  # ──────────────────────────────────────────────────────────────────────────
   extraConfig: |-
     log.retention.hours=2
     default.replication.factor=1
@@ -512,9 +638,22 @@ kafka:
   controller:
     heapOpts: ""
     replicaCount: 1
+    # Based on observed usage ~455Mi.
     resourcesPreset: "none"
+    resources:
+      limits:
+        memory: 1Gi
+      requests:
+        cpu: 100m
+        memory: 512Mi
   broker:
     heapOpts: ""
+    resources:
+      limits:
+        memory: 1Gi
+      requests:
+        cpu: 100m
+        memory: 512Mi
     persistence:
       enabled: false
   listeners:
@@ -533,7 +672,7 @@ kafka:
 kafkaUi:
   enabled: true
   # kafka.nameOverride will apply here too.
-  hostname: 'kafka.{{ .Values.global.baseDomain }}'
+  hostname: '{{ tpl .Values.global.kafkaUiHostname $ }}'
 
   basePath: ""
 
@@ -542,8 +681,7 @@ kafkaUi:
   opensearchKafkaConnectorAddress: '{{ .Release.Name }}-reporting-os-kafka-connector'
 
   oidcIssuerUrl: '{{ tpl .Values.global.keycloakIssuerUrl $ }}'
-  # Default name
-  oidcClientId: 'openg2p-kafka-{{ .Release.Namespace }}'
+  oidcClientId: openg2p-kafka
   # Name of the secret in Kubernetes containing (DO NOT put password directly here)
   # Same name as client id by convention.
   oidcClientSecret: '{{ tpl .Values.kafkaUi.oidcClientId $ }}'
@@ -613,8 +751,13 @@ kafkaUi:
 
   hostAliases: []
 
-  resources: {}
-  # javaOpts: "-Xms256M -Xmx2G"
+  # Based on observed usage ~420Mi.
+  resources:
+    limits:
+      memory: 1Gi
+    requests:
+      cpu: 50m
+      memory: 512Mi
   javaOpts: ""
 
   containerSecurityContext:
@@ -679,8 +822,11 @@ kafkaUi:
             clientSecret: '${OIDC_CLIENT_SECRET}'
             scope: ["openid","profile","email"]
             authorization-grant-type: authorization_code
-            issuer-uri: '{{ tpl .Values.kafkaUi.oidcIssuerUrl $ }}'
+            redirect-uri: '{baseUrl}/login/oauth2/code/{registrationId}'
+            authorization-uri: '{{ tpl .Values.global.keycloakExternalIssuerUrl $ }}/protocol/openid-connect/auth'
+            token-uri: '{{ tpl .Values.kafkaUi.oidcIssuerUrl $ }}/protocol/openid-connect/token'
             jwk-set-uri: '{{ tpl .Values.kafkaUi.oidcIssuerUrl $ }}/protocol/openid-connect/certs'
+            user-info-uri: '{{ tpl .Values.kafkaUi.oidcIssuerUrl $ }}/protocol/openid-connect/userinfo'
             user-name-attribute: email
             client-name: Keycloak
             provider: keycloak
@@ -742,316 +888,58 @@ kafkaUi:
         mode: SIMPLE
         credentialName: ""
 
-reporting:
-  enabled: false
-  debezium:
-    enabled: true
-  opensearch-kafka-connector:
-    enabled: true
-
-artifactory:
+keycloak:
   enabled: true
   image:
-    repository: mosipid/artifactory-server
-    tag: 1.4.1-ES
-  resources: {}
+    tag: 24.0.5-debian-12-r1-g2p1
+    pullPolicy: Always
+  auth:
+    adminUser: admin
+  # Disable bundled PostgreSQL — use the shared commons PostgreSQL instance.
+  postgresql:
+    enabled: false
+  externalDatabase:
+    host: '{{ tpl .Values.global.postgresqlHost $ }}'
+    port: 5432
+    database: keycloak
+    user: keycloakuser
+    existingSecret: keycloak-db-user
+    existingSecretPasswordKey: keycloak-db-user-password
+  production: true
+  proxy: edge
+  proxyHeaders: xforwarded
+  service:
+    type: ClusterIP
+  ingress:
+    enabled: false
+  extraEnvVars:
+    - name: KC_HOSTNAME
+      value: 'keycloak.{{ .Values.global.baseDomain }}'
+    - name: KC_HOSTNAME_STRICT
+      value: "false"
+  replicaCount: 1
+  # Based on observed usage ~922Mi. Keycloak needs generous headroom (Quarkus
+  # re-augmentation uses extra memory). Do NOT set JAVA_OPTS_APPEND here —
+  # it overwrites the chart's JGroups DNS discovery settings.
+  # For production, increase limit to 4Gi.
+  resources:
+    requests:
+      cpu: 100m
+      memory: 1Gi
+  rbac:
+    create: true
+    rules:
+      - apiGroups: [""]
+        resources: ["pods"]
+        verbs: ["get", "list"]
 
 softhsm:
   enabled: true
   # Hardcoding this for now. else every upgrade will reset the pin
   securityPIN: MTYwMzIyMjg=
-  resources: {}
-
-keymanager:
-  enabled: true
-  hostname: 'keymanager.{{ .Values.global.baseDomain }}'
-  # Disabling for now. TODO - understand the implications
-  authEnabled: false
-  # For country deployments we may for file based keystore instead of SoftHSM
-  keystoreType: PKCS12
-  p12KeystorePass: ''
-  # Postgres Init is important
-  skipPostgresInitCheck: false
-  # Keymanager should come up even if Keygen has not run. The idea is to have keygen run by individuals
-  skipKeygenCheck: true
-  postgresqlInstallationName: '{{ tpl .Values.global.postgresqlHost $ }}'
-  istio:
-    enabled: false
-  springConfig:
-    names: application,kernel
-    profile: default
-    gitRepo:
-      enabled: true
-      repoUrl: https://github.com/openg2p/mosip-config
-      # This branch has user name as per our conventions here
-      branch: master
-    rawConfig: ""
-  envVars:
-    JDK_JAVA_OPTIONS: "-XX:-UseContainerSupport -Dspring.jmx.enabled=false -Dcom.sun.management.jmxremote=false"
-    auth_server_admin_allowed_audience: 'openg2p-registry,openg2p-registry-{{ .Release.Namespace }},openg2p-pbms,openg2p-pbms-{{ .Release.Namespace }},openg2p-spar,openg2p-spar-{{ .Release.Namespace }},openg2p-g2p-bridge,openg2p-g2p-bridge-{{ .Release.Namespace }}'
-  envVarsFrom:
-    db_dbuser_password:
-      secretKeyRef:
-        name: keymgr-db-user
-        key: keymgr-db-user-password
-  postgresInit:
-    enabled: true
-    #forceRun: true
-    commonAnnotations:
-      "helm.sh/hook": post-install,post-upgrade
-      "helm.sh/hook-weight": "2"
-      "helm.sh/hook-delete-policy": before-hook-creation
-    envVars:
-      DB_USER: keymgruser
-    envVarsFrom:
-      DBUSER_PWD:
-        # Must be same as above
-        secretKeyRef:
-          name: keymgr-db-user
-          key: keymgr-db-user-password
-  keygen:
-    enabled: true
-    appIdsList:
-      - OPENG2P_SR
-      - OPENG2P_SR_NID
-      - OPENG2P_SPAR
-      - OPENG2P_SPAR_NID
-      - OPENG2P_PBMS
-      - OPENG2P_PBMS_NID
-
-    baseKeysList:
-      - OPENG2P_SR:ENCRYPT
-      - OPENG2P_SR_NID:ENCRYPT
-      - OPENG2P_SPAR:ENCRYPT
-      - OPENG2P_SPAR_NID:ENCRYPT
-      - OPENG2P_PBMS:ENCRYPT
-      - OPENG2P_PBMS_NID:ENCRYPT
-
-    envVars:
-      JDK_JAVA_OPTIONS: "-XX:-UseContainerSupport -Dspring.jmx.enabled=false -Dcom.sun.management.jmxremote=false"
-
-  persistence:
-    enabled: true
-
-superset:
-  enabled: true
-  hostname: 'superset.{{ .Values.global.baseDomain }}'
-
-  oidcIssuerUrl: '{{ tpl .Values.global.keycloakIssuerUrl $ }}'
-  # Default name
-  oidcClientId: 'openg2p-superset-{{ .Release.Namespace }}'
-
-  supersetSecretKey: ''
-
-  # envFromSecrets supports tpl (unlike extraEnvRaw), so we can use dynamic names.
-  # All keys from these secrets are loaded as env vars.
-  envFromSecrets:
-    - 'openg2p-superset-{{ .Release.Namespace }}'
-
-  extraEnvRaw:
-  - name: DB_PASS
-    valueFrom:
-      secretKeyRef:
-        name: superset-db-user
-        key: superset-db-user-password
-
-  init:
-    createAdmin: false
-    jobAnnotations:
-      "helm.sh/hook": post-install,post-upgrade
-      "helm.sh/hook-weight": "5"
-      "helm.sh/hook-delete-policy": before-hook-creation
-
-  # Tell Superset chart not to install Postgresql
-  postgresql:
-    enabled: false
-
-  # Since we have a common Redis, we tell Superset chart not to install Redis
-  redis:
-    enabled: false
-
-  supersetNode:
-    connections:
-      redis_host: '{{ tpl .Values.global.redisInstallationName $ }}-master'
-      db_host: '{{ tpl .Values.global.postgresqlHost $ }}'
-      # db_pass intentionally empty — the real password comes from extraEnvRaw
-      # (secret superset-db-user created by postgres-init). This prevents the
-      # commons-superset-env secret from containing a stale/wrong DB_PASS.
-      db_pass: ''
-
-  bootstrapScript: |
-    #!/bin/bash
-    pip install authlib==1.3.0
-
-  configOverrides:
-    enable_oauth: |
-      import os
-      SECRET_KEY = '{{ tpl .Values.supersetSecretKey $ }}' or 'OPENG2P_SUPER_SECRET_KEY'
-
-      # This will make sure the redirect_uri is properly computed, even with SSL offloading
-      ENABLE_PROXY_FIX = True
-
-      from flask_appbuilder.security.manager import AUTH_OAUTH
-      AUTH_TYPE = AUTH_OAUTH
-      OAUTH_PROVIDERS = [
-        {
-          "name": "keycloak",
-          "icon": "fa-key",
-          "token_key": "access_token",
-          "remote_app": {
-            "client_id": "{{ tpl .Values.oidcClientId $ }}",
-            "client_secret": os.getenv("client_secret"),
-            "api_base_url": "{{ tpl .Values.oidcIssuerUrl $ }}/protocol/openid-connect",
-            "client_kwargs": {"scope": "email profile openid"},
-            "access_token_url": "{{ tpl .Values.oidcIssuerUrl $ }}/protocol/openid-connect/token",
-            "jwks_uri": "{{ tpl .Values.oidcIssuerUrl $ }}/protocol/openid-connect/certs",
-            "authorize_url": "{{ tpl .Values.oidcIssuerUrl $ }}/protocol/openid-connect/auth",
-            "request_token_url": None
-          },
-        }
-      ]
-
-      # Map Authlib roles to superset roles
-      AUTH_ROLES_MAPPING = {
-        "Public": ["Public"],
-        "Admin": ["Admin"],
-      }
-
-      AUTH_ROLES_SYNC_AT_LOGIN = True
-
-      # Will allow user self registration, allowing to create Flask users from Authorized User
-      AUTH_USER_REGISTRATION = True
-
-      # The default user self registration role
-      # AUTH_USER_REGISTRATION_ROLE = "Public"
-
-      from superset.security import SupersetSecurityManager
-      class CustomSsoSecurityManager(SupersetSecurityManager):
-        def oauth_user_info(self, provider, response=None):
-          if provider == "keycloak":
-            me = self.appbuilder.sm.oauth_remotes[provider].get(
-              "openid-connect/userinfo"
-            )
-            me.raise_for_status()
-            data = me.json()
-            return {
-              "username": data.get("preferred_username", ""),
-              "first_name": data.get("given_name", ""),
-              "last_name": data.get("family_name", ""),
-              "email": data.get("email", ""),
-              "role_keys": data.get("client_roles", []),
-            }
-          return {}
-
-      CUSTOM_SECURITY_MANAGER = CustomSsoSecurityManager
-      SESSION_COOKIE_HTTPONLY = True
-      SESSION_COOKIE_SECURE = True
-      SESSION_COOKIE_SAMESITE = None
-      TALISMAN_ENABLED = False
-
-  istio:
-    enabled: true
-    virtualservice:
-      enabled: true
-      host: ""
-      gateway: "internal"
-      destination: '{{ include "superset.fullname" . }}'
-      destinationPort: '{{ .Values.service.port }}'
-    gateway:
-      enabled: false
-      host: ""
-      ingressController:
-        istio: ingressgateway
-      httpTlsRedirect: true
-      httpEnabled: true
-      httpsEnabled: false
-      tls:
-        mode: SIMPLE
-        credentialName: ""
-
-esignet:
-  enabled: true
-  hostname: 'esignet.{{ .Values.global.baseDomain }}'
-
-  captchaEnabled: false
-
-  envVars:
-    esignet_captcha_site_key: ''
-    esignet_captcha_secret_key: ''
-    JDK_JAVA_OPTIONS: "-XX:-UseContainerSupport -Dspring.jmx.enabled=false"
-  # TODO: read from a common variable in global.
-  artifactoryInstallationName: '{{ .Release.Name }}-artifactory'
-  # Note Redis Auth used here
-  redisInstallationName: '{{ tpl .Values.global.redisAuthInstallationName $ }}'
-  kafkaInstallationName: '{{ .Release.Name }}-kafka'
-  mockIdentitySystemInstallationName: '{{ .Release.Name }}-mock-identity-system'
-  softhsmInstallationName: '{{ .Release.Name }}-softhsm'
-  postgresqlInstallationName: '{{ tpl .Values.global.postgresqlHost $ }}'
-
-  envVarsFrom:
-    db_dbuser_password:
-      secretKeyRef:
-        # Must match postgres-init
-        name: esignet-db-user
-        key: esignet-db-user-password
-    spring_redis_password:
-      secretKeyRef:
-        name: '{{ tpl .Values.redisInstallationName $ }}'
-        # In our common Redis, auth is disabled, so we have created this manaully with random password
-        key: redis-password
-
-  postgresInit:
-    commonAnnotations:
-      "helm.sh/hook": post-install,post-upgrade
-      "helm.sh/hook-weight": "2"
-      "helm.sh/hook-delete-policy": before-hook-creation
-    envVarsFrom:
-      DBUSER_PWD:
-        secretKeyRef:
-          name: esignet-db-user
-          key: esignet-db-user-password
-
-  springConfig:
-    names: application,esignet
-    profile: default
-    gitRepo:
-      enabled: true
-      repoUrl: https://github.com/openg2p/mosip-config
-      branch: master
-    rawConfig: ""
-
-mock-identity-system:
-  enabled: true
-  hostname: 'esignet.{{ .Values.global.baseDomain }}'
-
-  envVars:
-    JDK_JAVA_OPTIONS: "-XX:-UseContainerSupport -Dspring.jmx.enabled=false"
-
-  envVarsFrom:
-    db_dbuser_password:
-      # MUST MATCH what is specified in postgres-init
-      secretKeyRef:
-        name: mockid-db-user
-        key: mockid-db-user-password
-
-  postgresqlInstallationName: '{{ tpl .Values.global.postgresqlHost $ }}'
-  postgresInit:
-    commonAnnotations:
-      "helm.sh/hook": post-install,post-upgrade
-      "helm.sh/hook-weight": "2"
-      "helm.sh/hook-delete-policy": before-hook-creation
-    envVarsFrom:
-      DBUSER_PWD:
-        # Same as above
-        secretKeyRef:
-          name: mockid-db-user
-          key: mockid-db-user-password
-
-  springConfig:
-    names: application,mock-identity-system
-    profile: default
-    gitRepo:
-      enabled: true
-      repoUrl: https://github.com/openg2p/mosip-config
-      branch: master
-    rawConfig: ""
+  resources:
+    limits:
+      memory: 128Mi
+    requests:
+      cpu: 10m
+      memory: 32Mi

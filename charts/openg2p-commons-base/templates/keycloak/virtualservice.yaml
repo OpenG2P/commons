@@ -1,0 +1,21 @@
+{{- if .Values.keycloak.enabled }}
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: {{ .Release.Name }}-keycloak
+spec:
+  gateways:
+    - {{ .Release.Name }}-keycloak
+  hosts:
+    - 'keycloak.{{ .Values.global.baseDomain }}'
+  http:
+    - route:
+        - destination:
+            host: {{ .Release.Name }}-keycloak
+            port:
+              number: 80
+      headers:
+        request:
+          set:
+            x-forwarded-proto: https
+{{- end }}

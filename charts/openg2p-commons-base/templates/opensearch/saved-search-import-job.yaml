@@ -1,0 +1,100 @@
+{{- if .Values.opensearch.enabled }}
+{{- if .Values.opensearch.dashboards.enabled }}
+{{- if .Values.opensearch.savedSearch.enabled }}
+{{- $osdHost := include "common.tplvalues.render" (dict "value" .Values.opensearch.savedSearch.dashboardsHost "context" .Subcharts.opensearch) }}
+{{- $secretName := include "common.tplvalues.render" (dict "value" .Values.opensearch.adminCredentials.passwordFrom.secretKeyRef.name "context" .Subcharts.opensearch) }}
+{{- $secretKey := include "common.tplvalues.render" (dict "value" .Values.opensearch.adminCredentials.passwordFrom.secretKeyRef.key "context" .Subcharts.opensearch) }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Release.Name }}-opensearch-saved-search-{{ .Release.Revision }}
+spec:
+  backoffLimit: 5
+  ttlSecondsAfterFinished: 86400
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: opensearch-saved-search
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        sidecar.istio.io/inject: "false"
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: import-saved-search
+          image: "docker.io/curlimages/curl:8.7.1"
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -e
+              OSD_URL="http://{{ $osdHost }}:5601"
+
+              echo "Waiting for OpenSearch Dashboards to be ready..."
+              for i in $(seq 1 60); do
+                HTTP_CODE=$(curl -sk -o /dev/null -w "%{http_code}" \
+                  -u "${OSD_USER}:${OSD_PASSWORD}" \
+                  "${OSD_URL}/api/status") || HTTP_CODE="000"
+                if [ "$HTTP_CODE" = "200" ]; then
+                  echo "Dashboards is ready."
+                  break
+                fi
+                echo "  Attempt $i/60 - waiting (HTTP $HTTP_CODE)..."
+                sleep 10
+              done
+
+              echo "Importing saved objects from /ndjson/saved-search.ndjson..."
+              HTTP_CODE=$(curl -sk -o /tmp/import-response.json -w "%{http_code}" \
+                -u "${OSD_USER}:${OSD_PASSWORD}" \
+                -X POST "${OSD_URL}/api/saved_objects/_import?overwrite={{ .Values.opensearch.savedSearch.overwrite }}" \
+                -H "osd-xsrf: true" \
+                --form file=@/ndjson/saved-search.ndjson)
+
+              if [ "$HTTP_CODE" = "200" ]; then
+                echo "Saved objects imported successfully:"
+                cat /tmp/import-response.json
+                echo
+              else
+                echo "Saved objects import returned HTTP $HTTP_CODE:"
+                cat /tmp/import-response.json
+                exit 1
+              fi
+
+              {{- if .Values.opensearch.savedSearch.setAsDefaultRoute }}
+              echo "Setting defaultRoute to saved search (id={{ .Values.opensearch.savedSearch.savedSearchId }})..."
+              DEFAULT_ROUTE='{{ .Values.opensearch.savedSearch.defaultRoute }}'
+              HTTP_CODE=$(curl -sk -o /tmp/route-response.json -w "%{http_code}" \
+                -u "${OSD_USER}:${OSD_PASSWORD}" \
+                -X POST "${OSD_URL}/api/opensearch-dashboards/settings/defaultRoute" \
+                -H "osd-xsrf: true" \
+                -H "Content-Type: application/json" \
+                -d "{\"value\":\"${DEFAULT_ROUTE}\"}")
+
+              if [ "$HTTP_CODE" = "200" ]; then
+                echo "defaultRoute set successfully."
+              else
+                echo "defaultRoute set returned HTTP $HTTP_CODE (non-fatal):"
+                cat /tmp/route-response.json
+                echo
+              fi
+              {{- end }}
+
+              echo "Done. Saved search import complete."
+          env:
+            - name: OSD_USER
+              value: {{ .Values.opensearch.adminCredentials.user | quote }}
+            - name: OSD_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $secretName }}
+                  key: {{ $secretKey }}
+          volumeMounts:
+            - name: ndjson
+              mountPath: /ndjson
+              readOnly: true
+      volumes:
+        - name: ndjson
+          configMap:
+            name: {{ .Release.Name }}-opensearch-saved-search
+{{- end }}
+{{- end }}
+{{- end }}

@@ -1,0 +1,66 @@
+{{- if .Values.minio.enabled }}
+{{- if .Values.minio.istio.enabled }}
+{{- if .Values.minio.istio.virtualservice.enabled }}
+{{- $istioVsHostname := include "common.tplvalues.render" (dict "value" .Values.minio.istio.virtualservice.host "context" .Subcharts.minio) }}
+{{- $mainHostname := include "common.tplvalues.render" (dict "value" .Values.minio.hostname "context" .Subcharts.minio) }}
+{{- $hostname := default $mainHostname $istioVsHostname }}
+{{- $apiHostname := include "common.tplvalues.render" (dict "value" .Values.minio.istio.virtualservice.apiHost "context" .Subcharts.minio) }}
+{{- $destination := include "common.tplvalues.render" (dict "value" .Values.minio.istio.virtualservice.destination "context" .Subcharts.minio) }}
+{{- $consolePort := include "common.tplvalues.render" (dict "value" .Values.minio.istio.virtualservice.destinationPort "context" .Subcharts.minio) }}
+{{- $apiPort := include "common.tplvalues.render" (dict "value" (.Values.minio.istio.virtualservice.apiPort | default "9000") "context" .Subcharts.minio) }}
+{{- $gateway := default (include "common.names.fullname" .Subcharts.minio) .Values.minio.istio.virtualservice.gateway }}
+---
+# MinIO Console UI
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: {{ include "common.names.fullname" .Subcharts.minio }}
+  labels: {{- include "common.labels.standard" (dict "customLabels" .Values.minio.commonLabels "context" .Subcharts.minio) | nindent 4 }}
+  {{- if .Values.minio.commonAnnotations }}
+  annotations: {{- include "common.tplvalues.render" (dict "value" .Values.minio.commonAnnotations "context" $) | nindent 4 }}
+  {{- end }}
+spec:
+  hosts:
+  - {{ $hostname | quote }}
+  gateways:
+  - {{ $gateway }}
+  http:
+  - headers:
+      request:
+        set:
+          x-forwarded-host: {{ $hostname | quote }}
+          x-forwarded-proto: https
+    route:
+    - destination:
+        host: {{ $destination }}
+        port:
+          number: {{ $consolePort }}
+---
+# MinIO S3 API
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: {{ include "common.names.fullname" .Subcharts.minio }}-api
+  labels: {{- include "common.labels.standard" (dict "customLabels" .Values.minio.commonLabels "context" .Subcharts.minio) | nindent 4 }}
+  {{- if .Values.minio.commonAnnotations }}
+  annotations: {{- include "common.tplvalues.render" (dict "value" .Values.minio.commonAnnotations "context" $) | nindent 4 }}
+  {{- end }}
+spec:
+  hosts:
+  - {{ $apiHostname | quote }}
+  gateways:
+  - {{ $gateway }}
+  http:
+  - headers:
+      request:
+        set:
+          x-forwarded-host: {{ $apiHostname | quote }}
+          x-forwarded-proto: https
+    route:
+    - destination:
+        host: {{ $destination }}
+        port:
+          number: {{ $apiPort }}
+{{- end }}
+{{- end }}
+{{- end }}

@@ -1,0 +1,145 @@
+{{- if (index .Values "keycloak-init" "enabled") }}
+{{- $suffix := .Release.Namespace }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-client-secrets-sync
+data:
+  sync.sh: |
+    #!/bin/sh
+    set -e
+
+    KEYCLOAK_URL="${KEYCLOAK_URL}"
+    KEYCLOAK_USER="${KEYCLOAK_USER}"
+    KEYCLOAK_PASSWORD="${KEYCLOAK_PASSWORD}"
+    NAMESPACE="${NAMESPACE}"
+    K8S_API="https://kubernetes.default.svc"
+    SA_TOKEN=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
+    CA_CERT="/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
+
+    # Get Keycloak access token
+    get_token() {
+      curl -sfk -X POST \
+        "${KEYCLOAK_URL}/realms/master/protocol/openid-connect/token" \
+        -d "client_id=admin-cli" \
+        -d "username=${KEYCLOAK_USER}" \
+        -d "password=${KEYCLOAK_PASSWORD}" \
+        -d "grant_type=password" | jq -r '.access_token'
+    }
+
+    # Fetch client secret from Keycloak for a given realm
+    get_client_secret() {
+      local realm="$1"
+      local client_id="$2"
+      local token="$3"
+
+      local client_uuid
+      client_uuid=$(curl -sfk \
+        -H "Authorization: Bearer ${token}" \
+        "${KEYCLOAK_URL}/admin/realms/${realm}/clients?clientId=${client_id}" \
+        | jq -r '.[0].id // empty')
+
+      if [ -z "$client_uuid" ]; then
+        return 1
+      fi
+
+      curl -sfk \
+        -H "Authorization: Bearer ${token}" \
+        "${KEYCLOAK_URL}/admin/realms/${realm}/clients/${client_uuid}/client-secret" \
+        | jq -r '.value // empty'
+    }
+
+    # Create or patch K8s secret
+    upsert_secret() {
+      local secret_name="$1"
+      local secret_value="$2"
+      local encoded
+      encoded=$(printf '%s' "${secret_value}" | base64)
+
+      local http_code
+      http_code=$(curl -s -o /dev/null -w "%{http_code}" \
+        --cacert "${CA_CERT}" \
+        -H "Authorization: Bearer ${SA_TOKEN}" \
+        "${K8S_API}/api/v1/namespaces/${NAMESPACE}/secrets/${secret_name}")
+
+      if [ "$http_code" = "200" ]; then
+        curl -sf --cacert "${CA_CERT}" \
+          -X PATCH \
+          -H "Authorization: Bearer ${SA_TOKEN}" \
+          -H "Content-Type: application/strategic-merge-patch+json" \
+          -d "{\"data\":{\"client_secret\":\"${encoded}\"}}" \
+          "${K8S_API}/api/v1/namespaces/${NAMESPACE}/secrets/${secret_name}" > /dev/null
+        echo "Patched secret ${secret_name}"
+      else
+        curl -sf --cacert "${CA_CERT}" \
+          -X POST \
+          -H "Authorization: Bearer ${SA_TOKEN}" \
+          -H "Content-Type: application/json" \
+          -d "{\"apiVersion\":\"v1\",\"kind\":\"Secret\",\"metadata\":{\"name\":\"${secret_name}\",\"namespace\":\"${NAMESPACE}\"},\"type\":\"Opaque\",\"data\":{\"client_secret\":\"${encoded}\"}}" \
+          "${K8S_API}/api/v1/namespaces/${NAMESPACE}/secrets" > /dev/null
+        echo "Created secret ${secret_name}"
+      fi
+    }
+
+    echo "Fetching Keycloak access token..."
+    TOKEN=""
+    for i in $(seq 1 30); do
+      TOKEN=$(get_token) && [ -n "$TOKEN" ] && break
+      echo "Waiting for Keycloak... (attempt $i/30)"
+      sleep 5
+    done
+
+    if [ -z "$TOKEN" ]; then
+      echo "ERROR: Could not authenticate to Keycloak."
+      exit 1
+    fi
+
+    echo "Syncing client secrets from Keycloak to namespace ${NAMESPACE}..."
+    ERRORS=0
+    {{- range $realmName, $realmCfg := (index .Values "keycloak-init" "realms") }}
+    {{- $resolvedRealm := tpl $realmName (dict "suffix" $suffix) }}
+    {{- range $realmCfg.clients }}
+    REALM="{{ $resolvedRealm }}"
+    CLIENT_ID="{{ .clientId }}"
+    echo "Processing ${CLIENT_ID} in realm ${REALM}..."
+    SECRET_VALUE=""
+    for attempt in $(seq 1 20); do
+      SECRET_VALUE=$(get_client_secret "${REALM}" "${CLIENT_ID}" "${TOKEN}") && [ -n "$SECRET_VALUE" ] && break
+      echo "  Client ${CLIENT_ID} not ready yet (attempt ${attempt}/20). Waiting..."
+      sleep 10
+      if [ $((attempt % 5)) -eq 0 ]; then
+        TOKEN=$(get_token) || true
+      fi
+    done
+    if [ -n "$SECRET_VALUE" ]; then
+      upsert_secret "${CLIENT_ID}" "${SECRET_VALUE}"
+    else
+      echo "WARN: Could not fetch secret for ${CLIENT_ID} after retries. Skipping."
+      ERRORS=$((ERRORS+1))
+    fi
+    {{- end }}
+    {{- end }}
+
+    if [ $ERRORS -gt 0 ]; then
+      echo "Completed with ${ERRORS} warning(s)."
+    else
+      echo "All client secrets synced successfully."
+    fi
+
+    # Restart deployments that consume the synced OIDC client secrets
+    echo "Restarting affected deployments..."
+    RESTART_PATCH="{\"spec\":{\"template\":{\"metadata\":{\"annotations\":{\"client-secrets-sync/restartedAt\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}}}}}"
+    DEPLOYMENTS="{{ .Release.Name }}-superset {{ .Release.Name }}-superset-worker"
+    for DEPLOY in $DEPLOYMENTS; do
+      echo "Restarting deployment ${DEPLOY}..."
+      curl -sf --cacert "${CA_CERT}" \
+        -X PATCH \
+        -H "Authorization: Bearer ${SA_TOKEN}" \
+        -H "Content-Type: application/strategic-merge-patch+json" \
+        -d "${RESTART_PATCH}" \
+        "${K8S_API}/apis/apps/v1/namespaces/${NAMESPACE}/deployments/${DEPLOY}" > /dev/null 2>&1 \
+        && echo "Restarted ${DEPLOY}" \
+        || echo "WARN: Could not restart ${DEPLOY} (may not exist yet)"
+    done
+    echo "Done."
+{{- end }}

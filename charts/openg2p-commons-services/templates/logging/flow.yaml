@@ -1,0 +1,24 @@
+{{- if .Values.logging.enabled }}
+apiVersion: logging.banzaicloud.io/v1beta1
+kind: Flow
+metadata:
+  name: {{ .Release.Name }}-services-flow
+  namespace: {{ .Release.Namespace }}
+spec:
+  match:
+    - select:
+        labels:
+          app.kubernetes.io/instance: {{ .Release.Name }}
+        container_names:
+          {{- toYaml .Values.logging.containerNames | nindent 10 }}
+  filters:
+    - parser:
+        remove_key_name_field: true
+        reserve_data: true
+        parse:
+          type: json
+    - tag_normaliser:
+        format: ${namespace_name}.${pod_name}.${container_name}
+  localOutputRefs:
+    - {{ .Values.logging.outputRef | quote }}
+{{- end }}

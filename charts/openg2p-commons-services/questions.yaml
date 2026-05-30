@@ -1,0 +1,242 @@
+questions:
+
+# General
+- variable: global.baseDomain
+  description: >-
+    Base domain for all services. All service hostnames are derived as
+    <service>.baseDomain (e.g., superset.example.openg2p.org).
+  type: string
+  label: Base Domain
+  required: true
+  group: General
+
+# Keycloak
+- variable: global.keycloakBaseUrl
+  description: Keycloak Base URL used in all components (e.g. https://keycloak.openg2p.org)
+  type: string
+  label: Keycloak Base URL
+  group: Keycloak
+
+- variable: global.keycloakAdminSecret
+  description: >-
+    Name of the K8s secret holding the Keycloak admin password (created by the
+    commons-base chart). Default assumes base release is 'commons'. Set this if
+    your base release has a different name (e.g. <base-release>-keycloak).
+  type: string
+  label: Keycloak Admin Secret Name
+  group: Keycloak
+
+- variable: global.keycloakAdminUser
+  description: Keycloak admin username (default 'admin').
+  type: string
+  label: Keycloak Admin User
+  group: Keycloak
+
+# Service hostnames (used both for service deployments and Keycloak redirect URIs)
+- variable: global.supersetHostname
+  description: >-
+    Hostname for Superset. Defaults to superset.<baseDomain>.
+  type: string
+  label: Superset Hostname
+  group: Service Hostnames
+
+- variable: global.odkHostname
+  description: >-
+    Hostname for ODK Central. Defaults to odk.<baseDomain>.
+  type: string
+  label: ODK Central Hostname
+  group: Service Hostnames
+
+- variable: global.iamHostname
+  description: >-
+    Hostname for the IAM service. Defaults to iam.<baseDomain>.
+  type: string
+  label: IAM Hostname
+  group: Service Hostnames
+
+- variable: global.staffPortalApiHostname
+  description: >-
+    Hostname of the IAM staff portal API. Defaults to staff-iam.<baseDomain>.
+    Used by both the IAM deployment and the Keycloak staff-portal client
+    redirect URI — keeping them in sync.
+  type: string
+  label: Staff Portal API Hostname
+  group: Service Hostnames
+
+# Staff Portal UI
+- variable: global.staffPortalHostname
+  description: >-
+    Hostname for the Staff Portal UI. Defaults to staff-portal.<baseDomain>.
+    Override if your environment uses a different convention
+    (e.g. staff-portal.<env>.openg2p.org).
+  type: string
+  label: Staff Portal Hostname
+  group: Staff Portal UI
+
+- variable: global.staffPortalCookieDomain
+  description: >-
+    Cookie domain shared between Staff Portal UI and the IAM API.
+    Should be the parent domain so cookies are accessible to both.
+    Defaults to .<baseDomain>.
+  type: string
+  label: Staff Portal Cookie Domain
+  group: Staff Portal UI
+
+- variable: openg2p-staff-portal-ui.enabled
+  description: Install OpenG2P Staff Portal UI
+  type: boolean
+  label: Install Staff Portal UI?
+  group: Staff Portal UI
+
+# Infrastructure references (from openg2p-commons-base)
+- variable: global.postgresqlHost
+  description: >-
+    Hostname or IP address of PostgreSQL. For embedded PG set to <base-release-name>-postgresql.
+    For external PostgreSQL, set to the hostname or IP of the external server.
+  type: string
+  label: PostgreSQL Hostname
+  required: true
+  group: Infrastructure
+
+- variable: global.postgresqlSecret
+  description: >-
+    Name of the Kubernetes secret containing the PostgreSQL superuser password.
+    For embedded PG, set to <base-release-name>-postgresql. For external PG,
+    pre-create the secret manually and set its name here.
+  type: string
+  label: PostgreSQL Superuser Secret Name
+  group: Infrastructure
+
+- variable: global.postgresqlSecretKey
+  description: >-
+    Key inside the superuser secret that holds the password. Defaults to
+    'postgres-password'. Change if your external secret uses a different key.
+  type: string
+  label: PostgreSQL Superuser Secret Key
+  group: Infrastructure
+
+- variable: global.redisInstallationName
+  description: >-
+    Redis service name from the base chart. Set to <base-release-name>-redis.
+  type: string
+  label: Redis Hostname
+  group: Infrastructure
+
+- variable: global.redisAuthInstallationName
+  description: >-
+    Redis (auth-enabled) service name from the base chart. Set to <base-release-name>-redis-auth.
+  type: string
+  label: Redis Auth Hostname
+  group: Infrastructure
+
+- variable: global.minioInstallationName
+  description: >-
+    MinIO service name from the base chart. Set to <base-release-name>-minio.
+  type: string
+  label: MinIO Hostname
+  group: Infrastructure
+
+- variable: global.mailInstallationName
+  description: >-
+    Mail service name from the base chart. Set to <base-release-name>-mail.
+  type: string
+  label: Mail Server Hostname
+  group: Infrastructure
+
+- variable: global.kafkaInstallationName
+  description: >-
+    Kafka service name from the base chart. Set to <base-release-name>-kafka.
+  type: string
+  label: Kafka Hostname
+  group: Infrastructure
+
+- variable: global.softhsmInstallationName
+  description: >-
+    SoftHSM service name from the base chart. Set to <base-release-name>-softhsm.
+  type: string
+  label: SoftHSM Hostname
+  group: Infrastructure
+
+# Logging
+- variable: logging.enabled
+  description: Ship pod logs (JSON) to the OpenSearch Output configured by commons-base
+  type: boolean
+  label: Enable Logging
+  group: Logging
+
+- variable: logging.outputRef
+  description: Name of the namespace-scoped Fluent Output resource (created by commons-base) to route logs to
+  type: string
+  label: Fluent Output Name
+  group: Logging
+
+# Master data
+- variable: masterData.enabled
+  type: boolean
+  label: Enable Master Data service
+  group: Master Data
+
+# ODK
+- variable: odk-central.enabled
+  description: This installs ODK Central
+  type: boolean
+  label: Install ODK Central?
+  group: ODK
+
+# Reporting
+- variable: reporting.enabled
+  description: This installs Reporting Framework.
+  type: boolean
+  label: Install Reporting Framework?
+  group: Reporting
+
+# Keymanager
+- variable: keymanager.enabled
+  description: This installs Keymanager.
+  type: boolean
+  label: Install Keymanager?
+  group: Keymanager
+
+- variable: keymanager.istio.enabled
+  label: Expose Keymanager APIs
+  description: >-
+    Enable this to manually download/upload certificates to Keymanager.
+    This exposes Keymanager APIs publicly outside Kubernetes.
+  type: boolean
+  group: Keymanager
+
+- variable: keymanager.keystoreType
+  label: Keystore Type
+  description: PKCS11 for HSM. PKCS12 for storing into local p12 file.
+  type: enum
+  options:
+    - PKCS11
+    - PKCS12
+  group: Keymanager
+
+- variable: keymanager.persistence.enabled
+  label: Persistence Enabled
+  description: Enable this if Keystore Type is PKCS12.
+  type: boolean
+  group: Keymanager
+
+# Superset
+- variable: superset.enabled
+  description: Install Superset
+  type: boolean
+  label: Install Superset?
+  group: Superset
+
+# eSignet
+- variable: esignet.enabled
+  description: This installs eSignet for mocking user authentication
+  type: boolean
+  label: Install eSignet?
+  group: eSignet
+
+# Mock Identity Settings
+- variable: mock-identity-system.enabled
+  description: This installs Mock Identity System. Install only when eSignet is installed
+  type: boolean
+  label: Install Mock Identity System?
+  group: eSignet

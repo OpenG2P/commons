@@ -1,0 +1,191 @@
+questions:
+
+# General
+- variable: global.baseDomain
+  description: >-
+    Base domain for all services. All service hostnames are derived as
+    <service>.baseDomain (e.g., superset.example.openg2p.org).
+  type: string
+  label: Base Domain
+  required: true
+  group: General
+
+# Service hostnames (used both for service deployments and Keycloak redirect URIs)
+- variable: global.kafkaUiHostname
+  description: >-
+    Hostname for Kafka UI. Defaults to kafka.<baseDomain>.
+  type: string
+  label: Kafka UI Hostname
+  group: Service Hostnames
+
+- variable: global.opensearchHostname
+  description: >-
+    Hostname for OpenSearch Dashboards. Defaults to opensearch.<baseDomain>.
+  type: string
+  label: OpenSearch Hostname
+  group: Service Hostnames
+
+- variable: global.minioHostname
+  description: >-
+    Hostname for the MinIO console. Defaults to minio.<baseDomain>.
+  type: string
+  label: MinIO Hostname
+  group: Service Hostnames
+
+# Keycloak
+- variable: keycloak.enabled
+  description: >-
+    Install a per-environment Keycloak instance. Disable only when using
+    an external Keycloak and set global.keycloakBaseUrl accordingly.
+  type: boolean
+  label: Install Keycloak?
+  group: Keycloak
+
+- variable: global.keycloakBaseUrl
+  description: >-
+    Keycloak Base URL used in all components. Defaults to
+    https://keycloak.<baseDomain>. Override only for external Keycloak.
+  type: string
+  label: Keycloak Base URL (override)
+  group: Keycloak
+
+- variable: keycloak.image.tag
+  description: >-
+    Docker image tag for Keycloak. Uses openg2p/keycloak image from the chart.
+  type: string
+  label: Keycloak Image Tag
+  group: Keycloak
+
+- variable: keycloak-init.enabled
+  description: >-
+    Enable Keycloak client initialization. Creates OIDC realms, clients,
+    and secrets for Superset, OpenSearch, Kafka, MinIO, and ODK.
+  type: boolean
+  label: Run Keycloak Init?
+  group: Keycloak
+
+- variable: keycloak-init.realms.staff.users[0].email
+  description: >-
+    Email address for the default admin user created in the staff realm.
+  type: string
+  label: Staff Admin Email
+  group: Keycloak
+
+# PostgreSQL
+- variable: postgresql.enabled
+  description: Disable for external PostgreSQL server
+  type: boolean
+  label: Install PostgreSQL
+  group: Postgres
+
+- variable: global.postgresqlHost
+  description: Hostname of PostgreSQL installation. Change this only for external PostgreSQL server.
+  type: string
+  label: PostgreSQL Hostname
+  group: Postgres
+
+- variable: global.postgresqlSecret
+  description: >-
+    Name of the Kubernetes secret containing the PostgreSQL superuser password.
+    For embedded PostgreSQL this is auto-created. For external PostgreSQL,
+    pre-create this secret manually and set the name here.
+  type: string
+  label: PostgreSQL Superuser Secret Name
+  group: Postgres
+
+- variable: global.postgresqlSecretKey
+  description: >-
+    Key inside the superuser secret that holds the password. Defaults to
+    'postgres-password'. Change if your external secret uses a different key.
+  type: string
+  label: PostgreSQL Superuser Secret Key
+  group: Postgres
+
+# Mail
+- variable: mail.enabled
+  description: This installs Mail server for relaying SMTP requests to preferred backend.
+  type: boolean
+  label: Install Mail SMTP Server?
+  group: Mail
+
+- variable: global.mailInstallationName
+  description: Hostname of the Mail server. Change for external installations.
+  type: string
+  label: Mail Server Hostname
+  group: Mail
+
+# Minio
+- variable: minio.enabled
+  description: This installs Minio for document store.
+  type: boolean
+  label: Install Minio?
+  group: Minio
+
+# Opensearch
+- variable: opensearch.enabled
+  description: This installs OpenSearch.
+  type: boolean
+  label: Install OpenSearch?
+  group: Opensearch
+
+- variable: opensearch.ismPolicy.enabled
+  description: >-
+    Enable automatic log retention. Deletes logstash indexes older than
+    the configured retention period.
+  type: boolean
+  label: Enable Log Retention Policy?
+  group: Opensearch
+
+- variable: opensearch.ismPolicy.retentionDays
+  description: >-
+    Number of days to retain log indexes before automatic deletion.
+  type: int
+  label: Log Retention (days)
+  group: Opensearch
+
+# Kafka
+- variable: kafka.enabled
+  description: This installs Kafka.
+  type: boolean
+  label: Install Kafka?
+  group: Kafka
+
+- variable: kafka.controller.replicaCount
+  description: >-
+    Number of Kafka controller replicas. Use 1 for sandbox, 3 for production
+    (quorum-based consensus requires odd number, minimum 3).
+  type: int
+  label: Kafka Controller Replicas
+  group: Kafka
+
+- variable: kafka.broker.replicaCount
+  description: >-
+    Number of Kafka broker replicas. Use 1 for sandbox, 3 for production
+    (matches replication factor and provides fault tolerance).
+  type: int
+  label: Kafka Broker Replicas
+  group: Kafka
+
+- variable: kafka.broker.persistence.enabled
+  description: >-
+    Enable persistent storage for Kafka brokers. Must be true in production
+    to prevent data loss on pod restart.
+  type: boolean
+  label: Kafka Broker Persistence?
+  group: Kafka
+
+- variable: kafka.extraConfig
+  description: >-
+    Kafka server.properties overrides. For production, set:
+    default.replication.factor=3, offsets.topic.replication.factor=3,
+    transaction.state.log.replication.factor=3, transaction.state.log.min.isr=2,
+    min.insync.replicas=2, log.retention.hours=168.
+  type: multiline
+  label: Kafka Extra Config
+  group: Kafka
+
+- variable: kafkaUi.enabled
+  description: This installs Kafka UI
+  type: boolean
+  label: Install Kafka UI?
+  group: Kafka
