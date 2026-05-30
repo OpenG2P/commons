@@ -6,6 +6,7 @@ on:
       - '**'
     branches:
       - 2.*
+      - develop
   workflow_dispatch:
     inputs:
       forcePublishCharts:
