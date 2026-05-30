@@ -240,3 +240,37 @@ questions:
   type: boolean
   label: Install Mock Identity System?
   group: eSignet
+
+# VC Issuance — Inji Certify
+- variable: injiCertify.enabled
+  description: Install Inji Certify (Verifiable Credential issuer)
+  type: boolean
+  label: Install Inji Certify?
+  group: VC Issuance (Inji Certify)
+- variable: global.certifyHostname
+  description: Hostname under which Inji Certify is accessed (e.g. certify.example.org)
+  type: string
+  label: Certify Hostname
+  group: VC Issuance (Inji Certify)
+  show_if: "injiCertify.enabled=true"
+- variable: global.vcIssuerDid
+  description: >-
+    Issuer DID — identifies the VC issuer (env-level, one per environment).
+    Modules reference this when registering their credential_configs.
+  type: string
+  label: Issuer DID
+  group: VC Issuance (Inji Certify)
+  show_if: "injiCertify.enabled=true"
+- variable: injiCertify.certify.image.tag
+  description: Inji Certify image tag
+  type: string
+  label: Certify Image Tag
+  default: "0.14.0"
+  group: VC Issuance (Inji Certify)
+  show_if: "injiCertify.enabled=true"
+- variable: injiCertify.certify.p12.existingSecret
+  description: Name of the Secret holding the .p12 keystore (the issuer identity)
+  type: string
+  label: .p12 Keystore Secret Name
+  group: VC Issuance (Inji Certify)
+  show_if: "injiCertify.enabled=true"

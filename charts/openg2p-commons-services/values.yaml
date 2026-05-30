@@ -23,6 +23,14 @@ global:
   minioInstallationName: commons-minio
 
   sysAdminEmail: admin@openg2p.sandbox.org
+  # Inji Certify (VC issuer) hostname + public issuer URL. Shared global so the
+  # injiCertify subchart picks it up (it reads global.certifyHostname / certifyDomainUrl).
+  certifyHostname: 'certify.{{ .Values.global.baseDomain }}'
+  certifyDomainUrl: 'https://{{ tpl .Values.global.certifyHostname $ }}'
+  # VC issuer DID — env-level (one issuer/authority per environment), set at
+  # Certify install. Modules reference the same value when registering their
+  # credential_configs. Replace per environment.
+  vcIssuerDid: 'did:web:REPLACE-WITH-ISSUER-DID-HOST'
   redisInstallationName: commons-redis
   redisAuthInstallationName: commons-redis-auth
   kafkaInstallationName: commons-kafka
@@ -739,3 +747,24 @@ keycloak-init:
           clientRoleMappings:
             openg2p-superset:
               - "Admin"
+
+# ---------------------------------------------------------------------------
+# Inji Certify — VC issuer (Phase-1 paper credentials, push model).
+# Subchart defaults already target the commons PostgreSQL (commons-postgresql)
+# and create their own DB/user via postgres-init. Hostname/issuer URL come from
+# global.certifyHostname / certifyDomainUrl above.
+#
+# PREREQUISITE before enabling: create the PKCS12 keystore Secret
+#   <release>-inji-certify-p12  (the issuer identity, .p12 — persist+back up),
+# or set certify.p12.existingSecret / certify.p12.enabled=false. Also review the
+# DB-schema-init SQL (files/db-init/*.sql) for your Certify image version.
+# ---------------------------------------------------------------------------
+injiCertify:
+  enabled: true
+  certify:
+    image:
+      repository: injistack/inji-certify-with-plugins
+      tag: "0.14.0"
+  # NOTE: the issuer DID/key and the VC credential_config definitions are NOT
+  # set here — they are owned by the consuming module (registry/NSR), which
+  # registers them with Certify on install. This is the generic issuer service.
