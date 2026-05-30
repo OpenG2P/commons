@@ -2,7 +2,7 @@ apiVersion: v2
 name: openg2p-commons-base
 description: "Helm chart for OpenG2P Commons infrastructure (databases, message queues, init jobs)"
 type: application
-version: 2.0.0-develop
+version: 0.0.0-develop
 dependencies:
   - name: postgresql
     version: 15.5.38
