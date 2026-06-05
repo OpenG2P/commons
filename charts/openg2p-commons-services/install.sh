@@ -24,6 +24,20 @@ BASE_RELEASE="$3"
 BASE_DOMAIN="$4"
 shift 4
 
+# Enforce both release names. Cross-chart references (iamServiceUrl,
+# Keycloak admin secret, etc.) hardcode these.
+if [ "$RELEASE" != "commons-services" ]; then
+  echo "ERROR: release-name must be 'commons-services' (got '$RELEASE')."
+  echo "Cross-chart references (e.g. global.iamServiceUrl pointing at"
+  echo "commons-services-iam-staff-portal-api) depend on this name."
+  exit 1
+fi
+if [ "$BASE_RELEASE" != "commons" ]; then
+  echo "ERROR: base-release-name must be 'commons' (got '$BASE_RELEASE')."
+  echo "The base chart enforces 'commons' as its release name."
+  exit 1
+fi
+
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 # Verify namespace exists (should already exist from base install)

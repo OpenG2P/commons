@@ -50,4 +50,7 @@ dependencies:
 icon: https://openg2p.github.io/openg2p-helm/openg2p-logo.png
 annotations:
   catalog.cattle.io/display-name: "OpenG2P Commons Base"
+  # Rancher locks the release name to this value. Other release names break
+  # cross-chart references (commons-services expects 'commons' as base release).
+  catalog.cattle.io/release-name: "commons"
   openg2p.org/add-to-rancher: "openg2p.org/add-to-rancher"

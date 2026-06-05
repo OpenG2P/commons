@@ -56,4 +56,8 @@ dependencies:
 icon: https://openg2p.github.io/openg2p-helm/openg2p-logo.png
 annotations:
   catalog.cattle.io/display-name: "OpenG2P Commons Services"
+  # Rancher locks the release name to this value. Cross-chart references
+  # (e.g. global.iamServiceUrl points at commons-services-iam-staff-portal-api)
+  # depend on this release name being 'commons-services'.
+  catalog.cattle.io/release-name: "commons-services"
   openg2p.org/add-to-rancher: "openg2p.org/add-to-rancher"

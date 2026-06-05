@@ -19,6 +19,16 @@ RELEASE="$2"
 BASE_DOMAIN="$3"
 shift 3
 
+# Enforce the release name. Other releases break cross-chart references
+# (commons-services expects 'commons' as the base release name).
+if [ "$RELEASE" != "commons" ]; then
+  echo "ERROR: release-name must be 'commons' (got '$RELEASE')."
+  echo "Cross-chart references (postgres host, keycloak admin secret, etc.)"
+  echo "assume the base release is named 'commons'. Use:"
+  echo "  $0 $NAMESPACE commons $BASE_DOMAIN"
+  exit 1
+fi
+
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 # Ensure namespace exists
