@@ -157,18 +157,8 @@ questions:
   label: SoftHSM Hostname
   group: Infrastructure
 
-# Logging
-- variable: logging.enabled
-  description: Ship pod logs (JSON) to the OpenSearch Output configured by commons-base
-  type: boolean
-  label: Enable Logging
-  group: Logging
-
-- variable: logging.outputRef
-  description: Name of the namespace-scoped Fluent Output resource (created by commons-base) to route logs to
-  type: string
-  label: Fluent Output Name
-  group: Logging
+# Logging is handled cluster-wide by OpenTelemetry + Loki at the infra layer;
+# no per-service logging configuration is needed here anymore.
 
 # Master data
 - variable: masterData.enabled

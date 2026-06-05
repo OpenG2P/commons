@@ -20,10 +20,6 @@ dependencies:
     version: 12.12.2
     repository: https://openg2p.github.io/openg2p-helm
     condition: minio.enabled
-  - name: opensearch
-    version: 1.2.0
-    repository: https://openg2p.github.io/openg2p-helm
-    condition: opensearch.enabled
   - name: kafka
     version: 29.3.14
     repository: https://openg2p.github.io/openg2p-helm

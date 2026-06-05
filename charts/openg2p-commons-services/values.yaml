@@ -55,20 +55,10 @@ global:
   keycloakAdminSecretKey: admin-password
   keycloakAdminUser: admin
 
-logging:
-  enabled: true
-  # Name of the namespace-scoped Fluent Output resource (created by commons-base)
-  outputRef: commons-opensearch
-  # Container names whose logs should be captured.
-  # Must match the actual container names in the deployments.
-  containerNames:
-    - master-data-api
-    - iam-staff-portal-api
-    - odk-central-backend
-    - esignet
-    - keymanager
-    - audit-manager
-    - staff-portal-ui
+# Logging is now handled cluster-wide by the OpenTelemetry + Loki stack at the
+# infra layer (the OTel agent DaemonSet tails every pod automatically), so the
+# per-service Fluentd Flow/Output that used to ship to OpenSearch has been
+# removed. No app-level logging config is required here anymore.
 
 masterData:
   enabled: true

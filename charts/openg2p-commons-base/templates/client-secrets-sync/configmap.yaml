@@ -134,10 +134,10 @@ data:
     fi
 
     # Restart deployments that consume the synced OIDC client secrets.
-    # commons-base owns: kafka-ui, opensearch-dashboards, minio.
+    # commons-base owns: kafka-ui, minio.
     echo "Restarting affected deployments..."
     RESTART_PATCH="{\"spec\":{\"template\":{\"metadata\":{\"annotations\":{\"client-secrets-sync/restartedAt\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}}}}}"
-    DEPLOYMENTS="{{ .Release.Name }}-kafka-ui {{ .Release.Name }}-opensearch-dashboards {{ .Release.Name }}-minio"
+    DEPLOYMENTS="{{ .Release.Name }}-kafka-ui {{ .Release.Name }}-minio"
     for DEPLOY in $DEPLOYMENTS; do
       echo "Restarting deployment ${DEPLOY}..."
       curl -sf --cacert "${CA_CERT}" \

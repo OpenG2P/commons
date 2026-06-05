@@ -18,13 +18,6 @@ questions:
   label: Kafka UI Hostname
   group: Service Hostnames
 
-- variable: global.opensearchHostname
-  description: >-
-    Hostname for OpenSearch Dashboards. Defaults to opensearch.<baseDomain>.
-  type: string
-  label: OpenSearch Hostname
-  group: Service Hostnames
-
 - variable: global.minioHostname
   description: >-
     Hostname for the MinIO console. Defaults to minio.<baseDomain>.
@@ -59,7 +52,7 @@ questions:
 - variable: keycloak-init.enabled
   description: >-
     Enable Keycloak client initialization. Creates OIDC realms, clients,
-    and secrets for Superset, OpenSearch, Kafka, MinIO, and ODK.
+    and secrets for Superset, Kafka, MinIO, and ODK.
   type: boolean
   label: Run Keycloak Init?
   group: Keycloak
@@ -120,28 +113,6 @@ questions:
   type: boolean
   label: Install Minio?
   group: Minio
-
-# Opensearch
-- variable: opensearch.enabled
-  description: This installs OpenSearch.
-  type: boolean
-  label: Install OpenSearch?
-  group: Opensearch
-
-- variable: opensearch.ismPolicy.enabled
-  description: >-
-    Enable automatic log retention. Deletes logstash indexes older than
-    the configured retention period.
-  type: boolean
-  label: Enable Log Retention Policy?
-  group: Opensearch
-
-- variable: opensearch.ismPolicy.retentionDays
-  description: >-
-    Number of days to retain log indexes before automatic deletion.
-  type: int
-  label: Log Retention (days)
-  group: Opensearch
 
 # Kafka
 - variable: kafka.enabled
