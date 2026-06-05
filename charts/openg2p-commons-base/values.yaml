@@ -393,7 +393,6 @@ kafkaUi:
   basePath: ""
 
   kafkaBootstrapServers: '{{ include "common.names.fullname" .Subcharts.kafka }}:9092'
-  debeziumAddress: '{{ .Release.Name }}-reporting-debezium'
 
   oidcIssuerUrl: '{{ tpl .Values.global.keycloakIssuerUrl $ }}'
   oidcClientId: openg2p-kafka
@@ -523,9 +522,6 @@ kafkaUi:
       clusters:
       - name: main
         bootstrapServers: '{{ tpl .Values.kafkaUi.kafkaBootstrapServers $ }}'
-        kafkaConnect:
-        - name: debezium
-          address: 'http://{{ tpl .Values.kafkaUi.debeziumAddress $ }}'
     auth:
       type: OAUTH2
       oauth2:
