@@ -72,8 +72,6 @@ masterData:
   # Based on observed usage ~442Mi.
   masterDataApi:
     resources:
-      limits:
-        memory: 1Gi
       requests:
         cpu: 50m
         memory: 512Mi
@@ -108,8 +106,6 @@ odk-central:
     enabled: true
     # Based on observed usage ~468Mi.
     resources:
-      limits:
-        memory: 1Gi
       requests:
         cpu: 50m
         memory: 512Mi
@@ -123,15 +119,11 @@ odk-central:
   # Based on observed usage: pyxform ~135Mi, frontend ~8Mi.
   pyxform:
     resources:
-      limits:
-        memory: 256Mi
       requests:
         cpu: 20m
         memory: 128Mi
   frontend:
     resources:
-      limits:
-        memory: 128Mi
       requests:
         cpu: 20m
         memory: 32Mi
@@ -139,8 +131,6 @@ odk-central:
   backend:
     # Based on observed usage ~400Mi.
     resources:
-      limits:
-        memory: 1Gi
       requests:
         cpu: 50m
         memory: 512Mi
@@ -188,8 +178,6 @@ artifactory:
     tag: 1.4.1-ES
   # Based on observed usage ~2Mi. Small nginx server.
   resources:
-    limits:
-      memory: 128Mi
     requests:
       cpu: 20m
       memory: 32Mi
@@ -199,8 +187,6 @@ keymanager:
   hostname: 'keymanager.{{ .Values.global.baseDomain }}'
   # Based on observed usage ~1436Mi. Spring Boot + HSM is memory-hungry.
   resources:
-    limits:
-      memory: 2Gi
     requests:
       cpu: 100m
       memory: 1Gi
@@ -331,8 +317,6 @@ superset:
     # Increased from 512Mi after OOMs observed in practice.
     # For production with heavy dashboard usage, consider 2Gi.
     resources:
-      limits:
-        memory: 1Gi
       requests:
         cpu: 50m
         memory: 512Mi
@@ -347,8 +331,6 @@ superset:
   # Based on observed usage ~813Mi.
   supersetWorker:
     resources:
-      limits:
-        memory: 1.5Gi
       requests:
         cpu: 50m
         memory: 768Mi
@@ -449,8 +431,6 @@ esignet:
   # Based on observed usage ~1940Mi. eSignet is the largest memory consumer.
   # For production, increase limit to 4Gi.
   resources:
-    limits:
-      memory: 3Gi
     requests:
       cpu: 100m
       memory: 2Gi
@@ -514,8 +494,6 @@ mock-identity-system:
   hostname: 'esignet.{{ .Values.global.baseDomain }}'
   # Based on observed usage ~912Mi.
   resources:
-    limits:
-      memory: 1.5Gi
     requests:
       cpu: 50m
       memory: 1Gi
@@ -572,8 +550,6 @@ openg2p-iam-service:
       tag: "1.0.1"
     # Based on observed usage ~159Mi. Python FastAPI app.
     resources:
-      limits:
-        memory: 512Mi
       requests:
         cpu: 50m
         memory: 256Mi
@@ -643,8 +619,6 @@ openg2p-audit-manager:
       enabled: false
     # Based on the chart's commented-out reference values.
     resources:
-      limits:
-        memory: 512Mi
       requests:
         cpu: 50m
         memory: 256Mi
@@ -674,8 +648,6 @@ openg2p-staff-portal-ui:
     replicaCount: 1
     # Lightweight Node.js UI.
     resources:
-      limits:
-        memory: 256Mi
       requests:
         cpu: 50m
         memory: 64Mi
