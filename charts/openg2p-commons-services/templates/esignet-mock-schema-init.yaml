@@ -1,0 +1,108 @@
+{{/*
+====================================================================================
+  eSignet & mock-identity-system schema-init — as REGULAR resources (not hooks)
+====================================================================================
+WHY THIS TEMPLATE EXISTS
+  Both subcharts embed keymanager, which needs the keymanager schema (key_alias,
+  key_store, …) in their OWN database. The subcharts create that schema with a
+  `postgres-init` Job that ships as a `helm.sh/hook: post-install` hook. That
+  deadlocks `helm --wait`: the eSignet/mock pods can't become Ready until the
+  schema exists, but a post-install hook only runs AFTER the release is Ready.
+  Result: the hook never runs, the schema is never created, the pods crashloop
+  with `relation "key_alias" does not exist`, and the release ends "failed".
+
+  Helm cannot reliably strip a subchart's hook annotation via values `null`
+  (verified on Helm v4) and an unknown hook value makes Helm skip the resource
+  entirely — so the subchart hook Jobs are disabled in values.yaml
+  (esignet.postgresInit.enabled / mock-identity-system.postgresInit.enabled =
+  false) and the equivalent runs here as ordinary Jobs that apply during the main
+  install, concurrent with the Deployments (the keymanager pattern). The pods
+  crashloop for ~40s until these Jobs create the schema, then recover, and
+  `helm --wait` completes cleanly.
+
+KEEP IN SYNC when bumping the esignet / mock-identity-system subchart versions:
+  image tag, GIT_REPO_URL, GIT_BRANCH, DB_USER, MOSIP_DB_NAME below mirror those
+  subcharts' `postgresInit` defaults. The per-environment values (PostgreSQL host,
+  superuser secret) are taken from the global.* values so they stay correct.
+*/}}
+{{- $ctx := . -}}
+{{- $image := "mosipid/postgres-init:1.2.0.1-B4" -}}
+{{- $pgHost := tpl .Values.global.postgresqlHost . -}}
+{{- $suSecret := tpl .Values.global.postgresqlSecret . -}}
+{{- $suKey := tpl .Values.global.postgresqlSecretKey . -}}
+{{- $services := list
+      (dict "name" "esignet"
+            "db" "mosip_esignet"
+            "dbUser" "esignetuser"
+            "dbUserSecret" "esignet-db-user"
+            "dbUserKey" "esignet-db-user-password"
+            "gitRepo" "https://github.com/mosip/esignet"
+            "gitBranch" "v1.4.1")
+      (dict "name" "mock-identity-system"
+            "db" "mosip_mockidentitysystem"
+            "dbUser" "mockidsystemuser"
+            "dbUserSecret" "mockid-db-user"
+            "dbUserKey" "mockid-db-user-password"
+            "gitRepo" "https://github.com/mosip/esignet-mock-services"
+            "gitBranch" "v0.9.3")
+-}}
+{{- range $svc := $services }}
+{{- $sub := index $ctx.Values $svc.name }}
+{{- if $sub.enabled }}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: commons-services-{{ $svc.name }}-schema-init
+  namespace: {{ $ctx.Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: commons-services-{{ $svc.name }}-schema-init
+    app.kubernetes.io/instance: {{ $ctx.Release.Name }}
+    app.kubernetes.io/managed-by: {{ $ctx.Release.Service }}
+spec:
+  backoffLimit: 10
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: commons-services-{{ $svc.name }}-schema-init
+        app.kubernetes.io/instance: {{ $ctx.Release.Name }}
+    spec:
+      restartPolicy: OnFailure
+      serviceAccountName: commons-services-{{ $svc.name }}
+      containers:
+        - name: postgres-init
+          image: {{ $image }}
+          imagePullPolicy: Always
+          command: ["bash"]
+          args:
+            - -c
+            - until pg_isready -h ${DB_SERVERIP} -p ${DB_PORT}; do sleep 3; done && ./postgres-init.sh
+          env:
+            - name: MOSIP_DB_NAME
+              value: {{ $svc.db | quote }}
+            - name: DB_SERVERIP
+              value: {{ $pgHost | quote }}
+            - name: DB_PORT
+              value: "5432"
+            - name: SU_USER
+              value: "postgres"
+            - name: DB_USER
+              value: {{ $svc.dbUser | quote }}
+            - name: DML_FLAG
+              value: "1"
+            - name: GIT_REPO_URL
+              value: {{ $svc.gitRepo | quote }}
+            - name: GIT_BRANCH
+              value: {{ $svc.gitBranch | quote }}
+            - name: SU_USER_PWD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $suSecret | quote }}
+                  key: {{ $suKey | quote }}
+            - name: DBUSER_PWD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $svc.dbUserSecret | quote }}
+                  key: {{ $svc.dbUserKey | quote }}
+{{- end }}
+{{- end }}

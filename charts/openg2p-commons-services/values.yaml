@@ -463,22 +463,15 @@ esignet:
         # In our common Redis, auth is disabled, so we have created this manaully with random password
         key: redis-password
 
+  # The subchart ships postgres-init (the keymanager schema: key_alias,
+  # key_store, …) as a `post-install` HOOK, which deadlocks `helm --wait`: the
+  # pods can't become Ready until the schema exists, but the post-install hook
+  # that creates the schema only runs AFTER the release is Ready. Helm cannot
+  # reliably strip a subchart's hook annotation via values `null` (verified on
+  # Helm v4), so we DISABLE the subchart's hook Job here and run the equivalent
+  # as an ordinary resource in templates/esignet-mock-schema-init.yaml.
   postgresInit:
-    # Nullify hook annotations so these run as regular resources (Rancher skips hooks).
-    commonAnnotations:
-      "helm.sh/hook": null
-      "helm.sh/hook-weight": null
-      "helm.sh/hook-delete-policy": null
-    envVarsFrom:
-      # Override SU_USER_PWD for external PG support (see keymanager comment).
-      SU_USER_PWD:
-        secretKeyRef:
-          name: '{{ tpl .Values.global.postgresqlSecret $ }}'
-          key: '{{ tpl .Values.global.postgresqlSecretKey $ }}'
-      DBUSER_PWD:
-        secretKeyRef:
-          name: esignet-db-user
-          key: esignet-db-user-password
+    enabled: false
 
   springConfig:
     names: application,esignet
@@ -512,23 +505,11 @@ mock-identity-system:
         key: mockid-db-user-password
 
   postgresqlInstallationName: '{{ tpl .Values.global.postgresqlHost $ }}'
+  # DISABLED — see the esignet block above. The subchart's postgres-init ships
+  # as a `post-install` hook that deadlocks `helm --wait`; the equivalent runs
+  # as an ordinary resource in templates/esignet-mock-schema-init.yaml.
   postgresInit:
-    # Nullify hook annotations so these run as regular resources (Rancher skips hooks).
-    commonAnnotations:
-      "helm.sh/hook": null
-      "helm.sh/hook-weight": null
-      "helm.sh/hook-delete-policy": null
-    envVarsFrom:
-      # Override SU_USER_PWD for external PG support (see keymanager comment).
-      SU_USER_PWD:
-        secretKeyRef:
-          name: '{{ tpl .Values.global.postgresqlSecret $ }}'
-          key: '{{ tpl .Values.global.postgresqlSecretKey $ }}'
-      DBUSER_PWD:
-        # Same as above
-        secretKeyRef:
-          name: mockid-db-user
-          key: mockid-db-user-password
+    enabled: false
 
   springConfig:
     names: application,mock-identity-system
