@@ -549,6 +549,7 @@ openg2p-iam-service:
     keycloakApplicationUrl: 'https://keycloak.{{ .Values.global.baseDomain }}'
     registryApplicationUrl: 'https://registry.{{ .Values.global.baseDomain }}'
     minioApplicationUrl: 'https://minio.{{ .Values.global.baseDomain }}'
+    supersetApplicationUrl: 'https://{{ tpl .Values.global.supersetHostname $ }}'
   postgres-init:
     enabled: true
     nameOverride: iam-pg-init
