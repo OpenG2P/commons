@@ -61,6 +61,13 @@ keycloak-init:
   job:
     backoffLimit: 3
     ttlSecondsAfterFinished: 86400
+  # Email for the default staff-realm admin user. Kept as a SCALAR (not an
+  # array-index override) on purpose: Helm --set / -f on a list element like
+  # users[0].email REPLACES the whole element, wiping username/password/
+  # clientRoleMappings and breaking keycloak-init (KeyError: 'username').
+  # The user's email below is templated from this value, so overriding this
+  # scalar (Rancher question / install script) is safe.
+  staffAdminEmail: admin@openg2p.org
   # Only commons-related clients. Other module clients are added by their own charts.
   realms:
     master:
@@ -91,7 +98,9 @@ keycloak-init:
           password: admin
           firstName: Admin
           lastName: User
-          email: admin@your.domain.com
+          # Templated from the staffAdminEmail scalar above (rendered via tpl in
+          # the keycloak-init configmap). Override staffAdminEmail, not this.
+          email: '{{ .Values.staffAdminEmail | default "admin@openg2p.org" }}'
           # Only mappings for clients owned by commons-base. The services chart's
           # keycloak-init adds mappings for superset, odk, staff-portal.
           clientRoleMappings:

@@ -57,7 +57,7 @@ questions:
   label: Run Keycloak Init?
   group: Keycloak
 
-- variable: keycloak-init.realms.staff.users[0].email
+- variable: keycloak-init.staffAdminEmail
   description: >-
     Email address for the default admin user created in the staff realm.
   type: string
