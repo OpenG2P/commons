@@ -528,7 +528,7 @@ openg2p-iam-service:
     hostname: '{{ tpl .Values.global.staffPortalApiHostname $ }}'
     image:
       repository: openg2p/iam-staff-portal-api
-      tag: "1.0.1"
+      tag: "develop"
     # Based on observed usage ~159Mi. Python FastAPI app.
     resources:
       requests:
