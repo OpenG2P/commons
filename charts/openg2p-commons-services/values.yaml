@@ -162,15 +162,6 @@ odk-central:
           name: '{{ tpl .Values.oidcClientSecret $ }}'
           key: '{{ tpl .Values.oidcClientSecretKey $ }}'
 
-reporting:
-  enabled: false
-  debezium:
-    enabled: true
-    kafkaInstallationName: '{{ tpl .Values.global.kafkaInstallationName $ }}'
-  opensearch-kafka-connector:
-    enabled: true
-    kafkaInstallationName: '{{ tpl .Values.global.kafkaInstallationName $ }}'
-
 artifactory:
   enabled: true
   image:

@@ -173,13 +173,6 @@ questions:
   label: Install ODK Central?
   group: ODK
 
-# Reporting
-- variable: reporting.enabled
-  description: This installs Reporting Framework.
-  type: boolean
-  label: Install Reporting Framework?
-  group: Reporting
-
 # Keymanager
 - variable: keymanager.enabled
   description: This installs Keymanager.
