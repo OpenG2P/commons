@@ -155,8 +155,26 @@ postgresql:
 
 postgres-init:
   enabled: true
-  # NO hook annotations — runs as a regular Job.
-  # postgres-init has built-in pg_isready loops to wait for PostgreSQL.
+  # Run the init Job as a POST-install/upgrade hook — NOT the chart's pre-*
+  # default. PostgreSQL is embedded in this same release: the server and its
+  # Bitnami-created superuser secret ('<release>-postgresql') are regular
+  # resources, which Helm applies AFTER hooks. A pre-install hook therefore
+  # fails with `secret "<release>-postgresql" not found` (and has no DB to
+  # reach). post-install runs after those exist; postgres-init's built-in
+  # pg_isready loop then waits for readiness. before-hook-creation keeps the
+  # ticket's reinstall-collision fix (no "jobs.batch already exists").
+  # The ServiceAccount must share the hook phase so it exists when the Job
+  # pod schedules (weight -5 < Job's 1 → created first).
+  job:
+    annotations:
+      "helm.sh/hook": post-install,post-upgrade
+      "helm.sh/hook-weight": "1"
+      "helm.sh/hook-delete-policy": before-hook-creation
+  serviceAccount:
+    annotations:
+      "helm.sh/hook": post-install,post-upgrade
+      "helm.sh/hook-weight": "-5"
+      "helm.sh/hook-delete-policy": before-hook-creation
   postgresql:
     host: '{{ tpl .Values.global.postgresqlHost $ }}'
     port: 5432

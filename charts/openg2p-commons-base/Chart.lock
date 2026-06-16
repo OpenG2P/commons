@@ -28,6 +28,6 @@ dependencies:
   version: 21.4.5
 - name: keycloak-init
   repository: https://openg2p.github.io/openg2p-helm
-  version: 1.1.0-develop
-digest: sha256:58e3ef1f2ad77c008a7966e62f0c59cd0f871468f6384fa5745da662fc796a2c
-generated: "2026-06-05T10:36:53.149321+05:30"
+  version: 1.1.1
+digest: sha256:18cc8825d44d968f56e151f4af344b854c1eebf1a901ae4e1dd979e6bb356d27
+generated: "2026-06-16T05:28:28.146129+05:30"
