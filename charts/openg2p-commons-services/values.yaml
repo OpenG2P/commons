@@ -55,6 +55,19 @@ global:
   keycloakAdminSecretKey: admin-password
   keycloakAdminUser: admin
 
+  # ── AWE (Approval Workflow Engine) ──────────────────────────────────────────
+  # Single shared AWE for the environment (installed by the openg2p-awe subchart).
+  # Hostname follows the commons <service>.<baseDomain> convention.
+  aweHostname: 'awe.{{ .Values.global.baseDomain }}'
+  # Fixed DB contract for the shared AWE — kept stable (NOT release-scoped) so the
+  # registries can register their callback secret into this exact DB/secret.
+  # AWE's bundled postgres-init (awe-pg-init) creates the DB, user and Secret.
+  aweDB: awe
+  aweDBPort: 5432
+  aweDBUser: awe_user
+  aweDBSecret: awe-db-user
+  aweDBUserPasswordKey: awe-db-user-password
+
 # Logging is now handled cluster-wide by the OpenTelemetry + Loki stack at the
 # infra layer (the OTel agent DaemonSet tails every pod automatically), so the
 # per-service Fluentd Flow/Output that used to ship to OpenSearch has been
@@ -624,6 +637,26 @@ openg2p-staff-portal-ui:
       requests:
         cpu: 50m
         memory: 64Mi
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Approval Workflow Engine (AWE) — a single shared instance for the whole
+# environment. Self-contained: its bundled postgres-init (awe-pg-init) creates
+# the `awe` database/user (per the global.aweDB* contract), and its keycloak-init
+# (awe-kc-init) provisions the awe-admin-portal / awe-admin-resolver clients in
+# the shared `staff` realm and grants the `admin` user AWE_ADMIN.
+# Registries (NSR, Farmer Registry) no longer install their own AWE — they point
+# global.aweBaseUrl at https://<global.aweHostname> and register their per-registry
+# callback secret into this AWE's DB.
+# ─────────────────────────────────────────────────────────────────────────────
+openg2p-awe:
+  enabled: true
+  postgres-init:
+    enabled: true
+    # Distinct Job name within the commons-services release.
+    nameOverride: awe-pg-init
+  keycloak-init:
+    enabled: true
+    nameOverride: awe-kc-init
 
 # ─────────────────────────────────────────────────────────────────────────────
 # keycloak-init for services-owned clients (superset, odk, staff-portal).

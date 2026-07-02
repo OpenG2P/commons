@@ -223,3 +223,20 @@ questions:
   type: boolean
   label: Install Mock Identity System?
   group: eSignet
+
+# AWE (Approval Workflow Engine)
+- variable: openg2p-awe.enabled
+  description: >-
+    Install the shared Approval Workflow Engine. Registries (NSR, Farmer
+    Registry) consume this one instance instead of installing their own.
+  type: boolean
+  label: Install AWE?
+  group: AWE
+
+- variable: global.aweHostname
+  description: >-
+    Hostname for the shared AWE. Defaults to awe.<baseDomain>. Registries must
+    point their AWE base URL at https://<this hostname>.
+  type: string
+  label: AWE Hostname
+  group: AWE

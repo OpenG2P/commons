@@ -45,6 +45,14 @@ dependencies:
   version: 0.0.0-develop
   repository: https://openg2p.github.io/openg2p-helm
   condition: openg2p-staff-portal-ui.enabled
+# Approval Workflow Engine — installed ONCE per environment as part of commons.
+# Registries (NSR, Farmer Registry) consume this shared instance via
+# global.aweBaseUrl and register their callback secret against its DB, rather
+# than each installing their own AWE.
+- name: openg2p-awe
+  version: 0.0.0-develop
+  repository: https://openg2p.github.io/openg2p-helm
+  condition: openg2p-awe.enabled
 - name: keycloak-init
   version: 1.1.1
   repository: https://openg2p.github.io/openg2p-helm
