@@ -13,6 +13,10 @@ on:
         description: "Force publish Charts?"
         default: "*"
         type: string
+      version:
+        description: 'Explicit chart version (e.g. 2.0.1-g2p5466). Empty = derive from branch. Must be valid SemVer.'
+        required: false
+        type: string
 
 jobs:
   generate-charts:
@@ -27,6 +31,32 @@ jobs:
     steps:
     - name: Checkout Repository
       uses: actions/checkout@v3
+
+    - name: Resolve chart version (branch-gated, with manual override)
+      env:
+        INPUT_VERSION: ${{ inputs.version }}
+      run: |
+        # The published chart version is derived from the BRANCH NAME and applied
+        # at package time via `helm package --version`, with a unique run-number
+        # suffix so Rancher / the GH-Pages CDN never serve a stale cached chart
+        # for a mutable version like 0.0.0-develop.
+        BRANCH="${GITHUB_REF_NAME}"
+        SUFFIX="${GITHUB_RUN_NUMBER}"          # monotonic + unique per run
+        if [ -n "${INPUT_VERSION}" ]; then
+          VER="${INPUT_VERSION}"               # manual override -> publish from any branch
+        elif [ "$BRANCH" = "develop" ]; then
+          VER="0.0.0-develop.${SUFFIX}"
+        elif printf '%s' "$BRANCH" | grep -qE '^[0-9]+\.[0-9]+$'; then
+          VER="${BRANCH}.0-develop.${SUFFIX}"  # active release line (Helm needs 3-part SemVer)
+        elif printf '%s' "$BRANCH" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+          VER="${BRANCH}"                       # frozen release, no suffix
+        else
+          echo "::warning::Branch '${BRANCH}' is not develop/N.N/N.N.N and no explicit version was given — skipping."
+          echo "SKIP=TRUE" >> "$GITHUB_ENV"
+          VER=""
+        fi
+        echo "CHART_VERSION=${VER}" >> "$GITHUB_ENV"
+        echo "Resolved chart version for branch '${BRANCH}': ${VER:-<skipped>}"
 
     - id: files
       if: env.FORCE_PUBLISH_CHARTS == ''
@@ -57,7 +87,10 @@ jobs:
 
     - name: Generate tar files
       run: |
-        if [[ ! -s charts-list.txt ]]; then
+        if [ "${SKIP}" = "TRUE" ] || [ -z "${CHART_VERSION}" ]; then
+          echo "::warning::No resolvable chart version — skipping publish";
+          echo "SKIP=TRUE" >> $GITHUB_ENV
+        elif [[ ! -s charts-list.txt ]]; then
           echo "::warning::No Charts to publish";
           echo "SKIP=TRUE" >> $GITHUB_ENV
         else
@@ -72,7 +105,7 @@ jobs:
             chartname=$(basename "$chartpath")
             if [ -f charts/${chartname}/Chart.yaml ]; then
               echo "Chartname: $chartname"
-              helm package charts/$chartpath
+              helm package charts/$chartpath --version "${CHART_VERSION}"
               is_rancher_chart=$(grep "$RANCHER_CHART_FILTER" charts/${chartpath%*/}/Chart.yaml || true)
               if [ -n "$is_rancher_chart" ]; then
                 RANCHER_CHARTS+=("$chartname")

@@ -430,11 +430,10 @@ superset:
         credentialName: ""
 
 esignet:
-  # Disabled: esignet hard-depends on softhsm (unconditional PKCS11 socket +
-  # security-pin from the softhsm ConfigMap/Secret; no PKCS12 path). softhsm is
-  # disabled in commons-base for this file-based-keystore (.p12) environment, so
-  # esignet is disabled too. Re-enable both together for the eSignet login flow.
-  enabled: false
+  # Requires softhsm (enabled in commons-base): esignet embeds its own keymanager
+  # and initialises signing keys against the HSM (unconditional PKCS11 socket +
+  # security-pin from the softhsm ConfigMap/Secret; no PKCS12 path in this chart).
+  enabled: true
   hostname: 'esignet.{{ .Values.global.baseDomain }}'
   # Based on observed usage ~1940Mi. eSignet is the largest memory consumer.
   # For production, increase limit to 4Gi.
@@ -491,10 +490,9 @@ esignet:
     rawConfig: ""
 
 mock-identity-system:
-  # Disabled: same as esignet — hard-depends on softhsm (no PKCS12 path), which
-  # is disabled in this file-based-keystore environment. It is also esignet's
-  # auth backend, so it has no purpose with esignet off. Re-enable with softhsm.
-  enabled: false
+  # Requires softhsm (same as esignet — embeds its own keymanager, no PKCS12
+  # path). It is also esignet's auth backend, so it runs alongside esignet.
+  enabled: true
   hostname: 'esignet.{{ .Values.global.baseDomain }}'
   # Based on observed usage ~912Mi.
   resources:

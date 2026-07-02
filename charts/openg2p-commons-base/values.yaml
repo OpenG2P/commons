@@ -644,12 +644,12 @@ keycloak:
         verbs: ["get", "list"]
 
 softhsm:
-  # Disabled: this environment uses file-based (.p12 / PKCS12) keystores, not an
-  # HSM. keymanager runs with keystoreType=PKCS12 and never contacts softhsm.
-  # NOTE: esignet and mock-identity-system hard-depend on softhsm (no PKCS12
-  # path), so they are disabled too in commons-services. Re-enable this (and
-  # them) if you need HSM-backed keys or the eSignet / National-ID login flow.
-  enabled: false
+  # Required by esignet + mock-identity-system, which embed their own keymanager
+  # and initialise their signing keys against this HSM (they hardcode the
+  # softhsm PKCS11 socket / security-pin — no PKCS12 path in those charts).
+  # NOTE: the standalone keymanager service does NOT use this — it runs with
+  # keystoreType=PKCS12 (file-based .p12) and ignores softhsm entirely.
+  enabled: true
   # Hardcoding this for now. else every upgrade will reset the pin
   securityPIN: MTYwMzIyMjg=
   # NOTE: the softhsm subchart bakes a 1500Mi memory limit into its own
