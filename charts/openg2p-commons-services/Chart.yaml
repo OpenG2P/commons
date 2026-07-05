@@ -53,6 +53,15 @@ dependencies:
   version: 0.0.0-develop
   repository: https://openg2p.github.io/openg2p-helm
   condition: openg2p-awe.enabled
+# Partner Management — central registry of partner public keys (deployed as
+# commons-services-pm-*). NOTE: pinned to a SPECIFIC published PM version, not
+# the bare 0.0.0-develop the other subcharts use. While BOTH PM and this chart
+# are on develop, bump this to match PM's latest published develop version (see
+# the openg2p-helm index) every time PM is updated.
+- name: partner-management
+  version: 0.0.0-develop.4
+  repository: https://openg2p.github.io/openg2p-helm
+  condition: partner-management.enabled
 - name: keycloak-init
   version: 1.1.1
   repository: https://openg2p.github.io/openg2p-helm

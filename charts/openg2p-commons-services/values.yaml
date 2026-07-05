@@ -664,6 +664,61 @@ openg2p-awe:
     nameOverride: awe-kc-init
 
 # ─────────────────────────────────────────────────────────────────────────────
+# Partner Management — central registry of partner public keys, deployed as
+# `commons-services-pm-*`. Components are pm-prefixed to avoid colliding with the
+# commons staff-portal-ui. The PM standalone chart is unchanged; everything below
+# is embedding config (names + internal cross-refs, plain DB names, and the
+# Keycloak issuer split: token `iss` = EXTERNAL issuer, JWKS fetched INTERNALLY).
+# It inherits keycloak/postgres/iam from the shared `global`.
+# ─────────────────────────────────────────────────────────────────────────────
+partner-management:
+  enabled: true
+  global:
+    # Plain DB name/user/secret (no release-name prefix), like iam / audit_manager.
+    pmDB: partner_management
+    pmDBUser: partner_management_user
+    pmDBSecret: partner-management-db
+    pmDBUserPasswordKey: partner-management-db-user
+    # Hostnames off the shared baseDomain (PM's own default is namespace-based).
+    staffPortalUiHostname: 'partner-management.{{ tpl .Values.global.baseDomain $ }}'
+    staffPortalApiHostname: 'partner-management-staff-portal-api.{{ tpl .Values.global.baseDomain $ }}'
+    partnerApiHostname: 'partner-management-partner-api.{{ tpl .Values.global.baseDomain $ }}'
+    cookieDomain: '.{{ tpl .Values.global.baseDomain $ }}'
+  staffPortalApi:
+    nameOverride: pm-staff-portal-api
+    istio:
+      virtualservice:
+        destination: '{{ .Release.Name }}-pm-staff-portal-api'
+    envVars:
+      # Token `iss` is the EXTERNAL issuer; JWKS is fetched from the INTERNAL
+      # Keycloak URL (commons splits these two).
+      COMMON_AUTH_DEFAULT_ISSUERS: '["{{ tpl .Values.global.keycloakExternalIssuerUrl $ }}"]'
+      COMMON_AUTH_DEFAULT_JWKS_URLS: '["{{ tpl .Values.global.keycloakIssuerUrl $ }}/protocol/openid-connect/certs"]'
+  partnerApi:
+    nameOverride: pm-partner-api
+    istio:
+      virtualservice:
+        destination: '{{ .Release.Name }}-pm-partner-api'
+  staffPortalUi:
+    nameOverride: pm-staff-portal-ui
+    istio:
+      virtualservice:
+        destination: '{{ .Release.Name }}-pm-staff-portal-ui'
+    envVars:
+      STAFF_PORTAL_API_URL: 'http://{{ .Release.Name }}-pm-staff-portal-api'
+  postgres-init:
+    enabled: true
+    # Distinct Job name; run as a regular resource (Rancher skips helm hooks).
+    nameOverride: pm-pg-init
+    commonAnnotations:
+      "helm.sh/hook": null
+      "helm.sh/hook-weight": null
+      "helm.sh/hook-delete-policy": null
+  keycloak-init:
+    enabled: true
+    nameOverride: pm-kc-init
+
+# ─────────────────────────────────────────────────────────────────────────────
 # keycloak-init for services-owned clients (superset, odk, staff-portal).
 # Runs alongside the commons-base keycloak-init job. Both create their respective
 # clients in the same Keycloak (idempotent — clients are checked before creation).
