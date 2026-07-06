@@ -240,3 +240,22 @@ questions:
   type: string
   label: AWE Hostname
   group: AWE
+
+# Partner Management
+- variable: partner-management.enabled
+  description: >-
+    Install Partner Management — the central registry of partner public keys
+    (onboarding, approval & key rotation, plus the key-fetch API other modules
+    use). Deployed as commons-services-pm-*.
+  type: boolean
+  label: Install Partner Management?
+  group: Partner Management
+
+- variable: partner-management.global.staffPortalUiHostname
+  description: >-
+    Hostname for the Partner Management admin portal (UI). Defaults to
+    partner-management.<baseDomain>.
+  type: string
+  label: Partner Management Portal Hostname
+  group: Partner Management
+  show_if: partner-management.enabled=true

@@ -59,7 +59,7 @@ dependencies:
 # are on develop, bump this to match PM's latest published develop version (see
 # the openg2p-helm index) every time PM is updated.
 - name: partner-management
-  version: 0.0.0-develop.4
+  version: 0.0.0-develop.5
   repository: https://openg2p.github.io/openg2p-helm
   condition: partner-management.enabled
 - name: keycloak-init
