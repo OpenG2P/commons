@@ -717,6 +717,15 @@ partner-management:
   keycloak-init:
     enabled: true
     nameOverride: pm-kc-init
+  # Grants the partner_manager role to the staff-portal client's SERVICE ACCOUNT
+  # (so headless onboarding via client-credentials works — see the PM chart). Run
+  # as a regular resource: Rancher skips helm hooks, so null the hook annotations.
+  keycloakServiceAccountRole:
+    enabled: true
+    annotations:
+      "helm.sh/hook": null
+      "helm.sh/hook-weight": null
+      "helm.sh/hook-delete-policy": null
 
 # ─────────────────────────────────────────────────────────────────────────────
 # keycloak-init for services-owned clients (superset, odk, staff-portal).
