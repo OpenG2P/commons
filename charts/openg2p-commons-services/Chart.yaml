@@ -62,6 +62,15 @@ dependencies:
   version: 0.0.0-develop.5
   repository: https://openg2p.github.io/openg2p-helm
   condition: partner-management.enabled
+# Consent Manager — the PDP for outbound data sharing (deployed as
+# commons-services-cm-*). OFF by default; enable via openg2p-consent-manager.enabled.
+# Pinned to a SPECIFIC published CM develop version (like partner-management above);
+# while on develop, bump to CM's latest published develop version (see the
+# openg2p-helm index) whenever CM is updated.
+- name: openg2p-consent-manager
+  version: 0.0.0-develop.18
+  repository: https://openg2p.github.io/openg2p-helm
+  condition: openg2p-consent-manager.enabled
 - name: keycloak-init
   version: 1.1.1
   repository: https://openg2p.github.io/openg2p-helm

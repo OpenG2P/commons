@@ -728,6 +728,100 @@ partner-management:
       "helm.sh/hook-delete-policy": null
 
 # ─────────────────────────────────────────────────────────────────────────────
+# Consent Manager (CM) — the PDP for outbound data sharing. OFF by default;
+# enable with openg2p-consent-manager.enabled=true (surfaced in questions.yaml).
+# Deployed as commons-services-cm-* : the staff api, the partner api (the
+# /validate PDP), and the admin UI. CM verifies partner-signed consent objects
+# against the in-cluster Partner Management keys (commons-services-pm-partner-api).
+openg2p-consent-manager:
+  enabled: false
+  global:
+    # Plain DB name/user/secret (no release-name prefix), like partner-management.
+    consentDB: consent_manager
+    consentDBUser: consent_manager_user
+    consentDBSecret: consent-manager-db
+    consentDBUserPasswordKey: consent-manager-db-user
+    # Hostnames off the shared baseDomain.
+    consentManagerHostname: 'consent-manager.{{ tpl .Values.global.baseDomain $ }}'
+    consentManagerPartnerHostname: 'consent-manager-partner.{{ tpl .Values.global.baseDomain $ }}'
+    consentManagerBeneHostname: 'consent-manager-bene.{{ tpl .Values.global.baseDomain $ }}'
+    # CM verifies partner keys against the in-cluster PM (same commons release).
+    partnerManagementApiUrl: http://commons-services-pm-partner-api
+    partnerManagementAdminApiUrl: http://commons-services-pm-staff-portal-api
+    pmSeedClientId: commons-services-staff-portal
+  # STAFF api — commons-services-cm-api. Token `iss` is the EXTERNAL issuer; JWKS
+  # is fetched from the INTERNAL Keycloak URL (commons splits these two).
+  consentManagerApi:
+    nameOverride: cm-api
+    istio:
+      virtualservice:
+        destination: '{{ .Release.Name }}-cm-api'
+    envVars:
+      CONSENT_MANAGER_AUTH_ISSUER: '{{ tpl .Values.global.keycloakExternalIssuerUrl $ }}'
+      CONSENT_MANAGER_AUTH_JWKS_URL: '{{ tpl .Values.global.keycloakIssuerUrl $ }}/protocol/openid-connect/certs'
+  # PARTNER api (the PDP /validate, no Keycloak) + scaffolded BENEFICIARY api.
+  # Helm arrays REPLACE (not merge), so the full list is re-declared with cm-*
+  # names + matching istio destinations.
+  extraApis:
+    - enabled: true
+      nameOverride: cm-partner-api
+      apiAudience: partner
+      authEnabled: 'false'
+      signingKeyMounted: true
+      hostname: '{{ tpl .Values.global.consentManagerPartnerHostname $ }}'
+      openapiRootPath: /api/consent-manager-partner
+      istio:
+        enabled: true
+        virtualservice:
+          enabled: true
+          host: '{{ tpl .Values.global.consentManagerPartnerHostname $ }}'
+          gateway: "internal"
+          destination: '{{ .Release.Name }}-cm-partner-api'
+          destinationPort: 80
+          prefix: /api/consent-manager-partner/
+          rewriteUri: "/"
+        gateway:
+          enabled: false
+    - enabled: false
+      nameOverride: cm-bene-api
+      apiAudience: beneficiary
+      authEnabled: 'true'
+      signingKeyMounted: false
+      hostname: '{{ tpl .Values.global.consentManagerBeneHostname $ }}'
+      openapiRootPath: /api/consent-manager-bene
+      istio:
+        enabled: true
+        virtualservice:
+          enabled: true
+          host: '{{ tpl .Values.global.consentManagerBeneHostname $ }}'
+          gateway: "internal"
+          destination: '{{ .Release.Name }}-cm-bene-api'
+          destinationPort: 80
+          prefix: /api/consent-manager-bene/
+          rewriteUri: "/"
+        gateway:
+          enabled: false
+  ui:
+    nameOverride: cm-ui
+    istio:
+      virtualservice:
+        destination: '{{ .Release.Name }}-cm-ui'
+  postgres-init:
+    enabled: true
+    # Distinct Job name; run as a regular resource (Rancher skips helm hooks).
+    nameOverride: cm-pg-init
+    commonAnnotations:
+      "helm.sh/hook": null
+      "helm.sh/hook-weight": null
+      "helm.sh/hook-delete-policy": null
+  keycloak-init:
+    enabled: true
+    nameOverride: cm-kc-init
+  # Don't create test data in a commons install by default — smoke only.
+  sanity:
+    runE2e: false
+
+# ─────────────────────────────────────────────────────────────────────────────
 # keycloak-init for services-owned clients (superset, odk, staff-portal).
 # Runs alongside the commons-base keycloak-init job. Both create their respective
 # clients in the same Keycloak (idempotent — clients are checked before creation).

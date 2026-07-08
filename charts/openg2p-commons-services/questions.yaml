@@ -259,3 +259,24 @@ questions:
   label: Partner Management Portal Hostname
   group: Partner Management
   show_if: partner-management.enabled=true
+
+# Consent Manager
+- variable: openg2p-consent-manager.enabled
+  description: >-
+    Install the Consent Manager — the Policy Decision Point that verifies
+    partner-signed consent objects for outbound data sharing (the /validate PDP,
+    receipts, JWKS, admin UI). OFF by default. Requires Partner Management
+    (source of partner keys). Deployed as commons-services-cm-*.
+  type: boolean
+  default: false
+  label: Install Consent Manager?
+  group: Consent Manager
+
+- variable: openg2p-consent-manager.global.consentManagerHostname
+  description: >-
+    Hostname for the Consent Manager admin portal (UI + staff API). Defaults to
+    consent-manager.<baseDomain>.
+  type: string
+  label: Consent Manager Portal Hostname
+  group: Consent Manager
+  show_if: openg2p-consent-manager.enabled=true
