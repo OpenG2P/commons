@@ -194,6 +194,7 @@ jobs:
           REVISION: ${{ needs.version.outputs.revision }}
           PAGES_DIR: ${{ github.workspace }}/changelog-pages
           REPO_URL: ${{ github.server_url }}/${{ github.repository }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
           SKIP_AI: ${{ inputs.changelog_skip_ai }}
           REGEN_VERSION: ${{ inputs.changelog_regenerate }}
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
