@@ -5,7 +5,7 @@ type: application
 version: 0.0.0-develop
 dependencies:
 - name: openg2p-master-data
-  version: 0.0.0-develop.8
+  version: 0.0.0-develop.22
   repository: https://openg2p.github.io/openg2p-helm
   condition: masterData.enabled
   alias: masterData
@@ -45,28 +45,14 @@ dependencies:
   version: 0.0.0-develop.54
   repository: https://openg2p.github.io/openg2p-helm
   condition: openg2p-staff-portal-ui.enabled
-# Approval Workflow Engine — installed ONCE per environment as part of commons.
-# Registries (NSR, Farmer Registry) consume this shared instance via
-# global.aweBaseUrl and register their callback secret against its DB, rather
-# than each installing their own AWE.
 - name: openg2p-awe
   version: 0.0.0-develop.62
   repository: https://openg2p.github.io/openg2p-helm
   condition: openg2p-awe.enabled
-# Partner Management — central registry of partner public keys (deployed as
-# commons-services-pm-*). NOTE: pinned to a SPECIFIC published PM version, not
-# the bare 0.0.0-develop the other subcharts use. While BOTH PM and this chart
-# are on develop, bump this to match PM's latest published develop version (see
-# the openg2p-helm index) every time PM is updated.
 - name: partner-management
-  version: 0.0.0-develop.6
+  version: 0.0.0-develop.10
   repository: https://openg2p.github.io/openg2p-helm
   condition: partner-management.enabled
-# Consent Manager — the PDP for outbound data sharing (deployed as
-# commons-services-cm-*). OFF by default; enable via openg2p-consent-manager.enabled.
-# Pinned to a SPECIFIC published CM develop version (like partner-management above);
-# while on develop, bump to CM's latest published develop version (see the
-# openg2p-helm index) whenever CM is updated.
 - name: openg2p-consent-manager
   version: 0.0.0-develop.40
   repository: https://openg2p.github.io/openg2p-helm
