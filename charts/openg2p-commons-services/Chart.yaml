@@ -5,7 +5,7 @@ type: application
 version: 0.0.0-develop
 dependencies:
 - name: openg2p-master-data
-  version: 0.0.0-develop.22
+  version: 0.0.0-develop.24
   repository: https://openg2p.github.io/openg2p-helm
   condition: masterData.enabled
   alias: masterData
