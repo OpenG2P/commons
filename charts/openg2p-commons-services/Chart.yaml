@@ -34,15 +34,15 @@ dependencies:
   repository: https://openg2p.github.io/openg2p-helm
   condition: odk-central.enabled
 - name: openg2p-iam-service
-  version: 0.0.0-develop
+  version: 0.0.0-develop.55
   repository: https://openg2p.github.io/openg2p-helm
   condition: openg2p-iam-service.enabled
 - name: openg2p-audit-manager
-  version: 0.0.0-develop
+  version: 1.0.0
   repository: https://openg2p.github.io/openg2p-helm
   condition: openg2p-audit-manager.enabled
 - name: openg2p-staff-portal-ui
-  version: 0.0.0-develop
+  version: 0.0.0-develop.54
   repository: https://openg2p.github.io/openg2p-helm
   condition: openg2p-staff-portal-ui.enabled
 # Approval Workflow Engine — installed ONCE per environment as part of commons.
@@ -50,7 +50,7 @@ dependencies:
 # global.aweBaseUrl and register their callback secret against its DB, rather
 # than each installing their own AWE.
 - name: openg2p-awe
-  version: 0.0.0-develop
+  version: 0.0.0-develop.62
   repository: https://openg2p.github.io/openg2p-helm
   condition: openg2p-awe.enabled
 # Partner Management — central registry of partner public keys (deployed as
@@ -59,7 +59,7 @@ dependencies:
 # are on develop, bump this to match PM's latest published develop version (see
 # the openg2p-helm index) every time PM is updated.
 - name: partner-management
-  version: 0.0.0-develop.5
+  version: 0.0.0-develop.6
   repository: https://openg2p.github.io/openg2p-helm
   condition: partner-management.enabled
 # Consent Manager — the PDP for outbound data sharing (deployed as
@@ -68,7 +68,7 @@ dependencies:
 # while on develop, bump to CM's latest published develop version (see the
 # openg2p-helm index) whenever CM is updated.
 - name: openg2p-consent-manager
-  version: 0.0.0-develop.18
+  version: 0.0.0-develop.40
   repository: https://openg2p.github.io/openg2p-helm
   condition: openg2p-consent-manager.enabled
 - name: keycloak-init

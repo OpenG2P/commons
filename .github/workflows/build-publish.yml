@@ -1,0 +1,231 @@
+name: Build & Publish (commons packaging charts)
+
+# Bespoke workflow for openg2p-commons-deployment — a PURE packaging repo:
+# no dockers, two charts (openg2p-commons-base, openg2p-commons-services).
+#
+# It deliberately does NOT call openg2p-packaging's reusable build-publish.yml
+# (that shape assumes docker images + a single chart). It has its own trivial
+# versioning and a two-chart publish, but REUSES the shared changelog scripts
+# (ci/changelog/* @v1) so the changelog stays consistent with every other repo.
+#
+# Flow:
+#   push develop        -> both charts at 0.0.0-develop.<count>  (+ Unreleased changelog)
+#   tag N.N.N (on develop, or anywhere) -> both charts frozen N.N.N (+ frozen changelog)
+#   any other branch    -> both charts at 0.0.0-<slug>.<count>   (test builds, no changelog)
+#
+# No release-line branch is needed: tag N.N.N directly. Old v-prefixed tags are
+# ignored. Pick a version above what already exists in the helm repo (2.0.0/2.0.1
+# are taken -> next is 2.0.2).
+
+on:
+  push:
+    branches: ["**"]
+    tags: ["**"]
+  workflow_dispatch:
+    inputs:
+      changelog_skip_ai:
+        description: 'Skip the AI summary — publish the changelog from commit messages only. Leave OFF for a normal run.'
+        type: boolean
+        default: false
+      changelog_regenerate:
+        description: 'Backfill the AI summary for a released version e.g. 2.0.2. Leave EMPTY for a normal run.'
+        type: string
+        default: ''
+
+env:
+  CHARTS: "charts/openg2p-commons-base charts/openg2p-commons-services"
+  HELM_REPO: openg2p/openg2p-helm
+  HELM_BRANCH: gh-pages
+  HELM_URL: https://openg2p.github.io/openg2p-helm
+  PACKAGING_REF: v1        # ci/ scripts (changelog) are pinned here
+
+jobs:
+  version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.v.outputs.version }}
+      frozen: ${{ steps.v.outputs.frozen }}
+      changelog: ${{ steps.v.outputs.changelog }}
+      revision: ${{ steps.v.outputs.revision }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+      - name: Derive version
+        id: v
+        run: |
+          REF="${GITHUB_REF_NAME}"; TYPE="${GITHUB_REF_TYPE}"
+          COUNT=$(git rev-list --count HEAD)
+          REV=$(git rev-parse HEAD)
+          VER=""; FROZEN=false; DO_CL=false
+          if [ "$TYPE" = tag ]; then
+            if printf '%s' "$REF" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+              VER="$REF"; FROZEN=true; DO_CL=true          # frozen release
+            else
+              echo "::error::tag '$REF' is not N.N.N. Releases are bare SemVer, e.g. 2.0.2 (no 'v')."
+              exit 1
+            fi
+          elif [ "$REF" = develop ]; then
+            VER="0.0.0-develop.${COUNT}"; DO_CL=true        # rolling develop
+          else
+            slug=$(printf '%s' "$REF" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9-]+/-/g; s/-+/-/g; s/^-//; s/-$//')
+            [ -n "$slug" ] || { echo "::error::branch '$REF' slugifies to empty"; exit 1; }
+            case "$slug" in 0[0-9]*) slug="b${slug}";; esac
+            VER="0.0.0-${slug}.${COUNT}"                    # test build, no changelog
+          fi
+          echo "version=$VER"        >> "$GITHUB_OUTPUT"
+          echo "frozen=$FROZEN"      >> "$GITHUB_OUTPUT"
+          echo "changelog=$DO_CL"    >> "$GITHUB_OUTPUT"
+          echo "revision=$REV"       >> "$GITHUB_OUTPUT"
+          echo "### commons \`$VER\` (frozen=$FROZEN)" >> "$GITHUB_STEP_SUMMARY"
+
+  charts:
+    needs: version
+    runs-on: ubuntu-latest
+    concurrency:
+      group: helm-publish-${{ github.repository }}
+    env:
+      VERSION: ${{ needs.version.outputs.version }}
+      REVISION: ${{ needs.version.outputs.revision }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: azure/setup-helm@v4
+
+      - name: Package both charts
+        run: |
+          mkdir -p dist
+          for c in $CHARTS; do
+            REVISION="$REVISION" SOURCE="https://github.com/${{ github.repository }}" \
+              yq -i '.annotations["org.opencontainers.image.revision"] = strenv(REVISION) |
+                     .annotations["org.opencontainers.image.source"]   = strenv(SOURCE)' "$c/Chart.yaml"
+            helm dep up "$c"
+            helm package "$c" --version "$VERSION" --app-version "$VERSION" -d dist/
+          done
+          ls -l dist/
+
+      - name: Checkout helm repo
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.HELM_REPO }}
+          ref: ${{ env.HELM_BRANCH }}
+          token: ${{ secrets.OPENG2P_BOT_GITHUB_PAT }}
+          path: chart-repo
+
+      - name: Refuse to overwrite an existing chart version
+        run: |
+          fail=0
+          for c in $CHARTS; do
+            name=$(yq '.name' "$c/Chart.yaml")
+            if NAME="$name" yq -e '.entries[strenv(NAME)][] | select(.version == strenv(VERSION))' \
+                 chart-repo/index.yaml >/dev/null 2>&1; then
+              echo "::error::$name $VERSION already exists in the helm repo — pick a higher version."
+              fail=1
+            fi
+          done
+          [ "$fail" = 0 ]
+
+      - name: Publish (both charts + Rancher)
+        run: |
+          cd chart-repo
+          git config user.name "openg2p-bot"; git config user.email "bot@openg2p.org"
+          # Both commons charts carry the add-to-rancher annotation.
+          attempt() {
+            git fetch -q origin "$HELM_BRANCH"; git reset -q --hard "origin/$HELM_BRANCH"
+            cp ../dist/*.tgz .
+            helm repo index . --url "$HELM_URL"           # full regen (never --merge)
+            cp ../dist/*.tgz rancher/
+            helm repo index --url ../ --merge rancher/index.yaml rancher
+            rm -f rancher/*.tgz
+            git add -A
+            git diff --quiet --cached && { echo "nothing to publish"; return 0; }
+            git commit -q -m "publish ${{ github.repository }} $VERSION"
+            git push -q origin "HEAD:$HELM_BRANCH"
+          }
+          for i in 1 2 3 4 5; do
+            attempt && exit 0
+            echo "::warning::push rejected (attempt $i), retrying"; sleep $(( RANDOM % 10 + 5 ))
+          done
+          echo "::error::could not publish $VERSION after 5 attempts"; exit 1
+
+  changelog:
+    needs: [version, charts]
+    if: >-
+      always() && needs.version.result == 'success' &&
+      (needs.charts.result == 'success' || inputs.changelog_regenerate != '') &&
+      (inputs.changelog_regenerate != '' || needs.version.outputs.changelog == 'true')
+    runs-on: ubuntu-latest
+    concurrency:
+      group: changelog-${{ github.repository }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+      - name: Load changelog scripts
+        uses: actions/checkout@v4
+        with:
+          repository: openg2p/openg2p-packaging
+          ref: ${{ env.PACKAGING_REF }}
+          path: .openg2p-ci
+          sparse-checkout: ci
+      - name: Read summariser config
+        id: cfg
+        run: |
+          f=.openg2p-ci/ci/changelog/config.yml
+          echo "model=$(yq '.model' "$f")" >> "$GITHUB_OUTPUT"
+          echo "fallbacks=$(yq '.fallbacks | join(",")' "$f")" >> "$GITHUB_OUTPUT"
+          echo "max_tokens=$(yq '.max_tokens' "$f")" >> "$GITHUB_OUTPUT"
+          echo "jira_base=$(yq '.jira_base // ""' "$f")" >> "$GITHUB_OUTPUT"
+          echo "jira_project=$(yq '.jira_project // ""' "$f")" >> "$GITHUB_OUTPUT"
+      - name: Checkout changelog branch
+        uses: actions/checkout@v4
+        with:
+          repository: openg2p/openg2p-packaging
+          ref: gh-pages
+          token: ${{ secrets.OPENG2P_BOT_GITHUB_PAT }}
+          path: changelog-pages
+      - name: Build changelog
+        id: run
+        env:
+          REPO: ${{ github.event.repository.name }}
+          VERSION: ${{ needs.version.outputs.version }}
+          FROZEN: ${{ needs.version.outputs.frozen }}
+          REVISION: ${{ needs.version.outputs.revision }}
+          PAGES_DIR: ${{ github.workspace }}/changelog-pages
+          REPO_URL: ${{ github.server_url }}/${{ github.repository }}
+          SKIP_AI: ${{ inputs.changelog_skip_ai }}
+          REGEN_VERSION: ${{ inputs.changelog_regenerate }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          OPENROUTER_MODEL: ${{ steps.cfg.outputs.model }}
+          OPENROUTER_FALLBACKS: ${{ steps.cfg.outputs.fallbacks }}
+          MAX_TOKENS: ${{ steps.cfg.outputs.max_tokens }}
+          JIRA_BASE: ${{ steps.cfg.outputs.jira_base }}
+          JIRA_PROJECT: ${{ steps.cfg.outputs.jira_project }}
+        run: |
+          if [ -z "${OPENROUTER_API_KEY:-}" ] && [ "${SKIP_AI}" != "true" ]; then
+            echo "::warning::OPENROUTER_API_KEY not set; publishing human notes only"
+            export SKIP_AI=true
+          fi
+          DATE="$(date -u +%Y-%m-%d)" bash .openg2p-ci/ci/changelog/run.sh
+      - name: Publish changelog
+        if: steps.run.outputs.published == 'true'
+        working-directory: changelog-pages
+        env:
+          VERSION: ${{ needs.version.outputs.version }}
+          REPO: ${{ github.event.repository.name }}
+        run: |
+          git config user.name "openg2p-bot"; git config user.email "bot@openg2p.org"
+          attempt() {
+            git fetch -q origin gh-pages; git stash -q --include-untracked || true
+            git reset -q --hard origin/gh-pages; git stash pop -q 2>/dev/null || true
+            git add -A
+            git diff --quiet --cached && { echo "no changelog change"; return 0; }
+            git commit -q -m "changelog: ${REPO} ${VERSION}"
+            git push -q origin HEAD:gh-pages
+          }
+          for i in 1 2 3 4 5; do
+            attempt && exit 0
+            echo "::warning::changelog push rejected (attempt $i), retrying"; sleep $(( RANDOM % 10 + 5 ))
+          done
+          echo "::error::could not publish changelog after 5 attempts"; exit 1
