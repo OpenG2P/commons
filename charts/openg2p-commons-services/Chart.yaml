@@ -5,8 +5,8 @@ type: application
 version: 0.0.0-develop
 dependencies:
 - name: openg2p-master-data
-  version: 0.0.0-develop.25
-  repository: https://openg2p.github.io/openg2p-helm
+  version: 0.0.0-develop.26
+  repository: https://gitlab.com/api/v4/projects/84460547/packages/helm/stable
   condition: masterData.enabled
   alias: masterData
 - name: artifactory
