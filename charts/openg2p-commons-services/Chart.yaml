@@ -38,8 +38,8 @@ dependencies:
   repository: https://openg2p.github.io/openg2p-helm
   condition: openg2p-iam-service.enabled
 - name: openg2p-audit-manager
-  version: 1.0.0
-  repository: https://openg2p.github.io/openg2p-helm
+  version: 0.0.0-develop.20
+  repository: https://gitlab.com/api/v4/projects/84460547/packages/helm/stable
   condition: openg2p-audit-manager.enabled
 - name: openg2p-staff-portal-ui
   version: 0.0.0-develop.54
