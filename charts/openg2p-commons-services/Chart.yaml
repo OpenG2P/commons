@@ -46,8 +46,8 @@ dependencies:
   repository: https://gitlab.com/api/v4/projects/84460547/packages/helm/stable
   condition: openg2p-staff-portal-ui.enabled
 - name: openg2p-awe
-  version: 0.0.0-develop.66
-  repository: https://openg2p.github.io/openg2p-helm
+  version: 0.0.0-develop.67
+  repository: https://gitlab.com/api/v4/projects/84460547/packages/helm/stable
   condition: openg2p-awe.enabled
 - name: partner-management
   version: 0.0.0-develop.12

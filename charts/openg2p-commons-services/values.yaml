@@ -655,6 +655,18 @@ openg2p-staff-portal-ui:
 # ─────────────────────────────────────────────────────────────────────────────
 openg2p-awe:
   enabled: true
+  # Keycloak issuer split (same as Partner Management / Consent Manager): the
+  # token `iss` is the EXTERNAL issuer — real users log in via the public
+  # Keycloak hostname, so their tokens (which the registry forwards to AWE)
+  # carry the external issuer — while JWKS is still fetched from the INTERNAL
+  # Keycloak URL. The openg2p-awe subchart defaults `issuer` to the internal URL
+  # (global.keycloakIssuerUrl), which rejects real user tokens with
+  # "Invalid issuer" (AWE-ERR-006) on every change-request approval. Override
+  # just the issuer here; jwksUrl keeps the subchart's internal default.
+  awe:
+    appConfig:
+      keycloak:
+        issuer: '{{ tpl .Values.global.keycloakExternalIssuerUrl $ }}'
   postgres-init:
     enabled: true
     # Distinct Job name within the commons-services release.
