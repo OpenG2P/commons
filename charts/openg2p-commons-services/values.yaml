@@ -746,7 +746,7 @@ partner-management:
 # /validate PDP), and the admin UI. CM verifies partner-signed consent objects
 # against the in-cluster Partner Management keys (commons-services-pm-partner-api).
 openg2p-consent-manager:
-  enabled: false
+  enabled: true
   global:
     # Plain DB name/user/secret (no release-name prefix), like partner-management.
     consentDB: consent_manager
