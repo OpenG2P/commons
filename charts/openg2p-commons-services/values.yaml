@@ -832,6 +832,15 @@ openg2p-consent-manager:
   # Don't create test data in a commons install by default — smoke only.
   sanity:
     runE2e: false
+    # Prefix the sanity + pm-seed Job names with 'cm', matching the other CM
+    # components (cm-api/cm-ui/…): <release>-cm-sanity / <release>-cm-pm-seed.
+    nameOverride: cm
+    # The CM APIs are renamed to <release>-cm-api / <release>-cm-partner-api via
+    # nameOverride above, so the subchart's default sanity URLs (<release>-api /
+    # <release>-partner-api) don't resolve ("Name or service not known"). Point
+    # them at the actual cm-prefixed in-cluster Services.
+    baseUrl: 'http://{{ .Release.Name }}-cm-api'
+    partnerBaseUrl: 'http://{{ .Release.Name }}-cm-partner-api'
 
 # ─────────────────────────────────────────────────────────────────────────────
 # keycloak-init for services-owned clients (superset, odk, staff-portal).
