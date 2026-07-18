@@ -280,3 +280,14 @@ questions:
   label: Consent Manager Portal Hostname
   group: Consent Manager
   show_if: openg2p-consent-manager.enabled=true
+
+- variable: openg2p-consent-manager.sanity.runE2e
+  description: >-
+    Run the full end-to-end sanity (signed /validate round-trip) on each
+    install/upgrade. This seeds a persistent test partner into Partner
+    Management first. Leave off for production; the smoke + contract checks
+    still run either way.
+  type: boolean
+  label: Run Consent Manager E2E Sanity?
+  group: Consent Manager
+  show_if: openg2p-consent-manager.enabled=true
