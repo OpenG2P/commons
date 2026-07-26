@@ -4,18 +4,25 @@ name: Build & Publish (commons packaging charts)
 # no dockers, two charts (openg2p-commons-base, openg2p-commons-services).
 #
 # It deliberately does NOT call openg2p-packaging's reusable build-publish.yml
-# (that shape assumes docker images + a single chart). It has its own trivial
-# versioning and a two-chart publish, but REUSES the shared changelog scripts
-# (ci/changelog/* @v1) so the changelog stays consistent with every other repo.
+# (that shape assumes docker images + a SINGLE chart). It keeps its own two-chart
+# publish, but REUSES the shared scripts @v1 for BOTH the version policy
+# (ci/version/derive-version.sh) and the changelog (ci/changelog/*), so this repo
+# versions and documents itself exactly like every other one.
+#
+# ONE version per commit, applied to BOTH charts -- a chart is republished at the
+# new version even when nothing in it changed, so the two are always installable
+# as a matched pair.
 #
 # Flow:
-#   push develop        -> both charts at 0.0.0-develop.<count>  (+ Unreleased changelog)
-#   tag N.N.N (on develop, or anywhere) -> both charts frozen N.N.N (+ frozen changelog)
-#   any other branch    -> both charts at 0.0.0-<slug>.<count>   (test builds, no changelog)
+#   push develop        -> both charts at 0.0.0-develop.<count>   (+ changelog)
+#   push release line N.N -> both charts at N.N.<patch>-rc.<count> (+ changelog)
+#   tag N.N.N           -> both charts frozen at N.N.N            (+ changelog)
+#   any other branch    -> both charts at 0.0.0-<slug>.<count>    (test build, no changelog)
 #
-# No release-line branch is needed: tag N.N.N directly. Old v-prefixed tags are
-# ignored. Pick a version above what already exists in the helm repo (2.0.0/2.0.1
-# are taken -> next is 2.0.2).
+# Cut a release either way: tag N.N.N straight off develop, or branch the release
+# line N.N first (it publishes RCs) and tag when blessed -- see the docs,
+# "Cutting a release (how to tag)". Bare N.N.N tags only; old v-prefixed tags are
+# ignored, and a branch NAMED like a frozen version (2.0.0) is rejected.
 
 on:
   push:
@@ -45,40 +52,48 @@ jobs:
     outputs:
       version: ${{ steps.v.outputs.version }}
       frozen: ${{ steps.v.outputs.frozen }}
-      changelog: ${{ steps.v.outputs.changelog }}
+      channel: ${{ steps.v.outputs.channel }}
+      changelog: ${{ steps.cl.outputs.changelog }}
       revision: ${{ steps.v.outputs.revision }}
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
           fetch-tags: true
+
+      # The version comes from the SHARED policy, exactly as in every other repo
+      # (registry-platform, g2p-bridge, national-social-registry, …). Keeping a
+      # private copy here meant this repo never learned about release lines: a
+      # push to `2.2` was treated as a random branch (0.0.0-2-2.<count>) instead
+      # of an RC, so no changelog was published for it.
+      - name: Load versioning policy
+        uses: actions/checkout@v4
+        with:
+          repository: openg2p/openg2p-packaging
+          ref: ${{ env.PACKAGING_REF }}
+          path: .openg2p-ci
+          sparse-checkout: ci
+
       - name: Derive version
         id: v
+        run: bash .openg2p-ci/ci/version/derive-version.sh
+
+      - name: Changelog gate
+        id: cl
+        env:
+          CHANNEL: ${{ steps.v.outputs.channel }}
+          FROZEN: ${{ steps.v.outputs.frozen }}
+          VERSION: ${{ steps.v.outputs.version }}
         run: |
-          REF="${GITHUB_REF_NAME}"; TYPE="${GITHUB_REF_TYPE}"
-          COUNT=$(git rev-list --count HEAD)
-          REV=$(git rev-parse HEAD)
-          VER=""; FROZEN=false; DO_CL=false
-          if [ "$TYPE" = tag ]; then
-            if printf '%s' "$REF" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
-              VER="$REF"; FROZEN=true; DO_CL=true          # frozen release
-            else
-              echo "::error::tag '$REF' is not N.N.N. Releases are bare SemVer, e.g. 2.0.2 (no 'v')."
-              exit 1
-            fi
-          elif [ "$REF" = develop ]; then
-            VER="0.0.0-develop.${COUNT}"; DO_CL=true        # rolling develop
-          else
-            slug=$(printf '%s' "$REF" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9-]+/-/g; s/-+/-/g; s/^-//; s/-$//')
-            [ -n "$slug" ] || { echo "::error::branch '$REF' slugifies to empty"; exit 1; }
-            case "$slug" in 0[0-9]*) slug="b${slug}";; esac
-            VER="0.0.0-${slug}.${COUNT}"                    # test build, no changelog
-          fi
-          echo "version=$VER"        >> "$GITHUB_OUTPUT"
-          echo "frozen=$FROZEN"      >> "$GITHUB_OUTPUT"
-          echo "changelog=$DO_CL"    >> "$GITHUB_OUTPUT"
-          echo "revision=$REV"       >> "$GITHUB_OUTPUT"
-          echo "### commons \`$VER\` (frozen=$FROZEN)" >> "$GITHUB_STEP_SUMMARY"
+          # Same rule as the central pipeline: catalogue anything deployable --
+          # develop builds, release-line RCs and releases. Feature-branch test
+          # builds are not catalogued.
+          DO_CL=false
+          case "$CHANNEL" in develop|rc) DO_CL=true ;; esac
+          if [ "$FROZEN" = "true" ]; then DO_CL=true; fi
+          echo "changelog=$DO_CL" >> "$GITHUB_OUTPUT"
+          echo "### commons \`$VERSION\` (channel=$CHANNEL, frozen=$FROZEN, changelog=$DO_CL)" \
+            >> "$GITHUB_STEP_SUMMARY"
 
   charts:
     needs: version
