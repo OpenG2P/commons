@@ -54,7 +54,7 @@ dependencies:
   repository: https://gitlab.com/api/v4/projects/84460547/packages/helm/stable
   condition: partner-management.enabled
 - name: openg2p-consent-manager
-  version: 0.0.0-develop.49
+  version: 0.0.0-develop.50
   repository: https://gitlab.com/api/v4/projects/84460547/packages/helm/stable
   condition: openg2p-consent-manager.enabled
 - name: keycloak-init

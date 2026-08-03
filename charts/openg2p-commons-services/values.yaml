@@ -306,8 +306,22 @@ superset:
 
   init:
     createAdmin: false
-    # Remove hook annotations so Rancher doesn't skip the init job.
-    jobAnnotations: {}
+    # NOTE: `jobAnnotations: {}` does NOT clear the subchart's defaults — Helm
+    # deep-merge keeps subchart map keys — so the keys are restated explicitly
+    # here to actually override them.
+    #
+    # hook-succeeded is added to the delete policy: the DB migration can hit a
+    # transient Postgres deadlock on its first attempt (DDL vs. the already-
+    # running superset web/worker pods) and only succeed on a retry. The Job
+    # tolerates that (backoffLimit), but with only `before-hook-creation` the
+    # failed pod lingers until the next deploy and makes a healthy release look
+    # broken. `hook-succeeded` deletes the Job (and its pods) once it succeeds,
+    # so a passing install leaves nothing behind; `before-hook-creation` is kept
+    # so a genuinely failing Job is still retained for debugging and is cleaned
+    # up before the next run.
+    jobAnnotations:
+      "helm.sh/hook": post-install,post-upgrade
+      "helm.sh/hook-delete-policy": hook-succeeded,before-hook-creation
 
   # Tell Superset chart not to install Postgresql
   postgresql:
