@@ -257,6 +257,11 @@ minio:
     requests:
       cpu: 50m
       memory: 128Mi
+  # Parent-owned Secret so root + readonly keys share commons-minio.
+  auth:
+    existingSecret: '{{ .Release.Name }}-minio'
+    rootUser: admin
+    rootPassword: ""
   initContainers:
     - name: wait-for-keycloak
       image: busybox:1.36
@@ -269,6 +274,13 @@ minio:
             echo "Waiting for Keycloak..."
             sleep 3
           done
+
+  # Empty accessKey/secretKey = auto-generate (16 / 32 alphanumeric).
+  readOnlyUser:
+    enabled: true
+    accessKey: ""
+    secretKey: ""
+    policy: readonly
 
   oidcWellKnownConfigUrl: '{{ tpl .Values.global.keycloakIssuerUrl $ }}/.well-known/openid-configuration'
   oidcClientId: openg2p-minio
