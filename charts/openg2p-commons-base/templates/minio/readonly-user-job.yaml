@@ -1,0 +1,79 @@
+{{- if and .Values.minio.enabled .Values.minio.readOnlyUser.enabled }}
+{{- $secretName := include "common.names.fullname" .Subcharts.minio }}
+{{- $minioFullname := $secretName }}
+{{- $policy := .Values.minio.readOnlyUser.policy | default "readonly" }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ $minioFullname }}-readonly-user-{{ .Release.Revision }}
+  labels: {{- include "common.labels.standard" (dict "customLabels" .Values.minio.commonLabels "context" .Subcharts.minio) | nindent 4 }}
+  {{- if .Values.minio.commonAnnotations }}
+  annotations: {{- include "common.tplvalues.render" (dict "value" .Values.minio.commonAnnotations "context" $) | nindent 4 }}
+  {{- end }}
+spec:
+  backoffLimit: 6
+  ttlSecondsAfterFinished: 86400
+  template:
+    metadata:
+      labels: {{- include "common.labels.standard" (dict "customLabels" .Values.minio.commonLabels "context" .Subcharts.minio) | nindent 8 }}
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: provision-readonly-user
+          image: {{ include "minio.image" .Subcharts.minio }}
+          imagePullPolicy: {{ .Subcharts.minio.Values.image.pullPolicy | quote }}
+          env:
+            - name: MINIO_HOST
+              value: {{ $minioFullname | quote }}
+            - name: MINIO_PORT
+              value: {{ (.Subcharts.minio.Values.service.ports.api | default 9000) | quote }}
+            - name: MINIO_ROOT_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $secretName }}
+                  key: root-user
+            - name: MINIO_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $secretName }}
+                  key: root-password
+            - name: READONLY_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $secretName }}
+                  key: readonly-user
+            - name: READONLY_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $secretName }}
+                  key: readonly-password
+            - name: READONLY_POLICY
+              value: {{ $policy | quote }}
+          command:
+            - /bin/bash
+            - -ec
+            - |
+              set -euo pipefail
+              ALIAS="local"
+              ENDPOINT="http://${MINIO_HOST}:${MINIO_PORT}"
+
+              echo "Waiting for MinIO at ${ENDPOINT}..."
+              until mc alias set "${ALIAS}" "${ENDPOINT}" "${MINIO_ROOT_USER}" "${MINIO_ROOT_PASSWORD}" >/dev/null 2>&1; do
+                sleep 3
+              done
+              echo "MinIO is reachable."
+
+              echo "Creating/updating read-only user (access key length=${#READONLY_ACCESS_KEY})..."
+              mc admin user add "${ALIAS}" "${READONLY_ACCESS_KEY}" "${READONLY_SECRET_KEY}"
+
+              current="$(mc admin user info "${ALIAS}" "${READONLY_ACCESS_KEY}" 2>/dev/null | sed -n -e 's/^Policy.*: \(.*\)$/\1/p' || true)"
+              if [[ ",${current}," != *",${READONLY_POLICY},"* ]]; then
+                echo "Attaching policy '${READONLY_POLICY}'..."
+                mc admin policy attach "${ALIAS}" "${READONLY_POLICY}" --user="${READONLY_ACCESS_KEY}"
+              else
+                echo "Policy '${READONLY_POLICY}' already attached."
+              fi
+
+              mc admin user enable "${ALIAS}" "${READONLY_ACCESS_KEY}"
+              echo "Read-only MinIO user provisioned."
+{{- end }}
