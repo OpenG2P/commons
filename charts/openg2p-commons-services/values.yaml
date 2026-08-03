@@ -82,6 +82,37 @@ masterData:
     masterDataDBUser: master_data_user
     masterDataDBSecret: master-data
     masterDataDBUserPasswordKey: master-data-db-user
+  # The country this environment serves — declared HERE and nowhere else.
+  #
+  # One Master Data per environment means one geography, one set of code lists
+  # and one set of sample people. Registries read all three from it and name no
+  # country of their own, which is what lets the same registry image serve any
+  # country: letting a registry chart also pick one is how the two end up
+  # disagreeing, silently.
+  #
+  # The subchart defaults to XKM (Kamuntu, fictitious) so an unconfigured
+  # install cannot attach invented figures to a real country. A real deployment
+  # names its country, so this one does.
+  geoSeed:
+    # ETH is Ethiopia, OCHA COD-AB via HDX: country > region > zone > woreda,
+    # 1271 units. CC BY-IGO — attribution required, recorded in the pack's
+    # manifest and printed at seed time. Boundaries are operational, not a
+    # statement on legal or political status.
+    countryPack: ETH
+    load:
+      geo: true
+      # Registries copy these into their own tables at install. Off leaves each
+      # registry on the values its extension ships, and the semantic role tags —
+      # which nothing else provides — absent entirely.
+      codelists: true
+      # A couple of dozen country-coherent people, so a fresh install shows
+      # something rather than an empty registry. Not bulk analytics data.
+      samples: true
+    # Domain code lists, on top of the core ones. 'agriculture' (crops,
+    # livestock) is needed by a Farmer Registry; a social registry never reads
+    # them. Comma-separated in the Rancher form, a list here.
+    domains: []
+
   # Based on observed usage ~442Mi.
   masterDataApi:
     resources:
