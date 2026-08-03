@@ -7,7 +7,7 @@ spec:
   gateways:
     - {{ .Release.Name }}-keycloak
   hosts:
-    - 'keycloak.{{ .Values.global.baseDomain }}'
+    - 'keycloak.{{ tpl .Values.global.baseDomain $ }}'
   http:
     - route:
         - destination:

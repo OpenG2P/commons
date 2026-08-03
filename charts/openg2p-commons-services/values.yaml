@@ -1,7 +1,12 @@
 global:
-  baseDomain: qa.openg2p.org
+  # Derived from the install namespace so a fresh install lands on a sensible
+  # per-environment domain (e.g. namespace 'trial' -> trial.openg2p.org) instead
+  # of a hardcoded one that has to be overridden every time.
+  # NOTE: every consumer renders this with `tpl` — keep it that way, otherwise
+  # the {{ }} here is emitted literally into hostnames.
+  baseDomain: '{{ .Release.Namespace }}.openg2p.org'
   # Derived from baseDomain. Override only when using an external Keycloak.
-  keycloakBaseUrl: 'https://keycloak.{{ .Values.global.baseDomain }}'
+  keycloakBaseUrl: 'https://keycloak.{{ tpl .Values.global.baseDomain $ }}'
   # Internal (in-cluster) URL for pod-to-Keycloak communication (HTTP, no TLS).
   # Defaults assume base release name is 'commons'.
   keycloakInternalUrl: 'http://commons-keycloak:80'
@@ -32,16 +37,16 @@ global:
   # Single source of truth used by both the actual service deployments and the
   # keycloak-init redirect URIs below. Override these if your environment uses a
   # different naming convention (e.g. <service>.<env>.<domain>).
-  supersetHostname: 'superset.{{ .Values.global.baseDomain }}'
-  odkHostname: 'odk.{{ .Values.global.baseDomain }}'
+  supersetHostname: 'superset.{{ tpl .Values.global.baseDomain $ }}'
+  odkHostname: 'odk.{{ tpl .Values.global.baseDomain $ }}'
   # iamHostname is the family-level base (e.g. iam.<baseDomain>). Specific
   # IAM service APIs are derived from it via a service-specific prefix.
-  iamHostname: 'iam.{{ .Values.global.baseDomain }}'
+  iamHostname: 'iam.{{ tpl .Values.global.baseDomain $ }}'
   # Hostname of the IAM staff portal API. Used by both the IAM service deployment
   # and the Keycloak staff-portal client's redirect URI — single source of truth.
   staffPortalApiHostname: 'staff-{{ tpl .Values.global.iamHostname $ }}'
-  staffPortalHostname: 'staff-portal.{{ .Values.global.baseDomain }}'
-  staffPortalCookieDomain: '.{{ .Values.global.baseDomain }}'
+  staffPortalHostname: 'staff-portal.{{ tpl .Values.global.baseDomain $ }}'
+  staffPortalCookieDomain: '.{{ tpl .Values.global.baseDomain $ }}'
 
   # ── Cross-chart references ─────────────────────────────────────────────────
   # Internal cluster URL of the IAM staff portal API. Default assumes services
@@ -58,7 +63,7 @@ global:
   # ── AWE (Approval Workflow Engine) ──────────────────────────────────────────
   # Single shared AWE for the environment (installed by the openg2p-awe subchart).
   # Hostname follows the commons <service>.<baseDomain> convention.
-  aweHostname: 'awe.{{ .Values.global.baseDomain }}'
+  aweHostname: 'awe.{{ tpl .Values.global.baseDomain $ }}'
   # Fixed DB contract for the shared AWE — kept stable (NOT release-scoped) so the
   # registries can register their callback secret into this exact DB/secret.
   # AWE's bundled postgres-init (awe-pg-init) creates the DB, user and Secret.
@@ -76,7 +81,7 @@ global:
 masterData:
   enabled: true
   global:
-    masterDataHostname: 'master-data.{{ .Values.global.baseDomain }}'
+    masterDataHostname: 'master-data.{{ tpl .Values.global.baseDomain $ }}'
     # Plain DB names (no release-name prefix). Only one instance per env.
     masterDataDB: master_data
     masterDataDBUser: master_data_user
@@ -219,7 +224,7 @@ artifactory:
 
 keymanager:
   enabled: true
-  hostname: 'keymanager.{{ .Values.global.baseDomain }}'
+  hostname: 'keymanager.{{ tpl .Values.global.baseDomain $ }}'
   # Based on observed usage ~1436Mi. Spring Boot + HSM is memory-hungry.
   resources:
     requests:
@@ -479,7 +484,7 @@ esignet:
   # and initialises signing keys against the HSM (unconditional PKCS11 socket +
   # security-pin from the softhsm ConfigMap/Secret; no PKCS12 path in this chart).
   enabled: true
-  hostname: 'esignet.{{ .Values.global.baseDomain }}'
+  hostname: 'esignet.{{ tpl .Values.global.baseDomain $ }}'
   # Based on observed usage ~1940Mi. eSignet is the largest memory consumer.
   # For production, increase limit to 4Gi.
   resources:
@@ -538,7 +543,7 @@ mock-identity-system:
   # Requires softhsm (same as esignet — embeds its own keymanager, no PKCS12
   # path). It is also esignet's auth backend, so it runs alongside esignet.
   enabled: true
-  hostname: 'esignet.{{ .Values.global.baseDomain }}'
+  hostname: 'esignet.{{ tpl .Values.global.baseDomain $ }}'
   # Based on observed usage ~912Mi.
   resources:
     requests:
@@ -599,10 +604,10 @@ openg2p-iam-service:
     # NOTE: keycloakBaseUrl must be a plain string — the iam-service subchart does not tpl it.
     # Override via --set or install.sh for the correct domain.
     keycloakBaseUrl: 'https://keycloak.qa.openg2p.org'
-    staffPortalDefaultRedirectUri: 'https://staff-portal.{{ .Values.global.baseDomain }}'
-    keycloakApplicationUrl: 'https://keycloak.{{ .Values.global.baseDomain }}'
-    registryApplicationUrl: 'https://registry.{{ .Values.global.baseDomain }}'
-    minioApplicationUrl: 'https://minio.{{ .Values.global.baseDomain }}'
+    staffPortalDefaultRedirectUri: 'https://staff-portal.{{ tpl .Values.global.baseDomain $ }}'
+    keycloakApplicationUrl: 'https://keycloak.{{ tpl .Values.global.baseDomain $ }}'
+    registryApplicationUrl: 'https://registry.{{ tpl .Values.global.baseDomain $ }}'
+    minioApplicationUrl: 'https://minio.{{ tpl .Values.global.baseDomain $ }}'
     supersetApplicationUrl: 'https://{{ tpl .Values.global.supersetHostname $ }}'
   postgres-init:
     enabled: true
@@ -620,7 +625,7 @@ openg2p-iam-service:
 openg2p-audit-manager:
   enabled: true
   global:
-    auditManagerHostname: 'auditmanager.{{ .Values.global.baseDomain }}'
+    auditManagerHostname: 'auditmanager.{{ tpl .Values.global.baseDomain $ }}'
     postgresqlHost: '{{ tpl .Values.global.postgresqlHost $ }}'
     # Plain DB names (no release-name prefix). Only one instance per env.
     auditManagerDB: audit_manager
