@@ -1,0 +1,245 @@
+# OpenG2P Commons — build & publish on GitLab.
+#
+# A PURE packaging repo: no dockers, TWO charts (openg2p-commons-base,
+# openg2p-commons-services). It deliberately does NOT include openg2p/packaging's
+# ci/gitlab/build-publish.yml -- that shape assumes docker images and a SINGLE chart.
+# It does REUSE the shared scripts from openg2p/packaging@v1 for the version policy
+# (ci/version/derive-version.sh) and the changelog (ci/changelog/*), so this repo
+# versions and documents itself exactly like every other one.
+#
+# ONE version per commit, applied to BOTH charts -- a chart is republished at the new
+# version even when nothing in it changed, so the two are always installable as a
+# matched pair.
+#
+#   push develop          -> both charts at 0.0.0-develop.<count>    (+ changelog)
+#   push release line N.N -> both charts at N.N.<patch>-rc.<count>   (+ changelog)
+#   tag N.N.N             -> both charts frozen at N.N.N             (+ changelog)
+#   any other branch      -> both charts at 0.0.0-<slug>.<count>     (test build, no changelog)
+#
+# Bare N.N.N tags only; a branch NAMED like a frozen version (2.0.0) is rejected.
+# See the docs: "Cutting a release (how to tag)".
+
+variables:
+  PACKAGING_PROJECT: "openg2p/packaging"
+  PACKAGING_REF: "v1"                       # shared ci/ scripts are pinned here
+
+  CHARTS: "charts/openg2p-commons-base charts/openg2p-commons-services"
+
+  # Both charts go to the SHARED catalogue project, the one Rancher points at.
+  CHART_GITLAB_PROJECT: "openg2p/charts"
+  CHART_GITLAB_CHANNEL: "stable"
+  # Defaults to the job token, which cannot write to ANOTHER project. Set these as
+  # group CI/CD variables to a deploy/access token with write_package_registry.
+  HELM_PUBLISH_USER: "gitlab-ci-token"
+  HELM_PUBLISH_TOKEN: "$CI_JOB_TOKEN"
+
+  CHANGELOG_PROJECT: "openg2p/versions"
+  CHANGELOG_BRANCH: "develop"
+  CHANGELOG_TOKEN: "$CI_JOB_TOKEN"          # needs write_repository on CHANGELOG_PROJECT
+  CHANGELOG_SKIP_AI: "false"
+  CHANGELOG_REGENERATE: ""
+  ALLOW_OVERWRITE: "false"
+
+  # derive-version.sh + the changelog ranges need full history and tags.
+  GIT_DEPTH: "0"
+  GIT_STRATEGY: clone
+
+workflow:
+  rules:
+    - if: $CI_COMMIT_TAG
+    - if: $CI_COMMIT_BRANCH
+
+stages: [version, chart, changelog]
+
+# ─────────────────────────────────────────────────────────────────────────────
+# version — the SHARED policy, so release lines, RC numbering and the patch guard
+# behave exactly as they do in every other repo.
+# ─────────────────────────────────────────────────────────────────────────────
+version:
+  stage: version
+  image: alpine:3.20
+  before_script:
+    - apk add --no-cache bash git curl
+    - git config --global --add safe.directory "$CI_PROJECT_DIR"
+    - git fetch --tags --force
+    - git clone --depth 1 --branch "$PACKAGING_REF"
+        "https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}/${PACKAGING_PROJECT}.git" .packaging
+  script:
+    - |
+      set -euo pipefail
+      export REF_NAME="${CI_COMMIT_TAG:-$CI_COMMIT_REF_NAME}"
+      if [ -n "${CI_COMMIT_TAG:-}" ]; then export REF_TYPE=tag; else export REF_TYPE=branch; fi
+      bash .packaging/ci/version/derive-version.sh > version.txt
+      awk -F= 'NF{ print toupper($1)"="substr($0, index($0,"=")+1) }' version.txt > version.env
+
+      # Catalogue anything deployable: develop builds, release-line RCs and releases.
+      # Feature-branch test builds still publish charts, but are not catalogued.
+      CHANNEL=$(sed -n 's/^CHANNEL=//p' version.env | head -1)
+      FROZEN=$(sed -n 's/^FROZEN=//p'  version.env | head -1)
+      DO_CL=false
+      case "$CHANNEL" in develop|rc) DO_CL=true ;; esac
+      if [ "$FROZEN" = "true" ]; then DO_CL=true; fi
+      echo "CHANGELOG=$DO_CL" >> version.env
+
+      # A withdrawn version must never come back (see ci/withdraw). Fail-open on a
+      # fetch error -- a network blip must not block a build.
+      VER=$(sed -n 's/^VERSION=//p' version.env | head -1)
+      FOLDER=$(printf '%s' "$CI_PROJECT_PATH" | sed "s#^${CI_PROJECT_ROOT_NAMESPACE}/##" | tr '/' '-')
+      body=$(curl -fsSL --max-time 20 \
+        "${CI_SERVER_URL}/${CHANGELOG_PROJECT}/-/raw/${CHANGELOG_BRANCH}/${FOLDER}/.withdrawn" 2>/dev/null || true)
+      if [ -n "$body" ] && printf '%s\n' "$body" | grep -q "^${VER}|"; then
+        echo "ERROR: ${VER} was WITHDRAWN and must not be republished." >&2
+        echo "Push an empty commit so the build gets a fresh version." >&2
+        exit 1
+      fi
+      echo "----- version.env -----"; cat version.env
+  artifacts:
+    reports:
+      dotenv: version.env
+
+# ─────────────────────────────────────────────────────────────────────────────
+# chart — package BOTH charts at the one derived version and push them to the
+# shared Helm Package Registry. Republished together even if only one changed, so
+# the pair is always installable as a matched set.
+# ─────────────────────────────────────────────────────────────────────────────
+chart:
+  stage: chart
+  needs: ["version"]
+  # alpine/helm sets `helm` as ENTRYPOINT; reset it so GitLab can run the shell.
+  image:
+    name: alpine/helm:3.14.4
+    entrypoint: [""]
+  before_script:
+    - apk add --no-cache bash git jq curl
+    - curl -fsSL https://github.com/mikefarah/yq/releases/download/v4.44.3/yq_linux_amd64 -o /usr/local/bin/yq
+    - chmod +x /usr/local/bin/yq
+  script:
+    - |
+      set -euo pipefail
+      mkdir -p dist
+      enc=$(printf '%s' "$CHART_GITLAB_PROJECT" | sed 's#/#%2F#g')
+      base="${CI_API_V4_URL}/projects/${enc}/packages/helm"
+
+      for c in $CHARTS; do
+        chart="${c}/Chart.yaml"
+        [ -f "$chart" ] || { echo "ERROR: no Chart.yaml at ${c}" >&2; exit 1; }
+        name=$(yq '.name' "$chart")
+        echo "=== ${name} ==="
+
+        # Stamp the source commit into the chart itself.
+        REVISION="$CI_COMMIT_SHA" SOURCE="$CI_PROJECT_URL" yq -i '
+          .annotations["org.opencontainers.image.revision"] = strenv(REVISION) |
+          .annotations["org.opencontainers.image.source"]   = strenv(SOURCE)
+        ' "$chart"
+
+        # Idempotent: already published at this version -> skip, so a re-run that
+        # finishes a partial publish does not fail.
+        if curl -fsSL --user "${HELM_PUBLISH_USER}:${HELM_PUBLISH_TOKEN}" \
+             "${base}/${CHART_GITLAB_CHANNEL}/index.yaml" 2>/dev/null \
+             | NAME="$name" VER="$VERSION" yq -e '.entries[strenv(NAME)][] | select(.version == strenv(VER))' >/dev/null 2>&1; then
+          if [ "$ALLOW_OVERWRITE" != "true" ]; then
+            echo "  ${name} ${VERSION} already published; skipping (idempotent)."; continue
+          fi
+          echo "  WARNING: overwriting ${name} ${VERSION} (ALLOW_OVERWRITE)"
+        fi
+
+        helm dep up "$c"
+        helm package "$c" --version "$VERSION" --app-version "$VERSION" -d dist/
+        tgz=$(ls -t dist/${name}-*.tgz | head -1)
+
+        code=$(curl -s -o /tmp/resp -w '%{http_code}' \
+          --user "${HELM_PUBLISH_USER}:${HELM_PUBLISH_TOKEN}" \
+          --form "chart=@${tgz}" \
+          "${base}/api/${CHART_GITLAB_CHANNEL}/charts")
+        echo "  HTTP ${code}"; cat /tmp/resp 2>/dev/null || true; echo
+        case "$code" in 2*) : ;; *) echo "ERROR: upload of ${name} failed (HTTP ${code})" >&2; exit 1 ;; esac
+        echo "  published ${name} ${VERSION} -> ${CHART_GITLAB_PROJECT} (${CHART_GITLAB_CHANNEL})"
+      done
+
+# ─────────────────────────────────────────────────────────────────────────────
+# changelog — the SHARED ci/changelog scripts, so this repo's pages look and
+# behave like every other repo's in the catalogue.
+# ─────────────────────────────────────────────────────────────────────────────
+changelog:
+  stage: changelog
+  needs:
+    - job: version
+    - job: chart
+      optional: true
+  # Serialise this project's own changelog pushes; cross-repo races are handled by
+  # the fetch-rebase-retry loop below.
+  resource_group: changelog
+  image: alpine:3.20
+  rules:
+    - if: '$CHANGELOG_PROJECT == ""'
+      when: never
+    - if: $CI_COMMIT_TAG
+    - if: '$CI_COMMIT_BRANCH == "develop"'
+    - if: '$CI_COMMIT_BRANCH =~ /^[0-9]+\.[0-9]+$/'
+  before_script:
+    - apk add --no-cache bash git jq curl coreutils grep sed
+    - curl -fsSL https://github.com/mikefarah/yq/releases/download/v4.44.3/yq_linux_amd64 -o /usr/local/bin/yq
+    - chmod +x /usr/local/bin/yq
+    - git config --global --add safe.directory "$CI_PROJECT_DIR"
+    - git fetch --tags --force
+    - git clone --depth 1 --branch "$PACKAGING_REF"
+        "https://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}/${PACKAGING_PROJECT}.git" .packaging
+    - git clone --branch "$CHANGELOG_BRANCH"
+        "https://oauth2:${CHANGELOG_TOKEN}@${CI_SERVER_HOST}/${CHANGELOG_PROJECT}.git" changelog-pages
+  script:
+    - |
+      set -euo pipefail
+      [ "${CHANGELOG:-false}" = "true" ] || { echo "not a catalogued build; skipping"; exit 0; }
+
+      cfg=.packaging/ci/changelog/config.yml
+      export OPENROUTER_MODEL="$(yq '.model' "$cfg")"
+      export OPENROUTER_FALLBACKS="$(yq '.fallbacks | join(",")' "$cfg")"
+      export MAX_TOKENS="$(yq '.max_tokens' "$cfg")"
+      export JIRA_BASE="$(yq '.jira_base // ""' "$cfg")"
+      export JIRA_PROJECT="$(yq '.jira_project // ""' "$cfg")"
+
+      export REPO_DISPLAY=$(printf '%s' "$CI_PROJECT_PATH" | sed "s#^${CI_PROJECT_ROOT_NAMESPACE}/##")
+      export REPO=$(printf '%s' "$REPO_DISPLAY" | tr '/' '-')
+      export VERSION FROZEN
+      export REVISION="$CI_COMMIT_SHA"
+      export PAGES_DIR="${CI_PROJECT_DIR}/changelog-pages"
+      export REPO_URL="$CI_PROJECT_URL"
+      export HELM_REGISTRY_URL="${CI_SERVER_URL}/${CHART_GITLAB_PROJECT}/-/packages"
+      export COMMIT_PATH="-/commit"
+      export DEFAULT_BRANCH="$CI_DEFAULT_BRANCH"
+      export SKIP_AI="$CHANGELOG_SKIP_AI"
+      export REGEN_VERSION="$CHANGELOG_REGENERATE"
+      export GITHUB_OUTPUT="${CI_PROJECT_DIR}/changelog.out"
+      : > "$GITHUB_OUTPUT"
+      if [ -z "${OPENROUTER_API_KEY:-}" ] && [ "$SKIP_AI" != "true" ]; then
+        echo "OPENROUTER_API_KEY not set; publishing human notes only."; export SKIP_AI=true
+      fi
+      DATE="$(date -u +%Y-%m-%d)" bash .packaging/ci/changelog/run.sh
+
+      grep -q '^published=true' "$GITHUB_OUTPUT" || { echo "nothing to publish"; exit 0; }
+
+      rm -rf /tmp/our_changelog
+      cp -r "${PAGES_DIR}/${REPO}" /tmp/our_changelog
+
+      cd changelog-pages
+      git config user.name "openg2p-bot"; git config user.email "bot@openg2p.org"
+      attempt() {
+        git fetch -q origin "$CHANGELOG_BRANCH" || return 1
+        git reset -q --hard "origin/${CHANGELOG_BRANCH}" || return 1
+        rm -rf "$REPO" || return 1
+        cp -r /tmp/our_changelog "$REPO" || return 1
+        PAGES_DIR="${PAGES_DIR}" bash "${CI_PROJECT_DIR}/.packaging/ci/changelog/render-root-index.sh" || return 1
+        git add -A || return 1
+        if git diff --quiet --cached; then echo "no changelog change"; return 0; fi
+        git commit -q -m "changelog: ${REPO} ${VERSION}" || return 1
+        git push -q origin "HEAD:${CHANGELOG_BRANCH}" || return 1
+        return 0
+      }
+      i=1
+      while [ "$i" -le 5 ]; do
+        if attempt; then exit 0; fi
+        echo "changelog push rejected (attempt ${i}); retrying…"
+        sleep $(( i * 3 + 2 )); i=$(( i + 1 ))
+      done
+      echo "ERROR: could not publish changelog after 5 attempts" >&2
+      exit 1
