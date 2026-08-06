@@ -40,12 +40,19 @@ variables:
   CHANGELOG_REGENERATE: ""
   ALLOW_OVERWRITE: "false"
 
+  # SUPPLY-CHAIN GUARD: only this root namespace may run the pipeline, so a fork
+  # (personal namespace, another org) creates no pipeline at all. A customer on their
+  # own GitLab sets it to THEIR group.
+  PIPELINE_NAMESPACE: "openg2p"
+
   # derive-version.sh + the changelog ranges need full history and tags.
   GIT_DEPTH: "0"
   GIT_STRATEGY: clone
 
 workflow:
   rules:
+    - if: '$CI_PROJECT_ROOT_NAMESPACE != $PIPELINE_NAMESPACE'
+      when: never
     - if: $CI_COMMIT_TAG
     - if: $CI_COMMIT_BRANCH
 
