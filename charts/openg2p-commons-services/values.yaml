@@ -459,6 +459,20 @@ superset:
       SESSION_COOKIE_SAMESITE = None
       TALISMAN_ENABLED = False
 
+      # Embedded dashboards. G2P Insights shows Superset dashboards inside its
+      # own shell, which loads /embedded/<uuid> in an iframe — a route Superset
+      # only registers when this flag is on.
+      #
+      # Without it the failure is silent in an unhelpful way: the REST call that
+      # mints an embedded UUID still succeeds, the guest token is still issued
+      # and looks valid, so every check passes and only the iframe 404s. It reads
+      # as a broken client, not a missing feature flag.
+      FEATURE_FLAGS = {"EMBEDDED_SUPERSET": True}
+
+      # The role a guest token carries. Gamma can read the dashboards it is
+      # granted and nothing else, which is what an embedded viewer needs.
+      GUEST_ROLE_NAME = "Gamma"
+
   istio:
     enabled: true
     virtualservice:
