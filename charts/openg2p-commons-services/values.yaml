@@ -99,10 +99,25 @@ masterData:
   # install cannot attach invented figures to a real country. A real deployment
   # names its country, so this one does.
   geoSeed:
-    # ETH is Ethiopia, OCHA COD-AB via HDX: country > region > zone > woreda,
-    # 1271 units. CC BY-IGO — attribution required, recorded in the pack's
-    # manifest and printed at seed time. Boundaries are operational, not a
-    # statement on legal or political status.
+    # The value is a DIRECTORY NAME under packs/ in openg2p-data
+    # (https://github.com/openg2p/openg2p-data), conventionally the ISO 3166
+    # alpha-3 code. Not a fixed list — adding a country means adding data to that
+    # repository, not changing anything here. To build a pack for a country with
+    # a published COD-AB dataset, see Country Data Architecture in the OpenG2P
+    # documentation.
+    #
+    # Shipped today:
+    #   ETH  Ethiopia, OCHA COD-AB via HDX: country > region > zone > woreda,
+    #        1271 units. CC BY-IGO — attribution required, recorded in the pack's
+    #        manifest and printed at seed time. Boundaries are operational, not a
+    #        statement on legal or political status.
+    #   XKM  Kamuntu, fictitious, for demos and tests. Its P-codes come from the
+    #        ISO 3166 user-assigned ranges, so they can never collide with a real
+    #        country's.
+    #
+    # Whatever is set here must also be set as the maps country pack in the G2P
+    # Insights chart, where installed: the choropleth joins its figures to its
+    # shapes on P-code, so a mismatch draws an empty map rather than an error.
     countryPack: ETH
     load:
       geo: true

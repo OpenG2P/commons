@@ -170,11 +170,8 @@ questions:
 # it serves — registries read the geography, code lists and sample people from
 # Master Data and name no country of their own.
 - variable: masterData.geoSeed.countryPack
-  description: "Country pack to seed, as its directory name (alpha-3). ETH is Ethiopia from OCHA COD-AB — country > region > zone > woreda, 1271 units, CC BY-IGO with attribution required. XKM is Kamuntu, a fictitious country for demos and tests, with P-codes from the ISO 3166 user-assigned ranges that cannot collide with a real country's."
-  type: enum
-  options:
-    - ETH
-    - XKM
+  description: "Directory name of the pack to seed, from packs/ in github.com/openg2p/openg2p-data — ETH (Ethiopia) or XKM (Kamuntu, fictitious, for demos). Any other pack in that folder works; use its exact directory name."
+  type: string
   default: ETH
   label: Country Pack
   group: Master Data
