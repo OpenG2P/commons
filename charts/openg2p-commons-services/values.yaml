@@ -45,6 +45,10 @@ global:
   # Hostname of the IAM staff portal API. Used by both the IAM service deployment
   # and the Keycloak staff-portal client's redirect URI — single source of truth.
   staffPortalApiHostname: 'staff-{{ tpl .Values.global.iamHostname $ }}'
+  # Agent portal (IAM). Agents are a separate audience from staff — their own
+  # realm, their own host.
+  agentPortalApiHostname: 'agent-{{ tpl .Values.global.iamHostname $ }}'
+  agentPortalHostname: 'agent-portal.{{ tpl .Values.global.baseDomain $ }}'
   staffPortalHostname: 'staff-portal.{{ tpl .Values.global.baseDomain $ }}'
   staffPortalCookieDomain: '.{{ tpl .Values.global.baseDomain $ }}'
 
@@ -631,6 +635,26 @@ openg2p-iam-service:
       requests:
         cpu: 50m
         memory: 256Mi
+  iamAgentPortalApi:
+    envVars:
+      # Same single-tpl-pass trap as the staff API above: the subchart sets
+      # IAM_AGENT_KEYCLOAK_BASE_URL from .Values.global.keycloakBaseUrl, whose
+      # value here is itself a template. One tpl pass returns that raw text, so
+      # the pod ends up holding the literal
+      # 'https://keycloak.{{ tpl .Values.global.baseDomain $ }}'. Setting it here
+      # makes it resolve within that single pass.
+      IAM_AGENT_KEYCLOAK_BASE_URL: 'https://keycloak.{{ tpl .Values.global.baseDomain $ }}'
+    # Override the subchart default ('agent-{{ iamHostname }}') with our global so
+    # the deployment hostname AND the Keycloak callback URL stay in sync.
+    hostname: '{{ tpl .Values.global.agentPortalApiHostname $ }}'
+    image:
+      repository: registry.gitlab.com/openg2p/iam/iam-agent-portal-api
+      tag: "develop"
+    # Same profile as the staff API — a Python FastAPI app doing OIDC login.
+    resources:
+      requests:
+        cpu: 50m
+        memory: 256Mi
   global:
     iamHostname: '{{ tpl .Values.global.iamHostname $ }}'
     postgresqlHost: '{{ tpl .Values.global.postgresqlHost $ }}'
@@ -647,6 +671,9 @@ openg2p-iam-service:
     # top-level value correctly; the one that does not is pinned in
     # iamStaffPortalApi.envVars above.
     staffPortalDefaultRedirectUri: 'https://staff-portal.{{ tpl .Values.global.baseDomain $ }}'
+    # Without this the subchart default pins the agent redirect to the literal
+    # 'trial' domain, so every other environment gets a redirect it does not own.
+    agentPortalDefaultRedirectUri: 'https://agent-portal.{{ tpl .Values.global.baseDomain $ }}'
     keycloakApplicationUrl: 'https://keycloak.{{ tpl .Values.global.baseDomain $ }}'
     registryApplicationUrl: 'https://registry.{{ tpl .Values.global.baseDomain $ }}'
     minioApplicationUrl: 'https://minio.{{ tpl .Values.global.baseDomain $ }}'
