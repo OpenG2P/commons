@@ -34,8 +34,8 @@ dependencies:
   repository: https://openg2p.github.io/openg2p-helm
   condition: odk-central.enabled
 - name: openg2p-iam-service
-  version: 0.0.0-develop.55
-  repository: https://openg2p.github.io/openg2p-helm
+  version: 0.0.0-develop.82
+  repository: https://gitlab.com/api/v4/projects/84460547/packages/helm/stable
   condition: openg2p-iam-service.enabled
 - name: openg2p-audit-manager
   version: 1.0.1
