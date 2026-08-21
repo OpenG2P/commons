@@ -49,6 +49,9 @@ global:
   # realm, their own host.
   agentPortalApiHostname: 'agent-{{ tpl .Values.global.iamHostname $ }}'
   agentPortalHostname: 'agent-portal.{{ tpl .Values.global.baseDomain $ }}'
+  # Inji Certify — the verifiable credential issuer. One per environment; the
+  # registries push claims to it and reference its issuer DID.
+  certifyHostname: 'certify.{{ tpl .Values.global.baseDomain $ }}'
   staffPortalHostname: 'staff-portal.{{ tpl .Values.global.baseDomain $ }}'
   staffPortalCookieDomain: '.{{ tpl .Values.global.baseDomain $ }}'
 
@@ -611,6 +614,62 @@ mock-identity-system:
       repoUrl: https://github.com/openg2p/mosip-config
       branch: master
     rawConfig: ""
+
+# ---------------------------------------------------------------------------
+# Inji Certify — issues and signs verifiable credentials.
+#
+# ON by default: the registries ship an agent portal that pushes claims here, and
+# an environment without an issuer cannot produce a credential at all. Set
+# enabled: false for a deployment that does not issue.
+#
+# Everything below is defaulted so a stock install works with no extra input.
+# The two values an operator would realistically change are the hostname (via
+# global.certifyHostname) and the issuer DID.
+# ---------------------------------------------------------------------------
+openg2p-inji-certify:
+  enabled: true
+
+  global:
+    certifyHostname: '{{ tpl .Values.global.certifyHostname $ }}'
+    # The issuer identity stamped on every credential. Derived from the hostname
+    # so a stock install is self-consistent; registries must be given this SAME
+    # value (their global.vcIssuer.did) or the credentials they register will be
+    # signed under an issuer nobody can resolve.
+    vcIssuerDid: 'did:web:{{ tpl .Values.global.certifyHostname $ }}'
+
+    postgresqlHost: '{{ tpl .Values.global.postgresqlHost $ }}'
+    # Plain DB names, not release-derived. As a subchart the release name is
+    # 'commons-services', which would otherwise produce a database called
+    # commons_services holding nothing but Certify's tables.
+    certifyDB: inji_certify
+    certifyDBUser: inji_certify_user
+    certifyDBSecret: inji-certify
+    certifyDBUserPasswordKey: inji-certify-db-user
+
+  certify:
+    # Human-readable issuing authority, published in the issuer metadata and
+    # shown by wallets and verifiers as "issued by". Certify will not start
+    # without it.
+    appConfig:
+      issuerDisplay:
+        - name: "OpenG2P"
+          locale: en
+
+    # The signing keystore IS the issuer identity: it plus the encrypted key rows
+    # in Postgres are what every credential is signed with. Generated on first
+    # boot onto a durable volume — never disable this, or a new key is minted on
+    # every restart and every credential already issued becomes unverifiable.
+    p12:
+      enabled: true
+
+  postgres-init:
+    enabled: true
+    # Named so it does not collide with the other subcharts' postgres-init jobs.
+    nameOverride: certify-pg-init
+    postgresql:
+      host: '{{ tpl .Values.global.postgresqlHost $ }}'
+      existingSecret: '{{ tpl .Values.global.postgresqlSecret $ }}'
+      existingSecretPostgresPasswordKey: '{{ tpl .Values.global.postgresqlSecretKey $ }}'
 
 openg2p-iam-service:
   enabled: true

@@ -37,6 +37,10 @@ dependencies:
   version: 0.0.0-develop.88
   repository: https://gitlab.com/api/v4/projects/84460547/packages/helm/stable
   condition: openg2p-iam-service.enabled
+- name: openg2p-inji-certify
+  version: 0.0.0-develop.10
+  repository: https://gitlab.com/api/v4/projects/84460547/packages/helm/stable
+  condition: openg2p-inji-certify.enabled
 - name: openg2p-audit-manager
   version: 1.0.1
   repository: https://gitlab.com/api/v4/projects/84460547/packages/helm/stable
