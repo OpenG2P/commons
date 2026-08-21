@@ -5,7 +5,7 @@ type: application
 version: 0.0.0-develop
 dependencies:
 - name: openg2p-master-data
-  version: 0.0.0-develop.46
+  version: 1.1.0-rc.55
   repository: https://gitlab.com/api/v4/projects/84460547/packages/helm/stable
   condition: masterData.enabled
   alias: masterData
@@ -34,7 +34,7 @@ dependencies:
   repository: https://openg2p.github.io/openg2p-helm
   condition: odk-central.enabled
 - name: openg2p-iam-service
-  version: 0.0.0-develop.88
+  version: 1.4.0-rc.90
   repository: https://gitlab.com/api/v4/projects/84460547/packages/helm/stable
   condition: openg2p-iam-service.enabled
 - name: openg2p-inji-certify
