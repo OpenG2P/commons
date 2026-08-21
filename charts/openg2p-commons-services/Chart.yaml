@@ -5,7 +5,7 @@ type: application
 version: 0.0.0-develop
 dependencies:
 - name: openg2p-master-data
-  version: 0.0.0-develop.40
+  version: 0.0.0-develop.46
   repository: https://gitlab.com/api/v4/projects/84460547/packages/helm/stable
   condition: masterData.enabled
   alias: masterData
@@ -26,15 +26,15 @@ dependencies:
   repository: https://openg2p.github.io/openg2p-helm
   condition: esignet.enabled
 - name: mock-identity-system
-  version: 0.9.5
-  repository: https://openg2p.github.io/openg2p-helm
+  version: 0.0.0-develop.3
+  repository: https://gitlab.com/api/v4/projects/84460547/packages/helm/stable
   condition: mock-identity-system.enabled
 - name: odk-central
   version: v2025.2.2
   repository: https://openg2p.github.io/openg2p-helm
   condition: odk-central.enabled
 - name: openg2p-iam-service
-  version: 0.0.0-develop.82
+  version: 0.0.0-develop.88
   repository: https://gitlab.com/api/v4/projects/84460547/packages/helm/stable
   condition: openg2p-iam-service.enabled
 - name: openg2p-audit-manager
