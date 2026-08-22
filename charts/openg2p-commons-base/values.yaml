@@ -661,12 +661,24 @@ keycloak:
         verbs: ["get", "list"]
 
 softhsm:
-  # Required by esignet + mock-identity-system, which embed their own keymanager
-  # and initialise their signing keys against this HSM (they hardcode the
-  # softhsm PKCS11 socket / security-pin — no PKCS12 path in those charts).
-  # NOTE: the standalone keymanager service does NOT use this — it runs with
-  # keystoreType=PKCS12 (file-based .p12) and ignores softhsm entirely.
-  enabled: true
+  # DISABLED — nothing uses it any more.
+  #
+  # It was required by esignet + mock-identity-system, the only two services that
+  # ever talked to it. Both now run keystoreType=PKCS12 against their own file
+  # keystore, like the standalone keymanager service always has. The subchart
+  # values genuinely have no PKCS12 path, but the properties come from the config
+  # git repo the images clone at start, and JDK_JAVA_OPTIONS overrides those as
+  # JVM system properties — see the esignet block in commons-services.
+  #
+  # Why it was worth removing rather than keeping: the SoftHSM token lived here in
+  # commons-base and survived every commons-services reinstall, while those
+  # services' databases are dropped and recreated each time. The two halves drifted
+  # apart until duplicate CKA_LABELs crash-looped both services, recoverable only
+  # via `uninstall.sh --reset-keymanager`. Per-service keystores share one lifecycle
+  # with the key_alias rows that index them, so the failure cannot recur.
+  #
+  # Re-enable only if something is reintroduced that needs PKCS11.
+  enabled: false
   # Hardcoding this for now. else every upgrade will reset the pin
   securityPIN: MTYwMzIyMjg=
   # NOTE: the softhsm subchart bakes a 1500Mi memory limit into its own

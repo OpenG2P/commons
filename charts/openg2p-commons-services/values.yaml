@@ -92,7 +92,14 @@ masterData:
     # Plain DB names (no release-name prefix). Only one instance per env.
     masterDataDB: master_data
     masterDataDBUser: master_data_user
-    masterDataDBSecret: master-data
+    # NOTE: must NOT be plain 'master-data' — keycloak-init names its client-secret
+    # Secret after the clientId, and a 'master-data' Keycloak client exists. Both
+    # templates are lookup-guarded ('create only if absent') with resource-policy:
+    # keep, so whichever ran first won and the other silently skipped — leaving a
+    # Secret with only client_secret and no master-data-db-user key, which failed
+    # master-data-api with 'couldn't find key master-data-db-user'. Suffixed '-db'
+    # to match partner-management-db / consent-manager-db.
+    masterDataDBSecret: master-data-db
     masterDataDBUserPasswordKey: master-data-db-user
   # The country this environment serves — declared HERE and nowhere else.
   #
@@ -516,6 +523,26 @@ superset:
         credentialName: ""
 
 esignet:
+  # ── Probe budgets ────────────────────────────────────────────────────────
+  # Raised from the subchart defaults (startup 300s / liveness 80s).
+  #
+  # On first boot this service generates its keymanager keypairs, which on a
+  # modest cluster takes several minutes — the keymanager log shows 30s gaps
+  # between single key operations. The default startup budget expired mid-way,
+  # kubelet killed the container ("failed startup probe, will be restarted"),
+  # and the restart began key generation again from scratch: a loop that never
+  # converges and looks like a crash but is only impatience.
+  #
+  # startupProbe is the one that matters — while it is running, readiness and
+  # liveness are suspended, so a generous budget here costs nothing on restarts
+  # once the keys exist (the probe then passes on its first attempt).
+  startupProbe:
+    failureThreshold: 90     # 90 x 10s = 15 min for first-boot key generation
+    periodSeconds: 10
+  livenessProbe:
+    # Also raised: a slow but healthy service should not be killed outright.
+    failureThreshold: 12
+    initialDelaySeconds: 60
   # Requires softhsm (enabled in commons-base): esignet embeds its own keymanager
   # and initialises signing keys against the HSM (unconditional PKCS11 socket +
   # security-pin from the softhsm ConfigMap/Secret; no PKCS12 path in this chart).
@@ -533,7 +560,7 @@ esignet:
   envVars:
     esignet_captcha_site_key: ''
     esignet_captcha_secret_key: ''
-    JDK_JAVA_OPTIONS: "-XX:-UseContainerSupport -Dspring.jmx.enabled=false"
+    JDK_JAVA_OPTIONS: "-XX:-UseContainerSupport -Dspring.jmx.enabled=false -Dmosip.kernel.keymanager.hsm.keystore-type=PKCS12 -Dmosip.kernel.keymanager.hsm.config-path=/home/mosip/keystore/local.p12"
     keycloak_internal_url: '{{ tpl .Values.global.keycloakInternalUrl $ }}'
     keycloak_external_url: '{{ tpl .Values.global.keycloakBaseUrl $ }}'
   artifactoryInstallationName: '{{ .Release.Name }}-artifactory'
@@ -544,7 +571,40 @@ esignet:
   softhsmInstallationName: '{{ tpl .Values.global.softhsmInstallationName $ }}'
   postgresqlInstallationName: '{{ tpl .Values.global.postgresqlHost $ }}'
 
+  # ── PKCS12 keystore (replaces SoftHSM) ───────────────────────────────────
+  # These properties come from the config git repo the image clones at start,
+  # so the chart has no values for them. JDK_JAVA_OPTIONS reaches the JVM as
+  # system properties, which outrank properties files — that is the override
+  # path, and it needs no fork of the subchart or of openg2p/mosip-config.
+  #
+  # The password is NOT set here: a -D value is visible in the pod spec. It is
+  # injected as an env var from the managed Secret below, the same way the
+  # standalone keymanager service does it.
+  extraVolumes:
+    - name: keystore
+      persistentVolumeClaim:
+        claimName: '{{ .Release.Name }}-esignet-keystore'
+  extraVolumeMounts:
+    # Writable: keymanager creates local.p12 here on first boot.
+    - name: keystore
+      mountPath: /home/mosip/keystore
   envVarsFrom:
+    # SoftHSM is disabled in commons-base, so the subchart's defaults for these
+    # two would reference a Secret/ConfigMap that no longer exists and the pod
+    # would fail with CreateContainerConfigError.
+    #
+    # They are blanked, not deleted: Helm's coalesce keeps a subchart default
+    # when the parent sets null, and the chart's envVars helper ranges over
+    # every key without a skip condition — so null leaves the original
+    # secretKeyRef in place. An empty STRING does override the value, and
+    # renders as `value: ''`, which depends on nothing. Harmless because
+    # keystore-type=PKCS12 means the PKCS11 path is never taken.
+    PKCS11_PROXY_SOCKET: ""
+    softhsm_esignet_security_pin: ""
+    mosip_kernel_keymanager_hsm_keystore_pass:
+      secretKeyRef:
+        name: '{{ .Release.Name }}-esignet-keystore'
+        key: p12-keystore-pass
     db_dbuser_password:
       secretKeyRef:
         # Must match postgres-init
@@ -576,6 +636,26 @@ esignet:
     rawConfig: ""
 
 mock-identity-system:
+  # ── Probe budgets ────────────────────────────────────────────────────────
+  # Raised from the subchart defaults (startup 300s / liveness 80s).
+  #
+  # On first boot this service generates its keymanager keypairs, which on a
+  # modest cluster takes several minutes — the keymanager log shows 30s gaps
+  # between single key operations. The default startup budget expired mid-way,
+  # kubelet killed the container ("failed startup probe, will be restarted"),
+  # and the restart began key generation again from scratch: a loop that never
+  # converges and looks like a crash but is only impatience.
+  #
+  # startupProbe is the one that matters — while it is running, readiness and
+  # liveness are suspended, so a generous budget here costs nothing on restarts
+  # once the keys exist (the probe then passes on its first attempt).
+  startupProbe:
+    failureThreshold: 90     # 90 x 10s = 15 min for first-boot key generation
+    periodSeconds: 10
+  livenessProbe:
+    # Also raised: a slow but healthy service should not be killed outright.
+    failureThreshold: 12
+    initialDelaySeconds: 60
   # Requires softhsm (same as esignet — embeds its own keymanager, no PKCS12
   # path). It is also esignet's auth backend, so it runs alongside esignet.
   enabled: true
@@ -590,9 +670,29 @@ mock-identity-system:
   artifactoryInstallationName: '{{ .Release.Name }}-artifactory'
 
   envVars:
-    JDK_JAVA_OPTIONS: "-XX:-UseContainerSupport -Dspring.jmx.enabled=false"
+    JDK_JAVA_OPTIONS: "-XX:-UseContainerSupport -Dspring.jmx.enabled=false -Dmosip.kernel.keymanager.hsm.keystore-type=PKCS12 -Dmosip.kernel.keymanager.hsm.config-path=/home/mosip/keystore/local.p12"
 
+  # ── PKCS12 keystore (replaces SoftHSM) ───────────────────────────────────
+  # See the esignet block above for why: these properties live in the config git
+  # repo the image clones, and JDK_JAVA_OPTIONS is how a chart overrides them.
+  # The password is injected from the managed Secret rather than a -D value,
+  # which would be readable in the pod spec.
+  extraVolumes:
+    - name: keystore
+      persistentVolumeClaim:
+        claimName: '{{ .Release.Name }}-mock-identity-system-keystore'
+  extraVolumeMounts:
+    - name: keystore
+      mountPath: /home/mosip/keystore
   envVarsFrom:
+    # Blanked rather than deleted — see the esignet block above for why null
+    # does not remove a subchart default.
+    PKCS11_PROXY_SOCKET: ""
+    softhsm_mock_identity_system_security_pin: ""
+    mosip_kernel_keymanager_hsm_keystore_pass:
+      secretKeyRef:
+        name: '{{ .Release.Name }}-mock-identity-system-keystore'
+        key: p12-keystore-pass
     db_dbuser_password:
       # MUST MATCH what is specified in postgres-init
       secretKeyRef:
