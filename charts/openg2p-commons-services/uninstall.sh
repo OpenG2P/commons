@@ -21,6 +21,11 @@
 #                                               owned by this release, so they survive;
 #                                               leaving them causes reinstall auth failures
 #                                               once the *-db-user secret is regenerated)
+#   5b. (--reset-keymanager) Reset esignet / mock-identity keymanager state —
+#       their key_alias rows (base-owned DBs) AND the matching softhsm objects.
+#       These two halves must be cleared together or the survivor goes stale:
+#       orphan aliases -> 'key not found'; orphan HSM objects -> duplicate
+#       CKA_LABEL and both services crash-loop.
 #   6. Delete PVCs by label                    (keymanager .p12 keystore, superset, …)
 #   7. Delete PVs still bound to those PVCs
 #
@@ -44,8 +49,10 @@
 #     --postgres-release <name>   commons-postgresql release (default: commons-postgresql)
 #     --postgres-namespace <ns>   namespace of Postgres      (default: same as --namespace)
 #     --keep-dbs                  do NOT drop Postgres databases/roles
-#     --reset-keymanager          also clear esignet / mock-identity key_alias+key_store
-#                                 (needed if softhsm was reset — see note below)
+#     --reset-keymanager          reset esignet / mock-identity keymanager state:
+#                                 truncates their key_alias+key_store rows AND purges the
+#                                 key objects from softhsm. Use for a truly clean reinstall
+#                                 of those two, or if softhsm was reset independently.
 #     --keep-pvs                  delete PVCs but not the PVs behind them
 #     --dry-run                   print actions, change nothing
 #     --yes, -y                   skip the interactive confirmation
@@ -65,6 +72,8 @@ POSTGRES_NAMESPACE=""
 KEEP_DBS=false
 KEEP_PVS=false
 RESET_KEYMANAGER=false
+SOFTHSM_SECRET="commons-softhsm"
+SOFTHSM_PIN_KEY="security-pin"
 DRY_RUN=false
 ASSUME_YES=false
 
@@ -97,6 +106,7 @@ SERVICE_DBS=(
   "audit_manager:audit_manager_user"
   "partner_management:partner_management_user"
   "consent_manager:consent_manager_user"
+  "inji_certify:inji_certify_user"
   "master_data:master_data_user"
   # belt-and-suspenders: some render paths name the master-data DB with the
   # release prefix; DROP ... IF EXISTS makes this a no-op when absent.
@@ -300,6 +310,43 @@ else
     echo "  - ${db} (schema ${schema}): clearing key_alias + key_store"
     kexec_psql_db "$db" "TRUNCATE TABLE \\\"${schema}\\\".key_alias, \\\"${schema}\\\".key_store;"
   done
+
+  # The other half: purge the key MATERIAL from softhsm. The rows above are only
+  # references; leaving the objects behind is what accumulates duplicate
+  # CKA_LABELs across install cycles until PKCS11KeyStoreImpl refuses to load
+  # ("invalid KeyStore state: found multiple secret keys sharing same
+  # CKA_LABEL"), crash-looping esignet and mock-identity. Those two are the ONLY
+  # softhsm consumers (keymanager runs PKCS12), so clearing the token is safe.
+  SOFTHSM_POD=$(kubectl get pod -n "$NAMESPACE" -l "app.kubernetes.io/name=softhsm" \
+                  -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || true)
+  if [[ -z "$SOFTHSM_POD" ]]; then
+    SOFTHSM_POD=$(kubectl get pod -n "$NAMESPACE" -o name 2>/dev/null | grep -m1 softhsm | sed 's|pod/||' || true)
+  fi
+  SOFTHSM_PIN=$(kubectl get secret "$SOFTHSM_SECRET" -n "$NAMESPACE" \
+                  -o jsonpath="{.data.$SOFTHSM_PIN_KEY}" 2>/dev/null | base64 -d || true)
+  if [[ -z "$SOFTHSM_POD" ]]; then
+    _yellow "  (softhsm pod not found — skipping HSM purge)"
+  elif [[ -z "$SOFTHSM_PIN" ]]; then
+    _yellow "  (could not read PIN from secret '$SOFTHSM_SECRET' — skipping HSM purge)"
+  else
+    echo "  - softhsm ($SOFTHSM_POD): deleting all key objects"
+    if [[ "$DRY_RUN" == false ]]; then
+      kubectl exec -n "$NAMESPACE" "$SOFTHSM_POD" -- env PIN="$SOFTHSM_PIN" sh -c '
+        MOD=$(ls /usr/local/lib/softhsm/libsofthsm2.so /usr/lib/softhsm/libsofthsm2.so 2>/dev/null | head -1)
+        [ -z "$MOD" ] && { echo "libsofthsm2.so not found"; exit 0; }
+        for t in secrkey privkey pubkey cert; do
+          i=0
+          while [ $i -lt 100 ]; do
+            i=$((i+1))
+            ID=$(pkcs11-tool --module "$MOD" --login --pin "$PIN" --list-objects --type $t 2>/dev/null | awk "/ID:/{print \$2; exit}")
+            [ -z "$ID" ] && break
+            pkcs11-tool --module "$MOD" --login --pin "$PIN" --delete-object --type $t --id "$ID" >/dev/null 2>&1 || break
+          done
+        done
+        echo "objects remaining: $(pkcs11-tool --module "$MOD" --login --pin "$PIN" --list-objects 2>/dev/null | grep -c "Object;")"
+      ' 2>&1 | sed "s/^/    /" || _yellow "  (HSM purge returned non-zero — continuing)"
+    fi
+  fi
 fi
 
 # ========== STEP 6: PVCs ==========
