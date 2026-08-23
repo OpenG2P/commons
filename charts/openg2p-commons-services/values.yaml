@@ -590,17 +590,29 @@ esignet:
       mountPath: /home/mosip/keystore
   envVarsFrom:
     # SoftHSM is disabled in commons-base, so the subchart's defaults for these
-    # two would reference a Secret/ConfigMap that no longer exists and the pod
-    # would fail with CreateContainerConfigError.
+    # two point at a ConfigMap/Secret that no longer exists — which would fail
+    # the pod with CreateContainerConfigError.
     #
-    # They are blanked, not deleted: Helm's coalesce keeps a subchart default
-    # when the parent sets null, and the chart's envVars helper ranges over
-    # every key without a skip condition — so null leaves the original
-    # secretKeyRef in place. An empty STRING does override the value, and
-    # renders as `value: ''`, which depends on nothing. Harmless because
-    # keystore-type=PKCS12 means the PKCS11 path is never taken.
-    PKCS11_PROXY_SOCKET: ""
-    softhsm_esignet_security_pin: ""
+    # Marked optional rather than removed or blanked. null does not delete a
+    # subchart default (Helm's coalesce keeps it, and the chart's envVars helper
+    # ranges over every key with no skip condition), and an empty string, while
+    # it does win, is a non-table replacing a table — Helm warns
+    # "cannot overwrite table with non table" on every single install.
+    #
+    # `optional: true` keeps the same map shape, so the merge is clean and
+    # silent, and Kubernetes simply omits the variable when the source is
+    # absent. Harmless either way: keystore-type=PKCS12 means the PKCS11 path is
+    # never taken.
+    PKCS11_PROXY_SOCKET:
+      configMapKeyRef:
+        name: '{{ tpl .Values.softhsmInstallationName $ }}-share'
+        key: PKCS11_PROXY_SOCKET
+        optional: true
+    softhsm_esignet_security_pin:
+      secretKeyRef:
+        name: '{{ tpl .Values.softhsmInstallationName $ }}'
+        key: security-pin
+        optional: true
     mosip_kernel_keymanager_hsm_keystore_pass:
       secretKeyRef:
         name: '{{ .Release.Name }}-esignet-keystore'
@@ -685,10 +697,18 @@ mock-identity-system:
     - name: keystore
       mountPath: /home/mosip/keystore
   envVarsFrom:
-    # Blanked rather than deleted — see the esignet block above for why null
-    # does not remove a subchart default.
-    PKCS11_PROXY_SOCKET: ""
-    softhsm_mock_identity_system_security_pin: ""
+    # Marked optional rather than removed — see the esignet block above for why
+    # neither null nor an empty string is right here.
+    PKCS11_PROXY_SOCKET:
+      configMapKeyRef:
+        name: '{{ tpl .Values.softhsmInstallationName $ }}-share'
+        key: PKCS11_PROXY_SOCKET
+        optional: true
+    softhsm_mock_identity_system_security_pin:
+      secretKeyRef:
+        name: '{{ tpl .Values.softhsmInstallationName $ }}'
+        key: security-pin
+        optional: true
     mosip_kernel_keymanager_hsm_keystore_pass:
       secretKeyRef:
         name: '{{ .Release.Name }}-mock-identity-system-keystore'
