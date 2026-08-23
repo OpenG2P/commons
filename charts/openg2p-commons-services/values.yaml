@@ -852,7 +852,7 @@ openg2p-iam-service:
     staffPortalDefaultRedirectUri: 'https://staff-portal.{{ tpl .Values.global.baseDomain $ }}'
     # Without this the subchart default pins the agent redirect to the literal
     # 'trial' domain, so every other environment gets a redirect it does not own.
-    agentPortalDefaultRedirectUri: 'https://agent-portal.{{ tpl .Values.global.baseDomain $ }}'
+    agentPortalDefaultRedirectUri: 'https://{{ tpl .Values.global.agentPortalHostname $ }}'
     keycloakApplicationUrl: 'https://keycloak.{{ tpl .Values.global.baseDomain $ }}'
     registryApplicationUrl: 'https://registry.{{ tpl .Values.global.baseDomain $ }}'
     minioApplicationUrl: 'https://minio.{{ tpl .Values.global.baseDomain $ }}'
@@ -1162,6 +1162,27 @@ keycloak-init:
     backoffLimit: 3
     ttlSecondsAfterFinished: 86400
   realms:
+    # ── The `agent` realm ──────────────────────────────────────────────────
+    # Owned here for the same reason as `staff`: the client is CONFIDENTIAL and
+    # iam-agent-portal-api is its only consumer, so the client and the Secret
+    # holding its secret must be created by the release that configures that
+    # API. A registry creating it per-release would produce a Secret named after
+    # the release (e.g. fr-agent-portal), which the IAM chart does not look for,
+    # leaving the login_providers row with a placeholder secret and no way to
+    # complete a code exchange.
+    agent:
+      clients:
+        - clientId: agent-portal
+          name: Agent Portal
+          # Used by IAM agent portal API for the agent portal login flow.
+          # First URI = IAM API callback, second = agent portal UI.
+          redirectUris:
+            - 'https://{{ tpl .Values.global.agentPortalApiHostname $ }}/*'
+            - 'https://{{ tpl .Values.global.agentPortalHostname $ }}/*'
+          # The single capability an agent has. Defined on the client the agent's
+          # token is minted for, so resource_access carries it.
+          clientRoles:
+            - "register:issue_credential"
     staff:
       clients:
         - clientId: openg2p-superset
