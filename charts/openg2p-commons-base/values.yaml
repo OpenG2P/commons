@@ -1,7 +1,12 @@
 global:
-  baseDomain: trial.openg2p.org
+  # Derived from the install namespace so a fresh install lands on a sensible
+  # per-environment domain (e.g. namespace 'trial' -> trial.openg2p.org) instead
+  # of a hardcoded one that has to be overridden every time.
+  # NOTE: every consumer renders this with `tpl` — keep it that way, otherwise
+  # the {{ }} here is emitted literally into hostnames.
+  baseDomain: '{{ .Release.Namespace }}.openg2p.org'
   # Derived from baseDomain. Override only when using an external Keycloak.
-  keycloakBaseUrl: 'https://keycloak.{{ .Values.global.baseDomain }}'
+  keycloakBaseUrl: 'https://keycloak.{{ tpl .Values.global.baseDomain $ }}'
   # Internal (in-cluster) URL for pod-to-Keycloak communication (HTTP, no TLS).
   keycloakInternalUrl: 'http://{{ .Release.Name }}-keycloak:80'
   # Keycloak realm where OIDC clients live (staff-<namespace>).
@@ -15,8 +20,8 @@ global:
 
   # Service hostnames owned by commons-base — single source of truth used by both
   # the actual service deployments and the keycloak-init redirect URIs below.
-  kafkaUiHostname: 'kafka.{{ .Values.global.baseDomain }}'
-  minioHostname: 'minio.{{ .Values.global.baseDomain }}'
+  kafkaUiHostname: 'kafka.{{ tpl .Values.global.baseDomain $ }}'
+  minioHostname: 'minio.{{ tpl .Values.global.baseDomain $ }}'
 
   postgresqlHost: '{{ .Release.Name }}-postgresql'
   # PostgreSQL superuser secret. Defaults to the embedded chart's auto-created secret.
@@ -316,9 +321,9 @@ minio:
     virtualservice:
       enabled: true
       # Console UI hostname
-      host: 'minio.{{ .Values.global.baseDomain }}'
+      host: 'minio.{{ tpl .Values.global.baseDomain $ }}'
       # S3 API hostname
-      apiHost: 'minio-api.{{ .Values.global.baseDomain }}'
+      apiHost: 'minio-api.{{ tpl .Values.global.baseDomain $ }}'
       gateway: "internal"
       destination: '{{ include "common.names.fullname" . }}'
       # Console UI port
@@ -636,7 +641,7 @@ keycloak:
     enabled: false
   extraEnvVars:
     - name: KC_HOSTNAME
-      value: 'keycloak.{{ .Values.global.baseDomain }}'
+      value: 'keycloak.{{ tpl .Values.global.baseDomain $ }}'
     - name: KC_HOSTNAME_STRICT
       value: "false"
   replicaCount: 1

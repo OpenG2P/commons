@@ -8,7 +8,7 @@ spec:
     istio: ingressgateway
   servers:
     - hosts:
-        - 'keycloak.{{ .Values.global.baseDomain }}'
+        - 'keycloak.{{ tpl .Values.global.baseDomain $ }}'
       port:
         name: http2
         number: 8080

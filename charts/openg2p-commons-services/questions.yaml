@@ -166,6 +166,41 @@ questions:
   label: Enable Master Data service
   group: Master Data
 
+# The country pack. This is the ONE place an environment declares which country
+# it serves — registries read the geography, code lists and sample people from
+# Master Data and name no country of their own.
+- variable: masterData.geoSeed.countryPack
+  description: "Directory name of the pack to seed, from packs/ in github.com/openg2p/openg2p-data — ETH (Ethiopia) or XKM (Kamuntu, fictitious, for demos). Any other pack in that folder works; use its exact directory name."
+  type: string
+  default: ETH
+  label: Country Pack
+  group: Master Data
+  show_if: masterData.enabled=true
+
+- variable: masterData.geoSeed.load.codelists
+  description: "Seed the country's code lists (gender, education level, water source, ...) and their semantic role tags. Registries copy these into their own tables at install; with this off, each falls back to the values its extension ships and the role tags are absent entirely — nothing else provides them."
+  type: boolean
+  default: true
+  label: Seed Country Code Lists
+  group: Master Data
+  show_if: masterData.enabled=true
+
+- variable: masterData.geoSeed.load.samples
+  description: "Seed the pack's sample people — a couple of dozen, coherent with the geography and the code lists — so a fresh install shows something rather than an empty registry. Not bulk analytics data, which each registry generates for itself."
+  type: boolean
+  default: true
+  label: Seed Sample People
+  group: Master Data
+  show_if: masterData.enabled=true
+
+- variable: masterData.geoSeed.domains
+  description: "Domain code lists to seed on top of the core ones, comma-separated. Use 'agriculture' (crops, livestock) when a Farmer Registry will use this environment; a social registry never reads them. Leave empty otherwise."
+  type: string
+  default: ""
+  label: Domain Code Lists
+  group: Master Data
+  show_if: masterData.enabled=true
+
 # ODK
 - variable: odk-central.enabled
   description: This installs ODK Central
@@ -291,3 +326,29 @@ questions:
   label: Run Consent Manager E2E Sanity?
   group: Consent Manager
   show_if: openg2p-consent-manager.enabled=true
+
+# ---------------------------------------------------------------------------
+# Inji Certify — the verifiable credential issuer.
+# ---------------------------------------------------------------------------
+- variable: openg2p-inji-certify.enabled
+  description: "Issue and sign verifiable credentials. One issuer per environment; the registries' agent portals push claims here. Turning it off leaves an environment unable to produce a credential at all."
+  type: boolean
+  default: true
+  label: Enable Inji Certify
+  group: Verifiable Credentials
+
+- variable: global.certifyHostname
+  description: "Public hostname of the issuer. It also determines the issuer DID (did:web:<hostname>) that every credential is signed under, and the audience Certify accepts on incoming proofs — so a registry issuing credentials must be given the SAME value. Default: certify.<namespace>.openg2p.org."
+  type: string
+  label: Certify Hostname
+  group: Verifiable Credentials
+  show_if: openg2p-inji-certify.enabled=true
+
+- variable: openg2p-inji-certify.certify.appConfig.issuerDisplay[0].name
+  description: "Name of the issuing authority, published in the issuer metadata — this is what a wallet or verifier shows as 'issued by'. Set it to the department or agency that owns the credentials."
+  type: string
+  default: OpenG2P
+  label: Issuing Authority Name
+  group: Verifiable Credentials
+  show_if: openg2p-inji-certify.enabled=true
+

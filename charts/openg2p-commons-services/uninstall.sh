@@ -44,6 +44,8 @@
 #     --postgres-release <name>   commons-postgresql release (default: commons-postgresql)
 #     --postgres-namespace <ns>   namespace of Postgres      (default: same as --namespace)
 #     --keep-dbs                  do NOT drop Postgres databases/roles
+#     --reset-keymanager          also clear esignet / mock-identity key_alias+key_store
+#                                 (needed if softhsm was reset — see note below)
 #     --keep-pvs                  delete PVCs but not the PVs behind them
 #     --dry-run                   print actions, change nothing
 #     --yes, -y                   skip the interactive confirmation
@@ -62,6 +64,7 @@ POSTGRES_RELEASE="commons-postgresql"
 POSTGRES_NAMESPACE=""
 KEEP_DBS=false
 KEEP_PVS=false
+RESET_KEYMANAGER=false
 DRY_RUN=false
 ASSUME_YES=false
 
@@ -73,6 +76,21 @@ ASSUME_YES=false
 # NOTE: keep this in sync when a services subchart that creates its own DB is
 # added. registry/registry_idgenerator belong to the registry (NSR) release —
 # NOT commons-services — and must never appear here.
+# ---------- keymanager state owned by esignet / mock-identity ----------
+# These two run PKCS11: their key MATERIAL lives in softhsm (base-owned) while
+# their key_alias rows live in these base-owned DBs. The two are excluded from
+# SERVICE_DBS on purpose, but that means the aliases survive a services
+# uninstall. If softhsm is ever reset/reinstalled while they survive, the
+# aliases reference HSM keys that no longer exist and the apps fail at
+# keymanager/ROOT KEY init. --reset-keymanager truncates just the key tables so
+# the next start regenerates them against whatever softhsm currently holds.
+# Application data (client_detail, consent_*, mock_identity, kyc_auth) is kept.
+# db:schema
+KEYMANAGER_DBS=(
+  "mosip_esignet:esignet"
+  "mosip_mockidentitysystem:mockidentitysystem"
+)
+
 SERVICE_DBS=(
   "awe:awe_user"
   "iam:iam_user"
@@ -94,6 +112,7 @@ while [[ $# -gt 0 ]]; do
     --postgres-release)   POSTGRES_RELEASE="$2";   shift 2 ;;
     --postgres-namespace) POSTGRES_NAMESPACE="$2"; shift 2 ;;
     --keep-dbs)           KEEP_DBS=true;           shift ;;
+    --reset-keymanager)   RESET_KEYMANAGER=true;   shift ;;
     --keep-pvs)           KEEP_PVS=true;           shift ;;
     --dry-run)            DRY_RUN=true;            shift ;;
     --yes|-y)             ASSUME_YES=true;         shift ;;
@@ -128,6 +147,17 @@ kexec_psql() {
   if [[ "$DRY_RUN" == false ]]; then
     kubectl exec -n "$POSTGRES_NAMESPACE" "$PG_POD" -c postgresql -- \
       bash -c "PGPASSWORD=\"\$POSTGRES_PASSWORD\" psql -U postgres -v ON_ERROR_STOP=0 -c \"$sql\"" \
+      || _yellow "  (psql returned non-zero — continuing)"
+  fi
+}
+
+kexec_psql_db() {
+  # Like kexec_psql but connects to a specific database (-d).
+  local db="$1"; local sql="$2"
+  echo "  \$ psql -U postgres -d $db -c \"$sql\""
+  if [[ "$DRY_RUN" == false ]]; then
+    kubectl exec -n "$POSTGRES_NAMESPACE" "$PG_POD" -c postgresql -- \
+      bash -c "PGPASSWORD=\"\$POSTGRES_PASSWORD\" psql -U postgres -d \"$db\" -v ON_ERROR_STOP=0 -c \"$sql\"" \
       || _yellow "  (psql returned non-zero — continuing)"
   fi
 }
@@ -253,6 +283,23 @@ if [[ "$PG_POD_FOUND" == true ]]; then
   done
 else
   echo "  (skipped — Postgres pod not reachable or --keep-dbs)"
+fi
+
+# ========== STEP 5b: reset esignet / mock-identity keymanager state ==========
+# Opt-in. See KEYMANAGER_DBS above for why this is not automatic: these DBs are
+# base-owned, so their key_alias rows outlive a services uninstall and only go
+# stale if softhsm was reset independently.
+_blue "==> [5b/7] Reset esignet / mock-identity keymanager keys"
+if [[ "$RESET_KEYMANAGER" != true ]]; then
+  echo "  (skipped — pass --reset-keymanager if softhsm was reset/reinstalled)"
+elif [[ "$PG_POD_FOUND" != true ]]; then
+  echo "  (skipped — Postgres pod not reachable)"
+else
+  for entry in "${KEYMANAGER_DBS[@]}"; do
+    db="${entry%%:*}"; schema="${entry##*:}"
+    echo "  - ${db} (schema ${schema}): clearing key_alias + key_store"
+    kexec_psql_db "$db" "TRUNCATE TABLE \\\"${schema}\\\".key_alias, \\\"${schema}\\\".key_store;"
+  done
 fi
 
 # ========== STEP 6: PVCs ==========

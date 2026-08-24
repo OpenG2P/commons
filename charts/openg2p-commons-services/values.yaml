@@ -1,7 +1,12 @@
 global:
-  baseDomain: qa.openg2p.org
+  # Derived from the install namespace so a fresh install lands on a sensible
+  # per-environment domain (e.g. namespace 'trial' -> trial.openg2p.org) instead
+  # of a hardcoded one that has to be overridden every time.
+  # NOTE: every consumer renders this with `tpl` — keep it that way, otherwise
+  # the {{ }} here is emitted literally into hostnames.
+  baseDomain: '{{ .Release.Namespace }}.openg2p.org'
   # Derived from baseDomain. Override only when using an external Keycloak.
-  keycloakBaseUrl: 'https://keycloak.{{ .Values.global.baseDomain }}'
+  keycloakBaseUrl: 'https://keycloak.{{ tpl .Values.global.baseDomain $ }}'
   # Internal (in-cluster) URL for pod-to-Keycloak communication (HTTP, no TLS).
   # Defaults assume base release name is 'commons'.
   keycloakInternalUrl: 'http://commons-keycloak:80'
@@ -32,16 +37,23 @@ global:
   # Single source of truth used by both the actual service deployments and the
   # keycloak-init redirect URIs below. Override these if your environment uses a
   # different naming convention (e.g. <service>.<env>.<domain>).
-  supersetHostname: 'superset.{{ .Values.global.baseDomain }}'
-  odkHostname: 'odk.{{ .Values.global.baseDomain }}'
+  supersetHostname: 'superset.{{ tpl .Values.global.baseDomain $ }}'
+  odkHostname: 'odk.{{ tpl .Values.global.baseDomain $ }}'
   # iamHostname is the family-level base (e.g. iam.<baseDomain>). Specific
   # IAM service APIs are derived from it via a service-specific prefix.
-  iamHostname: 'iam.{{ .Values.global.baseDomain }}'
+  iamHostname: 'iam.{{ tpl .Values.global.baseDomain $ }}'
   # Hostname of the IAM staff portal API. Used by both the IAM service deployment
   # and the Keycloak staff-portal client's redirect URI — single source of truth.
   staffPortalApiHostname: 'staff-{{ tpl .Values.global.iamHostname $ }}'
-  staffPortalHostname: 'staff-portal.{{ .Values.global.baseDomain }}'
-  staffPortalCookieDomain: '.{{ .Values.global.baseDomain }}'
+  # Agent portal (IAM). Agents are a separate audience from staff — their own
+  # realm, their own host.
+  agentPortalApiHostname: 'agent-{{ tpl .Values.global.iamHostname $ }}'
+  agentPortalHostname: 'agent-portal.{{ tpl .Values.global.baseDomain $ }}'
+  # Inji Certify — the verifiable credential issuer. One per environment; the
+  # registries push claims to it and reference its issuer DID.
+  certifyHostname: 'certify.{{ tpl .Values.global.baseDomain $ }}'
+  staffPortalHostname: 'staff-portal.{{ tpl .Values.global.baseDomain $ }}'
+  staffPortalCookieDomain: '.{{ tpl .Values.global.baseDomain $ }}'
 
   # ── Cross-chart references ─────────────────────────────────────────────────
   # Internal cluster URL of the IAM staff portal API. Default assumes services
@@ -58,7 +70,7 @@ global:
   # ── AWE (Approval Workflow Engine) ──────────────────────────────────────────
   # Single shared AWE for the environment (installed by the openg2p-awe subchart).
   # Hostname follows the commons <service>.<baseDomain> convention.
-  aweHostname: 'awe.{{ .Values.global.baseDomain }}'
+  aweHostname: 'awe.{{ tpl .Values.global.baseDomain $ }}'
   # Fixed DB contract for the shared AWE — kept stable (NOT release-scoped) so the
   # registries can register their callback secret into this exact DB/secret.
   # AWE's bundled postgres-init (awe-pg-init) creates the DB, user and Secret.
@@ -76,12 +88,58 @@ global:
 masterData:
   enabled: true
   global:
-    masterDataHostname: 'master-data.{{ .Values.global.baseDomain }}'
+    masterDataHostname: 'master-data.{{ tpl .Values.global.baseDomain $ }}'
     # Plain DB names (no release-name prefix). Only one instance per env.
     masterDataDB: master_data
     masterDataDBUser: master_data_user
     masterDataDBSecret: master-data
     masterDataDBUserPasswordKey: master-data-db-user
+  # The country this environment serves — declared HERE and nowhere else.
+  #
+  # One Master Data per environment means one geography, one set of code lists
+  # and one set of sample people. Registries read all three from it and name no
+  # country of their own, which is what lets the same registry image serve any
+  # country: letting a registry chart also pick one is how the two end up
+  # disagreeing, silently.
+  #
+  # The subchart defaults to XKM (Kamuntu, fictitious) so an unconfigured
+  # install cannot attach invented figures to a real country. A real deployment
+  # names its country, so this one does.
+  geoSeed:
+    # The value is a DIRECTORY NAME under packs/ in openg2p-data
+    # (https://github.com/openg2p/openg2p-data), conventionally the ISO 3166
+    # alpha-3 code. Not a fixed list — adding a country means adding data to that
+    # repository, not changing anything here. To build a pack for a country with
+    # a published COD-AB dataset, see Country Data Architecture in the OpenG2P
+    # documentation.
+    #
+    # Shipped today:
+    #   ETH  Ethiopia, OCHA COD-AB via HDX: country > region > zone > woreda,
+    #        1271 units. CC BY-IGO — attribution required, recorded in the pack's
+    #        manifest and printed at seed time. Boundaries are operational, not a
+    #        statement on legal or political status.
+    #   XKM  Kamuntu, fictitious, for demos and tests. Its P-codes come from the
+    #        ISO 3166 user-assigned ranges, so they can never collide with a real
+    #        country's.
+    #
+    # Whatever is set here must also be set as the maps country pack in the G2P
+    # Insights chart, where installed: the choropleth joins its figures to its
+    # shapes on P-code, so a mismatch draws an empty map rather than an error.
+    countryPack: ETH
+    load:
+      geo: true
+      # Registries copy these into their own tables at install. Off leaves each
+      # registry on the values its extension ships, and the semantic role tags —
+      # which nothing else provides — absent entirely.
+      codelists: true
+      # A couple of dozen country-coherent people, so a fresh install shows
+      # something rather than an empty registry. Not bulk analytics data.
+      samples: true
+    # Domain code lists, on top of the core ones. 'agriculture' (crops,
+    # livestock) is needed by a Farmer Registry; a social registry never reads
+    # them. Comma-separated in the Rancher form, a list here.
+    domains: []
+
   # Based on observed usage ~442Mi.
   masterDataApi:
     resources:
@@ -188,7 +246,7 @@ artifactory:
 
 keymanager:
   enabled: true
-  hostname: 'keymanager.{{ .Values.global.baseDomain }}'
+  hostname: 'keymanager.{{ tpl .Values.global.baseDomain $ }}'
   # Based on observed usage ~1436Mi. Spring Boot + HSM is memory-hungry.
   resources:
     requests:
@@ -306,8 +364,22 @@ superset:
 
   init:
     createAdmin: false
-    # Remove hook annotations so Rancher doesn't skip the init job.
-    jobAnnotations: {}
+    # NOTE: `jobAnnotations: {}` does NOT clear the subchart's defaults — Helm
+    # deep-merge keeps subchart map keys — so the keys are restated explicitly
+    # here to actually override them.
+    #
+    # hook-succeeded is added to the delete policy: the DB migration can hit a
+    # transient Postgres deadlock on its first attempt (DDL vs. the already-
+    # running superset web/worker pods) and only succeed on a retry. The Job
+    # tolerates that (backoffLimit), but with only `before-hook-creation` the
+    # failed pod lingers until the next deploy and makes a healthy release look
+    # broken. `hook-succeeded` deletes the Job (and its pods) once it succeeds,
+    # so a passing install leaves nothing behind; `before-hook-creation` is kept
+    # so a genuinely failing Job is still retained for debugging and is cleaned
+    # up before the next run.
+    jobAnnotations:
+      "helm.sh/hook": post-install,post-upgrade
+      "helm.sh/hook-delete-policy": hook-succeeded,before-hook-creation
 
   # Tell Superset chart not to install Postgresql
   postgresql:
@@ -409,6 +481,20 @@ superset:
       SESSION_COOKIE_SAMESITE = None
       TALISMAN_ENABLED = False
 
+      # Embedded dashboards. G2P Insights shows Superset dashboards inside its
+      # own shell, which loads /embedded/<uuid> in an iframe — a route Superset
+      # only registers when this flag is on.
+      #
+      # Without it the failure is silent in an unhelpful way: the REST call that
+      # mints an embedded UUID still succeeds, the guest token is still issued
+      # and looks valid, so every check passes and only the iframe 404s. It reads
+      # as a broken client, not a missing feature flag.
+      FEATURE_FLAGS = {"EMBEDDED_SUPERSET": True}
+
+      # The role a guest token carries. Gamma can read the dashboards it is
+      # granted and nothing else, which is what an embedded viewer needs.
+      GUEST_ROLE_NAME = "Gamma"
+
   istio:
     enabled: true
     virtualservice:
@@ -434,7 +520,7 @@ esignet:
   # and initialises signing keys against the HSM (unconditional PKCS11 socket +
   # security-pin from the softhsm ConfigMap/Secret; no PKCS12 path in this chart).
   enabled: true
-  hostname: 'esignet.{{ .Values.global.baseDomain }}'
+  hostname: 'esignet.{{ tpl .Values.global.baseDomain $ }}'
   # Based on observed usage ~1940Mi. eSignet is the largest memory consumer.
   # For production, increase limit to 4Gi.
   resources:
@@ -493,7 +579,7 @@ mock-identity-system:
   # Requires softhsm (same as esignet — embeds its own keymanager, no PKCS12
   # path). It is also esignet's auth backend, so it runs alongside esignet.
   enabled: true
-  hostname: 'esignet.{{ .Values.global.baseDomain }}'
+  hostname: 'esignet.{{ tpl .Values.global.baseDomain $ }}'
   # Based on observed usage ~912Mi.
   resources:
     requests:
@@ -529,9 +615,74 @@ mock-identity-system:
       branch: master
     rawConfig: ""
 
+# ---------------------------------------------------------------------------
+# Inji Certify — issues and signs verifiable credentials.
+#
+# ON by default: the registries ship an agent portal that pushes claims here, and
+# an environment without an issuer cannot produce a credential at all. Set
+# enabled: false for a deployment that does not issue.
+#
+# Everything below is defaulted so a stock install works with no extra input.
+# The two values an operator would realistically change are the hostname (via
+# global.certifyHostname) and the issuer DID.
+# ---------------------------------------------------------------------------
+openg2p-inji-certify:
+  enabled: true
+
+  global:
+    certifyHostname: '{{ tpl .Values.global.certifyHostname $ }}'
+    # The issuer identity stamped on every credential. Derived from the hostname
+    # so a stock install is self-consistent; registries must be given this SAME
+    # value (their global.vcIssuer.did) or the credentials they register will be
+    # signed under an issuer nobody can resolve.
+    vcIssuerDid: 'did:web:{{ tpl .Values.global.certifyHostname $ }}'
+
+    postgresqlHost: '{{ tpl .Values.global.postgresqlHost $ }}'
+    # Plain DB names, not release-derived. As a subchart the release name is
+    # 'commons-services', which would otherwise produce a database called
+    # commons_services holding nothing but Certify's tables.
+    certifyDB: inji_certify
+    certifyDBUser: inji_certify_user
+    certifyDBSecret: inji-certify
+    certifyDBUserPasswordKey: inji-certify-db-user
+
+  certify:
+    # Human-readable issuing authority, published in the issuer metadata and
+    # shown by wallets and verifiers as "issued by". Certify will not start
+    # without it.
+    appConfig:
+      issuerDisplay:
+        - name: "OpenG2P"
+          locale: en
+
+    # The signing keystore IS the issuer identity: it plus the encrypted key rows
+    # in Postgres are what every credential is signed with. Generated on first
+    # boot onto a durable volume — never disable this, or a new key is minted on
+    # every restart and every credential already issued becomes unverifiable.
+    p12:
+      enabled: true
+
+  postgres-init:
+    enabled: true
+    # Named so it does not collide with the other subcharts' postgres-init jobs.
+    nameOverride: certify-pg-init
+    postgresql:
+      host: '{{ tpl .Values.global.postgresqlHost $ }}'
+      existingSecret: '{{ tpl .Values.global.postgresqlSecret $ }}'
+      existingSecretPostgresPasswordKey: '{{ tpl .Values.global.postgresqlSecretKey $ }}'
+
 openg2p-iam-service:
   enabled: true
   iamStaffPortalApi:
+    envVars:
+      # Set the Keycloak URL DIRECTLY here rather than relying on the subchart's
+      # `IAM_STAFF_KEYCLOAK_BASE_URL: '{{ .Values.global.keycloakBaseUrl }}'`.
+      # Each env value gets exactly ONE tpl pass, and that indirection returns
+      # the global's raw text without re-evaluating it — so a templated global
+      # leaks literally (the pod ended up with the unrendered
+      # 'https://keycloak.{{ tpl .Values.global.baseDomain $ }}'). Calling tpl
+      # ourselves resolves fully in that single pass.
+      IAM_STAFF_KEYCLOAK_BASE_URL: 'https://keycloak.{{ tpl .Values.global.baseDomain $ }}'
     # Override the subchart default ('staff-{{ iamHostname }}') with our global
     # so the deployment hostname AND the Keycloak redirect URI stay in sync.
     hostname: '{{ tpl .Values.global.staffPortalApiHostname $ }}'
@@ -539,6 +690,26 @@ openg2p-iam-service:
       repository: openg2p/iam-staff-portal-api
       tag: "develop"
     # Based on observed usage ~159Mi. Python FastAPI app.
+    resources:
+      requests:
+        cpu: 50m
+        memory: 256Mi
+  iamAgentPortalApi:
+    envVars:
+      # Same single-tpl-pass trap as the staff API above: the subchart sets
+      # IAM_AGENT_KEYCLOAK_BASE_URL from .Values.global.keycloakBaseUrl, whose
+      # value here is itself a template. One tpl pass returns that raw text, so
+      # the pod ends up holding the literal
+      # 'https://keycloak.{{ tpl .Values.global.baseDomain $ }}'. Setting it here
+      # makes it resolve within that single pass.
+      IAM_AGENT_KEYCLOAK_BASE_URL: 'https://keycloak.{{ tpl .Values.global.baseDomain $ }}'
+    # Override the subchart default ('agent-{{ iamHostname }}') with our global so
+    # the deployment hostname AND the Keycloak callback URL stay in sync.
+    hostname: '{{ tpl .Values.global.agentPortalApiHostname $ }}'
+    image:
+      repository: registry.gitlab.com/openg2p/iam/iam-agent-portal-api
+      tag: "develop"
+    # Same profile as the staff API — a Python FastAPI app doing OIDC login.
     resources:
       requests:
         cpu: 50m
@@ -551,13 +722,20 @@ openg2p-iam-service:
     iamDBUser: iam_user
     iamDBSecret: iam
     iamDBUserPasswordKey: iam-db-user
-    # NOTE: keycloakBaseUrl must be a plain string — the iam-service subchart does not tpl it.
-    # Override via --set or install.sh for the correct domain.
-    keycloakBaseUrl: 'https://keycloak.qa.openg2p.org'
-    staffPortalDefaultRedirectUri: 'https://staff-portal.{{ .Values.global.baseDomain }}'
-    keycloakApplicationUrl: 'https://keycloak.{{ .Values.global.baseDomain }}'
-    registryApplicationUrl: 'https://registry.{{ .Values.global.baseDomain }}'
-    minioApplicationUrl: 'https://minio.{{ .Values.global.baseDomain }}'
+    # NOTE: no keycloakBaseUrl override here. A subchart-scoped `global:` loses to
+    # the chart's top-level `global.keycloakBaseUrl`, so the hardcoded
+    # 'https://keycloak.qa.openg2p.org' that used to sit here never actually took
+    # effect — it just looked like the qa domain was configured. The consumers
+    # that DO tpl this global (issuer URLs, login-providers-secret) resolve the
+    # top-level value correctly; the one that does not is pinned in
+    # iamStaffPortalApi.envVars above.
+    staffPortalDefaultRedirectUri: 'https://staff-portal.{{ tpl .Values.global.baseDomain $ }}'
+    # Without this the subchart default pins the agent redirect to the literal
+    # 'trial' domain, so every other environment gets a redirect it does not own.
+    agentPortalDefaultRedirectUri: 'https://agent-portal.{{ tpl .Values.global.baseDomain $ }}'
+    keycloakApplicationUrl: 'https://keycloak.{{ tpl .Values.global.baseDomain $ }}'
+    registryApplicationUrl: 'https://registry.{{ tpl .Values.global.baseDomain $ }}'
+    minioApplicationUrl: 'https://minio.{{ tpl .Values.global.baseDomain $ }}'
     supersetApplicationUrl: 'https://{{ tpl .Values.global.supersetHostname $ }}'
   postgres-init:
     enabled: true
@@ -575,7 +753,7 @@ openg2p-iam-service:
 openg2p-audit-manager:
   enabled: true
   global:
-    auditManagerHostname: 'auditmanager.{{ .Values.global.baseDomain }}'
+    auditManagerHostname: 'auditmanager.{{ tpl .Values.global.baseDomain $ }}'
     postgresqlHost: '{{ tpl .Values.global.postgresqlHost $ }}'
     # Plain DB names (no release-name prefix). Only one instance per env.
     auditManagerDB: audit_manager
