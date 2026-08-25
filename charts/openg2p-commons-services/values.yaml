@@ -806,7 +806,7 @@ openg2p-iam-service:
       # silently pins this service to whatever was last pushed there -- it was
       # missing every IAM change since the GitLab move, with no error anywhere.
       # Matches iamAgentPortalApi and iamStaffUi below.
-      repository: registry.gitlab.com/openg2p/iam/iam-staff-portal-api
+      repository: registry.gitlab.com/openg2p/platform-services/iam/iam-staff-portal-api
       tag: "develop"
     # Based on observed usage ~159Mi. Python FastAPI app.
     resources:
