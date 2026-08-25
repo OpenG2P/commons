@@ -1154,17 +1154,17 @@ keycloak-init:
     # leaving the login_providers row with a placeholder secret and no way to
     # complete a code exchange.
     agent:
-      # Same OpenG2P theme as the `staff` realm (set by commons-base for that
-      # one). Without it the agent lands on Keycloak's stock login page, which
-      # looks nothing like the rest of the product.
+      # The agent portal's own OpenG2P theme, bound at REALM level exactly as
+      # `staff` binds staff-portal (commons-base sets that one). It is a copy of
+      # staff-portal with the product name changed, so the login page reads
+      # "Agent Portal" -- an agent who lands on the staff login otherwise gets an
+      # unhelpful "invalid credentials" rather than "wrong portal".
+      #
+      # Ships in the Keycloak image built from openg2p/keycloak/keycloak-themes;
+      # until that image is rebuilt Keycloak falls back to its stock login page.
       themes:
-        loginTheme: staff-portal
-        adminTheme: staff-portal
-      # Shown on the login page. The theme is shared with `staff`, so without a
-      # display name the two login screens are indistinguishable apart from the
-      # URL -- and an agent who lands on the wrong one gets an unhelpful
-      # "invalid credentials" rather than "wrong portal".
-      displayName: 'OpenG2P Agent'
+        loginTheme: agent-portal
+        adminTheme: agent-portal
       clients:
         - clientId: agent-portal
           name: Agent Portal
