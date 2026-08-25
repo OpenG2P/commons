@@ -618,7 +618,8 @@ kafkaUi:
 keycloak:
   enabled: true
   image:
-    tag: 24.0.5-debian-12-r1-g2p1
+    repository: registry.gitlab.com/openg2p/keycloak/keycloak-themes
+    tag: 24.0.5-debian-12-r1-g2p2
     pullPolicy: Always
   auth:
     adminUser: admin
