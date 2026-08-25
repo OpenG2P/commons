@@ -807,7 +807,12 @@ openg2p-iam-service:
     # so the deployment hostname AND the Keycloak redirect URI stay in sync.
     hostname: '{{ tpl .Values.global.staffPortalApiHostname $ }}'
     image:
-      repository: openg2p/iam-staff-portal-api
+      # registry.gitlab.com, NOT Docker Hub. `openg2p/iam-staff-portal-api` is
+      # the pre-migration Docker Hub build and is no longer published, so it
+      # silently pins this service to whatever was last pushed there -- it was
+      # missing every IAM change since the GitLab move, with no error anywhere.
+      # Matches iamAgentPortalApi and iamStaffUi below.
+      repository: registry.gitlab.com/openg2p/iam/iam-staff-portal-api
       tag: "develop"
     # Based on observed usage ~159Mi. Python FastAPI app.
     resources:
@@ -1171,6 +1176,17 @@ keycloak-init:
     # leaving the login_providers row with a placeholder secret and no way to
     # complete a code exchange.
     agent:
+      # Same OpenG2P theme as the `staff` realm (set by commons-base for that
+      # one). Without it the agent lands on Keycloak's stock login page, which
+      # looks nothing like the rest of the product.
+      themes:
+        loginTheme: staff-portal
+        adminTheme: staff-portal
+      # Shown on the login page. The theme is shared with `staff`, so without a
+      # display name the two login screens are indistinguishable apart from the
+      # URL -- and an agent who lands on the wrong one gets an unhelpful
+      # "invalid credentials" rather than "wrong portal".
+      displayName: 'OpenG2P Agent'
       clients:
         - clientId: agent-portal
           name: Agent Portal
