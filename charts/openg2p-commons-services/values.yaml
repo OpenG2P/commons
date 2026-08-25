@@ -793,16 +793,10 @@ openg2p-inji-certify:
 
 openg2p-iam-service:
   enabled: true
+  # Image/tag and application env come from the IAM chart. Commons only wires
+  # hostnames, DB names, and resources so this install stays in sync with
+  # Keycloak redirect URIs and the shared Postgres.
   iamStaffPortalApi:
-    envVars:
-      # Set the Keycloak URL DIRECTLY here rather than relying on the subchart's
-      # `IAM_STAFF_KEYCLOAK_BASE_URL: '{{ .Values.global.keycloakBaseUrl }}'`.
-      # Each env value gets exactly ONE tpl pass, and that indirection returns
-      # the global's raw text without re-evaluating it — so a templated global
-      # leaks literally (the pod ended up with the unrendered
-      # 'https://keycloak.{{ tpl .Values.global.baseDomain $ }}'). Calling tpl
-      # ourselves resolves fully in that single pass.
-      IAM_STAFF_KEYCLOAK_BASE_URL: 'https://keycloak.{{ tpl .Values.global.baseDomain $ }}'
     # Override the subchart default ('staff-{{ iamHostname }}') with our global
     # so the deployment hostname AND the Keycloak redirect URI stay in sync.
     hostname: '{{ tpl .Values.global.staffPortalApiHostname $ }}'
@@ -820,20 +814,7 @@ openg2p-iam-service:
         cpu: 50m
         memory: 256Mi
   iamAgentPortalApi:
-    envVars:
-      # Same single-tpl-pass trap as the staff API above: the subchart sets
-      # IAM_AGENT_KEYCLOAK_BASE_URL from .Values.global.keycloakBaseUrl, whose
-      # value here is itself a template. One tpl pass returns that raw text, so
-      # the pod ends up holding the literal
-      # 'https://keycloak.{{ tpl .Values.global.baseDomain $ }}'. Setting it here
-      # makes it resolve within that single pass.
-      IAM_AGENT_KEYCLOAK_BASE_URL: 'https://keycloak.{{ tpl .Values.global.baseDomain $ }}'
-    # Override the subchart default ('agent-{{ iamHostname }}') with our global so
-    # the deployment hostname AND the Keycloak callback URL stay in sync.
     hostname: '{{ tpl .Values.global.agentPortalApiHostname $ }}'
-    image:
-      repository: registry.gitlab.com/openg2p/iam/iam-agent-portal-api
-      tag: "develop"
     # Same profile as the staff API — a Python FastAPI app doing OIDC login.
     resources:
       requests:
@@ -847,13 +828,10 @@ openg2p-iam-service:
     iamDBUser: iam_user
     iamDBSecret: iam
     iamDBUserPasswordKey: iam-db-user
-    # NOTE: no keycloakBaseUrl override here. A subchart-scoped `global:` loses to
-    # the chart's top-level `global.keycloakBaseUrl`, so the hardcoded
-    # 'https://keycloak.qa.openg2p.org' that used to sit here never actually took
-    # effect — it just looked like the qa domain was configured. The consumers
-    # that DO tpl this global (issuer URLs, login-providers-secret) resolve the
-    # top-level value correctly; the one that does not is pinned in
-    # iamStaffPortalApi.envVars above.
+    # NOTE: no keycloakBaseUrl override here. Helm merges the parent
+    # global.keycloakBaseUrl into the subchart. The IAM chart must tpl
+    # IAM_*_KEYCLOAK_BASE_URL (same as ADMIN_URL) so the nested baseDomain
+    # template resolves instead of leaking as literal '{{ tpl ... }}' text.
     staffPortalDefaultRedirectUri: 'https://staff-portal.{{ tpl .Values.global.baseDomain $ }}'
     # Without this the subchart default pins the agent redirect to the literal
     # 'trial' domain, so every other environment gets a redirect it does not own.
