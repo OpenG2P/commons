@@ -5,7 +5,7 @@ type: application
 version: 0.0.0-develop
 dependencies:
 - name: openg2p-master-data
-  version: 0.0.0-develop.60
+  version: 0.0.0-develop.62
   repository: https://gitlab.com/api/v4/projects/84460547/packages/helm/stable
   condition: masterData.enabled
   alias: masterData
@@ -50,15 +50,15 @@ dependencies:
   repository: https://openg2p.github.io/openg2p-helm
   condition: openg2p-staff-portal-ui.enabled
 - name: openg2p-awe
-  version: 0.0.0-develop.71
+  version: 0.0.0-develop.74
   repository: https://gitlab.com/api/v4/projects/84460547/packages/helm/stable
   condition: openg2p-awe.enabled
 - name: partner-management
-  version: 0.0.0-develop.14
+  version: 0.0.0-develop.18
   repository: https://gitlab.com/api/v4/projects/84460547/packages/helm/stable
   condition: partner-management.enabled
 - name: openg2p-consent-manager
-  version: 0.0.0-develop.52
+  version: 0.0.0-develop.53
   repository: https://gitlab.com/api/v4/projects/84460547/packages/helm/stable
   condition: openg2p-consent-manager.enabled
 - name: keycloak-init
