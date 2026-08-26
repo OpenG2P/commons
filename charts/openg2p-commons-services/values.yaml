@@ -86,6 +86,12 @@ global:
 # removed. No app-level logging config is required here anymore.
 
 masterData:
+  keycloak-init:
+    # Distinct name: without it this subchart's kc-init ConfigMap resolves to the
+    # same name as the parent's own keycloak-init, the parent's wins, and the
+    # master-data client is silently never created (iam-register then hangs on
+    # invalid_client). Matches awe-kc-init / pm-kc-init / cm-kc-init.
+    nameOverride: md-kc-init
   enabled: true
   global:
     masterDataHostname: 'master-data.{{ tpl .Values.global.baseDomain $ }}'

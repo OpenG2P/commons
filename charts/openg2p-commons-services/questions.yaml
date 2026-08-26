@@ -351,4 +351,3 @@ questions:
   label: Issuing Authority Name
   group: Verifiable Credentials
   show_if: openg2p-inji-certify.enabled=true
-
