@@ -54,7 +54,7 @@ dependencies:
   repository: https://gitlab.com/api/v4/projects/84460547/packages/helm/stable
   condition: openg2p-awe.enabled
 - name: partner-management
-  version: 0.0.0-develop.18
+  version: 0.0.0-develop.20
   repository: https://gitlab.com/api/v4/projects/84460547/packages/helm/stable
   condition: partner-management.enabled
 - name: openg2p-consent-manager
