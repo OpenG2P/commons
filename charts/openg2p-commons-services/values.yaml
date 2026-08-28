@@ -807,12 +807,9 @@ openg2p-iam-service:
     # so the deployment hostname AND the Keycloak redirect URI stay in sync.
     hostname: '{{ tpl .Values.global.staffPortalApiHostname $ }}'
     image:
-      # registry.gitlab.com, NOT Docker Hub. `openg2p/iam-staff-portal-api` is
-      # the pre-migration Docker Hub build and is no longer published, so it
-      # silently pins this service to whatever was last pushed there -- it was
-      # missing every IAM change since the GitLab move, with no error anywhere.
+      # Docker Hub: iam publishes here again since the move back to GitHub.
       # Matches iamAgentPortalApi and iamStaffUi below.
-      repository: registry.gitlab.com/openg2p/platform-services/iam/iam-staff-portal-api
+      repository: openg2p/iam-staff-portal-api
       tag: "develop"
     # Based on observed usage ~159Mi. Python FastAPI app.
     resources:

@@ -618,12 +618,8 @@ kafkaUi:
 keycloak:
   enabled: true
   image:
-    # The Bitnami keycloak chart composes the image as <registry>/<repository>
-    # and defaults registry to docker.io. Putting the full host in `repository`
-    # alone produced docker.io/registry.gitlab.com/... -> 'pull access denied,
-    # repository does not exist'. Both keys must be set.
-    registry: registry.gitlab.com
-    repository: openg2p/keycloak/keycloak-themes
+    # Docker Hub (the Bitnami keycloak chart defaults registry to docker.io).
+    repository: openg2p/keycloak
     tag: 24.0.5-debian-12-r1-g2p2
     pullPolicy: Always
   auth:

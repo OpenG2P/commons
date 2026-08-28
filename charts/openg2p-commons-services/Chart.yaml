@@ -5,8 +5,8 @@ type: application
 version: 0.0.0-develop
 dependencies:
 - name: openg2p-master-data
-  version: 0.0.0-develop.62
-  repository: https://gitlab.com/api/v4/projects/84460547/packages/helm/stable
+  version: 0.0.0-develop.66
+  repository: https://openg2p.github.io/openg2p-helm
   condition: masterData.enabled
   alias: masterData
 - name: artifactory
@@ -26,44 +26,44 @@ dependencies:
   repository: https://openg2p.github.io/openg2p-helm
   condition: esignet.enabled
 - name: mock-identity-system
-  version: 0.0.0-develop.6
-  repository: https://gitlab.com/api/v4/projects/84460547/packages/helm/stable
+  version: 0.0.0-develop.7
+  repository: https://openg2p.github.io/openg2p-helm
   condition: mock-identity-system.enabled
 - name: odk-central
   version: v2025.2.2
   repository: https://openg2p.github.io/openg2p-helm
   condition: odk-central.enabled
 - name: openg2p-iam-service
-  version: 0.0.0-develop.96
-  repository: https://gitlab.com/api/v4/projects/84460547/packages/helm/stable
+  version: 0.0.0-develop.97
+  repository: https://openg2p.github.io/openg2p-helm
   condition: openg2p-iam-service.enabled
 - name: openg2p-inji-certify
-  version: 0.0.0-develop.13
-  repository: https://gitlab.com/api/v4/projects/84460547/packages/helm/stable
+  version: 0.0.0-develop.14
+  repository: https://openg2p.github.io/openg2p-helm
   condition: openg2p-inji-certify.enabled
 - name: openg2p-audit-manager
-  version: 0.0.0-develop.22
-  repository: https://gitlab.com/api/v4/projects/84460547/packages/helm/stable
+  version: 0.0.0-develop.25
+  repository: https://openg2p.github.io/openg2p-helm
   condition: openg2p-audit-manager.enabled
 - name: openg2p-staff-portal-ui
   version: 0.0.0-develop.54
   repository: https://openg2p.github.io/openg2p-helm
   condition: openg2p-staff-portal-ui.enabled
 - name: openg2p-awe
-  version: 0.0.0-develop.74
-  repository: https://gitlab.com/api/v4/projects/84460547/packages/helm/stable
+  version: 0.0.0-develop.78
+  repository: https://openg2p.github.io/openg2p-helm
   condition: openg2p-awe.enabled
 - name: partner-management
-  version: 0.0.0-develop.20
-  repository: https://gitlab.com/api/v4/projects/84460547/packages/helm/stable
+  version: 0.0.0-develop.23
+  repository: https://openg2p.github.io/openg2p-helm
   condition: partner-management.enabled
 - name: openg2p-consent-manager
-  version: 0.0.0-develop.53
-  repository: https://gitlab.com/api/v4/projects/84460547/packages/helm/stable
+  version: 0.0.0-develop.57
+  repository: https://openg2p.github.io/openg2p-helm
   condition: openg2p-consent-manager.enabled
 - name: keycloak-init
-  version: 0.0.0-develop.57
-  repository: https://gitlab.com/api/v4/projects/84460547/packages/helm/stable
+  version: 0.0.0-develop.60
+  repository: https://openg2p.github.io/openg2p-helm
   condition: keycloak-init.enabled
 icon: https://openg2p.github.io/openg2p-helm/openg2p-logo.png
 annotations:
