@@ -1176,10 +1176,15 @@ keycloak-init:
           redirectUris:
             - 'https://{{ tpl .Values.global.agentPortalApiHostname $ }}/*'
             - 'https://{{ tpl .Values.global.agentPortalHostname $ }}/*'
-          # The single capability an agent has. Defined on the client the agent's
-          # token is minted for, so resource_access carries it.
+          # The agent's capabilities. Defined on the client the agent's token is
+          # minted for, so resource_access carries them.
+          #
+          # Issuing and verifying are separate: checking a card someone presents
+          # and creating a new one are different acts with different risk, and a
+          # deployment may want staff who can do one and not the other.
           clientRoles:
             - "register:issue_credential"
+            - "register:verify_credential"
     staff:
       clients:
         - clientId: openg2p-superset
