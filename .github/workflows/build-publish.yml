@@ -199,6 +199,20 @@ jobs:
           export PAGES_DIR="${{ github.workspace }}/changelog-pages"
           export REPO_URL="${{ github.server_url }}/${{ github.repository }}"
           export HELM_REGISTRY_URL="$HELM_REPO_URL"
+          # Chart links for the catalogue page. The shared workflow derives these
+          # from its chart-path input; this repo has its own CHARTS list, so build
+          # the same JSON here -- without it run.sh emits no "Chart:" line at all,
+          # which is why every commons page lacked one.
+          charts='[]'
+          for cp in $CHARTS; do
+            [ -f "${cp}/Chart.yaml" ] || continue
+            cname=$(yq '.name' "${cp}/Chart.yaml")
+            charts=$(printf '%s' "$charts" | jq -c \
+              --arg n "$cname" --arg v "$VERSION" \
+              --arg u "${HELM_REPO_URL}/${cname}-${VERSION}.tgz" \
+              '. + [{name:$n, version:$v, url:$u}]')
+          done
+          export CHARTS_JSON="$charts"
           export COMMIT_PATH="commit" DEFAULT_BRANCH="${{ github.event.repository.default_branch }}"
           export CHANGELOG_KIND=service
           export GITHUB_OUTPUT="${{ github.workspace }}/changelog.out"; : > "$GITHUB_OUTPUT"
