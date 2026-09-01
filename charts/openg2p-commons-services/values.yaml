@@ -52,6 +52,7 @@ global:
   # Inji Certify — the verifiable credential issuer. One per environment; the
   # registries push claims to it and reference its issuer DID.
   certifyHostname: 'certify.{{ tpl .Values.global.baseDomain $ }}'
+  verifyHostname: 'verify.{{ tpl .Values.global.baseDomain $ }}'
   staffPortalHostname: 'staff-portal.{{ tpl .Values.global.baseDomain $ }}'
   staffPortalCookieDomain: '.{{ tpl .Values.global.baseDomain $ }}'
 
@@ -796,6 +797,41 @@ openg2p-inji-certify:
       host: '{{ tpl .Values.global.postgresqlHost $ }}'
       existingSecret: '{{ tpl .Values.global.postgresqlSecret $ }}'
       existingSecretPostgresPasswordKey: '{{ tpl .Values.global.postgresqlSecretKey $ }}'
+
+# ---------------------------------------------------------------------------
+# Inji Verify — the VERIFIER side of the credential story.
+#
+# Only `verify-service`. The stock Inji Verify deployment also brings a MOSIP
+# config-server, a PostgreSQL and a React portal (`verify-ui`); none of those is
+# a requirement of the service itself, and we run none of them:
+#
+#   * config-server — verify-service reads plain Spring properties;
+#   * PostgreSQL    — the database exists for OpenID4VP presentation
+#                     transactions, which we do not use. The chart runs it on
+#                     the image's bundled in-memory database instead;
+#   * verify-ui     — the Agent Portal has its own upload-and-check screen.
+#
+# It resolves the ISSUER'S key itself, from Certify's
+# /.well-known/jwks.json — the same cluster, so nothing is copied or kept in
+# step by hand. That path only exists because the Certify chart rewrites it: the
+# QR's ES256 key is published in the JWKS and NOT in the DID document, so the
+# rewrite is what makes a printed credential verifiable at all.
+# ---------------------------------------------------------------------------
+openg2p-inji-verify:
+  # ON with Certify: the two halves of the same feature, and an environment that
+  # issues credentials is the one that wants to check them. The Agent Portal's
+  # verification screen is switched separately (agentPortalApi.vcVerification),
+  # so this being on costs one small service and exposes nothing by itself.
+  enabled: true
+
+  global:
+    verifyHostname: '{{ tpl .Values.global.verifyHostname $ }}'
+
+  verifyService:
+    # No external database. See the note above: switching this off requires
+    # supplying verifyService.database.* as well.
+    stateless: true
+
 
 openg2p-iam-service:
   enabled: true

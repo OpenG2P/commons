@@ -38,15 +38,19 @@ dependencies:
   repository: https://openg2p.github.io/openg2p-helm
   condition: openg2p-iam-service.enabled
 - name: openg2p-inji-certify
-  version: 0.0.0-develop.14
+  version: 0.0.0-develop.16
   repository: https://openg2p.github.io/openg2p-helm
   condition: openg2p-inji-certify.enabled
+- name: openg2p-inji-verify
+  version: 0.0.0-develop.16
+  repository: https://openg2p.github.io/openg2p-helm
+  condition: openg2p-inji-verify.enabled
 - name: openg2p-audit-manager
   version: 0.0.0-develop.25
   repository: https://openg2p.github.io/openg2p-helm
   condition: openg2p-audit-manager.enabled
 - name: openg2p-staff-portal-ui
-  version: 0.0.0-develop.54
+  version: 0.0.0-develop.63
   repository: https://openg2p.github.io/openg2p-helm
   condition: openg2p-staff-portal-ui.enabled
 - name: openg2p-awe
