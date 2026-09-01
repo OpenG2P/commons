@@ -26,7 +26,7 @@ dependencies:
   repository: https://openg2p.github.io/openg2p-helm
   condition: esignet.enabled
 - name: mock-identity-system
-  version: 0.0.0-develop.3
+  version: 0.0.0-develop.7
   repository: https://openg2p.github.io/openg2p-helm
   condition: mock-identity-system.enabled
 - name: odk-central
@@ -38,7 +38,7 @@ dependencies:
   repository: https://openg2p.github.io/openg2p-helm
   condition: openg2p-iam-service.enabled
 - name: openg2p-inji-certify
-  version: 0.0.0-develop.10
+  version: 0.0.0-develop.14
   repository: https://openg2p.github.io/openg2p-helm
   condition: openg2p-inji-certify.enabled
 - name: openg2p-audit-manager
