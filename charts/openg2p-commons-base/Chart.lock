@@ -4,7 +4,7 @@ dependencies:
   version: 15.5.38
 - name: postgres-init
   repository: https://openg2p.github.io/openg2p-helm
-  version: 0.0.0-develop
+  version: 1.2.0
 - name: mail
   repository: https://openg2p.github.io/openg2p-helm
   version: 1.2.2
@@ -28,6 +28,6 @@ dependencies:
   version: 21.4.5
 - name: keycloak-init
   repository: https://openg2p.github.io/openg2p-helm
-  version: 1.1.1
-digest: sha256:18cc8825d44d968f56e151f4af344b854c1eebf1a901ae4e1dd979e6bb356d27
-generated: "2026-06-16T05:28:28.146129+05:30"
+  version: 1.2.0
+digest: sha256:6523a8e56b21f23e4a09a8b0968bd955e6e2ca0560c780ae70b9a80671317174
+generated: "2026-09-02T11:50:25.036803952+05:30"

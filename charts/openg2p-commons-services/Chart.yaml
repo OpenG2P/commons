@@ -34,7 +34,7 @@ dependencies:
   repository: https://openg2p.github.io/openg2p-helm
   condition: odk-central.enabled
 - name: openg2p-iam-service
-  version: 1.4.0
+  version: 1.4.1
   repository: https://openg2p.github.io/openg2p-helm
   condition: openg2p-iam-service.enabled
 - name: openg2p-inji-certify
