@@ -1,0 +1,44 @@
+{{- /*
+  Refuses an install that would leave the agent portal unable to sign out.
+
+  commons-services owns the Keycloak `agent-portal` client and the IAM login
+  provider; the REGISTRY chart owns the portal itself and derives its host from
+  its own release name ('<release>-agent.<ns>'). Both read
+  global.agentPortalHostname, but their DEFAULTS cannot agree -- commons-services
+  has no way to know the registry's release name -- so unless the operator sets
+  this on both, they diverge.
+
+  The divergence is worth failing over because its symptom is so misleading:
+  login keeps working (it redirects via the IAM callback, registered either way)
+  and only SIGN-OUT breaks, sending the agent to a host that serves nothing.
+  Nothing in the install output hints at it, and the portal looks healthy.
+
+  Only fires when the agent realm is actually configured, so installs without an
+  agent portal are unaffected. Set global.allowDefaultAgentPortalHostname=true to
+  proceed anyway -- correct if you genuinely serve the portal at that host.
+*/ -}}
+{{- $ki := index .Values "keycloak-init" | default dict -}}
+{{- $agentRealm := dig "realms" "agent" nil $ki -}}
+{{- if and $agentRealm (not .Values.global.allowDefaultAgentPortalHostname) -}}
+{{- $host := tpl .Values.global.agentPortalHostname $ -}}
+{{- $default := printf "agent-portal.%s" (tpl .Values.global.baseDomain $) -}}
+{{- if eq $host $default -}}
+{{- fail (printf `
+global.agentPortalHostname is still the commons-services default (%s), but the
+agent realm is enabled.
+
+The agent portal is served by the REGISTRY chart at its own host -- typically
+'<registry-release>-agent.<namespace>.<domain>', e.g. 'fr-agent.%s'. Because
+commons-services cannot know the registry's release name, this default will not
+match, and the mismatch breaks SIGN-OUT ONLY: login continues to work, so the
+fault surfaces long after install.
+
+Set it to the registry's agent UI host on BOTH charts:
+
+    --set global.agentPortalHostname=<registry-release>-agent.%s
+
+or set global.allowDefaultAgentPortalHostname=true if you really do serve the
+agent portal at %s.
+` $default (tpl .Values.global.baseDomain $) (tpl .Values.global.baseDomain $) $default) -}}
+{{- end -}}
+{{- end -}}

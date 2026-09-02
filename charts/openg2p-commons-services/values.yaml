@@ -48,7 +48,32 @@ global:
   # Agent portal (IAM). Agents are a separate audience from staff — their own
   # realm, their own host.
   agentPortalApiHostname: 'agent-{{ tpl .Values.global.iamHostname $ }}'
+  # The agent portal UI's PUBLIC host. commons-services does NOT serve it -- the
+  # registry chart does -- but commons-services owns the Keycloak client and the
+  # IAM login provider that must agree with it, so it has to be told the value.
+  #
+  # SET THIS on every install where the agent portal is used. The registry chart
+  # derives its own host from ITS release name ('{{ .Release.Name }}-agent.<ns>',
+  # e.g. 'fr-agent.<domain>'), which commons-services cannot know -- so the
+  # default below will disagree with it, and the two charts silently diverge.
+  #
+  # The symptom of a mismatch is misleading: LOGIN KEEPS WORKING and only
+  # SIGN-OUT BREAKS. Login redirects via the IAM callback, which is registered
+  # correctly either way; logout goes to post_logout_redirect_uri, derived from
+  # this value, so the agent lands on a host that serves nothing.
+  #
+  # It drives all three of:
+  #   * agentPortalDefaultRedirectUri -> login_providers.default_redirect_uri
+  #   * the Keycloak agent-portal client's redirectUris
+  #   * IAM_AGENT_CORS_ALLOW_ORIGINS
+  #
+  # Leaving it at the default while the agent realm is enabled is rejected at
+  # install time (templates/validate-agent-portal-hostname.yaml). Set
+  # global.allowDefaultAgentPortalHostname=true if you really do serve the portal
+  # at this host.
   agentPortalHostname: 'agent-portal.{{ tpl .Values.global.baseDomain $ }}'
+  # Escape hatch for the check above.
+  allowDefaultAgentPortalHostname: false
   # Inji Certify — the verifiable credential issuer. One per environment; the
   # registries push claims to it and reference its issuer DID.
   certifyHostname: 'certify.{{ tpl .Values.global.baseDomain $ }}'
