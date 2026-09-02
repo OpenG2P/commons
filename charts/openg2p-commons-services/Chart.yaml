@@ -50,7 +50,7 @@ dependencies:
   repository: https://openg2p.github.io/openg2p-helm
   condition: openg2p-staff-portal-ui.enabled
 - name: openg2p-awe
-  version: 1.2.1
+  version: 1.2.2
   repository: https://openg2p.github.io/openg2p-helm
   condition: openg2p-awe.enabled
 - name: partner-management
