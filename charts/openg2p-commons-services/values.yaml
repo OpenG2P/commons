@@ -1014,19 +1014,10 @@ openg2p-awe:
     enabled: true
     # Distinct Job name within the commons-services release.
     nameOverride: awe-pg-init
-    # Repeated in full because the extension list is the point: AWE's migration
-    # builds `CREATE INDEX ... USING gin (search_text gin_trgm_ops)`, which needs
-    # pg_trgm in the awe database. The subchart's default databases entry does not
-    # request it, so on a fresh cluster AWE crash-loops at startup with
-    # `operator class "gin_trgm_ops" does not exist for access method "gin"` --
-    # a failure that looks like a code fault and is really a missing extension.
-    databases:
-      - name: '{{ tpl .Values.global.aweDB $ }}'
-        user: '{{ tpl .Values.global.aweDBUser $ }}'
-        secret: '{{ tpl .Values.global.aweDBSecret $ }}'
-        secretUserPasswordKey: '{{ tpl .Values.global.aweDBUserPasswordKey $ }}'
-        extensions:
-          - 'pg_trgm'
+    # No `databases:` override here on purpose. The AWE chart declares its own
+    # database AND the pg_trgm extension its search index needs (>= .87), and a
+    # list here would REPLACE that entry rather than merge with it -- silently
+    # dropping anything upstream adds later.
   keycloak-init:
     enabled: true
     nameOverride: awe-kc-init
