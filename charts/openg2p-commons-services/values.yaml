@@ -67,13 +67,11 @@ global:
   #   * the Keycloak agent-portal client's redirectUris
   #   * IAM_AGENT_CORS_ALLOW_ORIGINS
   #
-  # Leaving it at the default while the agent realm is enabled is rejected at
-  # install time (templates/validate-agent-portal-hostname.yaml). Set
-  # global.allowDefaultAgentPortalHostname=true if you really do serve the portal
-  # at this host.
+  # If the registry is installed AFTER this chart (the normal order) you may not
+  # know its release name yet. In that case leave the default and re-run this
+  # chart with the right value once the registry host is known -- or let the
+  # registry's own iam-register Job carry it, which is where this belongs.
   agentPortalHostname: 'agent-portal.{{ tpl .Values.global.baseDomain $ }}'
-  # Escape hatch for the check above.
-  allowDefaultAgentPortalHostname: false
   # Inji Certify — the verifiable credential issuer. One per environment; the
   # registries push claims to it and reference its issuer DID.
   certifyHostname: 'certify.{{ tpl .Values.global.baseDomain $ }}'
@@ -1016,6 +1014,19 @@ openg2p-awe:
     enabled: true
     # Distinct Job name within the commons-services release.
     nameOverride: awe-pg-init
+    # Repeated in full because the extension list is the point: AWE's migration
+    # builds `CREATE INDEX ... USING gin (search_text gin_trgm_ops)`, which needs
+    # pg_trgm in the awe database. The subchart's default databases entry does not
+    # request it, so on a fresh cluster AWE crash-loops at startup with
+    # `operator class "gin_trgm_ops" does not exist for access method "gin"` --
+    # a failure that looks like a code fault and is really a missing extension.
+    databases:
+      - name: '{{ tpl .Values.global.aweDB $ }}'
+        user: '{{ tpl .Values.global.aweDBUser $ }}'
+        secret: '{{ tpl .Values.global.aweDBSecret $ }}'
+        secretUserPasswordKey: '{{ tpl .Values.global.aweDBUserPasswordKey $ }}'
+        extensions:
+          - 'pg_trgm'
   keycloak-init:
     enabled: true
     nameOverride: awe-kc-init
