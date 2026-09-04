@@ -1053,6 +1053,13 @@ partner-management:
       # Keycloak URL (commons splits these two).
       COMMON_AUTH_DEFAULT_ISSUERS: '["{{ tpl .Values.global.keycloakExternalIssuerUrl $ }}"]'
       COMMON_AUTH_DEFAULT_JWKS_URLS: '["{{ tpl .Values.global.keycloakIssuerUrl $ }}/protocol/openid-connect/certs"]'
+      # PM validates admin calls through its OWN auth stack, not COMMON_AUTH, so
+      # it needs the same split stated again. Without this it falls back to the
+      # PM chart's default, which resolves global.keycloakIssuerUrl — INTERNAL
+      # under commons — and every admin token minted at the public Keycloak is
+      # rejected 401 on issuer before its partner_manager role is even read.
+      PARTNER_MANAGER_AUTH_DEFAULT_ISSUERS: '["{{ tpl .Values.global.keycloakExternalIssuerUrl $ }}"]'
+      PARTNER_MANAGER_AUTH_DEFAULT_JWKS_URLS: '["{{ tpl .Values.global.keycloakIssuerUrl $ }}/protocol/openid-connect/certs"]'
   partnerApi:
     nameOverride: pm-partner-api
     istio:
