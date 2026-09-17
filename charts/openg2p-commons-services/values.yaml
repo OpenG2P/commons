@@ -85,7 +85,7 @@ global:
 # per-service Fluentd Flow/Output that used to ship to OpenSearch has been
 # removed. No app-level logging config is required here anymore.
 
-masterData:
+master-data:
   enabled: true
   global:
     masterDataHostname: 'master-data.{{ tpl .Values.global.baseDomain $ }}'
