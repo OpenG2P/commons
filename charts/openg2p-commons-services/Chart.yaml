@@ -19,7 +19,7 @@ dependencies:
   condition: keymanager.enabled
 - name: superset
   version: 0.12.11
-  repository: https://apache.github.io/superset
+  repository: https://openg2p.github.io/openg2p-helm
   condition: superset.enabled
 - name: esignet
   version: 1.4.3
