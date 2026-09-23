@@ -1,0 +1,64 @@
+{{- if .Values.novu.enabled }}
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: {{ .Release.Name }}-novu-api
+spec:
+  gateways:
+    - {{ .Release.Name }}-novu
+  hosts:
+    - {{ tpl .Values.global.novuApiHostname $ | quote }}
+  http:
+    - route:
+        - destination:
+            host: {{ .Release.Name }}-novu-api
+            port:
+              number: 3000
+      headers:
+        request:
+          set:
+            x-forwarded-host: {{ tpl .Values.global.novuApiHostname $ | quote }}
+            x-forwarded-proto: https
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: {{ .Release.Name }}-novu-ws
+spec:
+  gateways:
+    - {{ .Release.Name }}-novu
+  hosts:
+    - {{ tpl .Values.global.novuWsHostname $ | quote }}
+  http:
+    - route:
+        - destination:
+            host: {{ .Release.Name }}-novu-ws
+            port:
+              number: 3002
+      headers:
+        request:
+          set:
+            x-forwarded-host: {{ tpl .Values.global.novuWsHostname $ | quote }}
+            x-forwarded-proto: https
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: {{ .Release.Name }}-novu-dashboard
+spec:
+  gateways:
+    - {{ .Release.Name }}-novu
+  hosts:
+    - {{ tpl .Values.global.novuDashboardHostname $ | quote }}
+  http:
+    - route:
+        - destination:
+            host: {{ .Release.Name }}-novu-dashboard
+            port:
+              number: 4000
+      headers:
+        request:
+          set:
+            x-forwarded-host: {{ tpl .Values.global.novuDashboardHostname $ | quote }}
+            x-forwarded-proto: https
+{{- end }}

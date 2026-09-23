@@ -28,3 +28,15 @@ Render Env values section
 {{- $envVars := merge (deepCopy .Values.kafkaUi.envVars) (deepCopy .Values.kafkaUi.envVarsFrom) -}}
 {{- include "openg2pCommon.baseEnvVars" (dict "envVars" $envVars "context" $) }}
 {{- end -}}
+
+{{- define "openg2pCommon.novu.secret" -}}
+{{- printf "%s-novu" .Release.Name -}}
+{{- end -}}
+
+{{- define "openg2pCommon.novu.redisHost" -}}
+{{- printf "%s-novu-redis-master" .Release.Name -}}
+{{- end -}}
+
+{{- define "openg2pCommon.novu.redisSecret" -}}
+{{- printf "%s-novu-redis" .Release.Name -}}
+{{- end -}}

@@ -22,6 +22,9 @@ global:
   # the actual service deployments and the keycloak-init redirect URIs below.
   kafkaUiHostname: 'kafka.{{ tpl .Values.global.baseDomain $ }}'
   minioHostname: 'minio.{{ tpl .Values.global.baseDomain $ }}'
+  novuApiHostname: 'novu-api.{{ tpl .Values.global.baseDomain $ }}'
+  novuWsHostname: 'novu-ws.{{ tpl .Values.global.baseDomain $ }}'
+  novuDashboardHostname: 'novu.{{ tpl .Values.global.baseDomain $ }}'
 
   postgresqlHost: '{{ .Release.Name }}-postgresql'
   # PostgreSQL superuser secret. Defaults to the embedded chart's auto-created secret.
@@ -614,6 +617,73 @@ kafkaUi:
       tls:
         mode: SIMPLE
         credentialName: ""
+
+# Novu workloads live in templates/novu. Redis is the novu-redis alias below.
+# Disabled until the standalone `novu` release in this namespace is removed.
+# Secret name is {{ .Release.Name }}-novu. The api-key Job signs up the admin
+# below and writes api-key. Leave notificationApiKey empty unless you already
+# have a key to force.
+novu:
+  enabled: false
+  notificationApiKey: ''
+  # First dashboard user. Password is generated (plus Aa1!) unless set here.
+  # Novu requires 8–64 chars with upper, lower, digit, and one of #?!@$%^&*()-
+  # Registration must stay enabled until this user exists.
+  bootstrap:
+    email: admin@openg2p.org
+    password: ''
+  jwtSecret: ''
+  storeEncryptionKey: ''
+  novuSecretKey: ''
+  api:
+    image: ghcr.io/novuhq/novu/api:3.19.0
+    env:
+      API_ROOT_URL: 'https://{{ tpl .Values.global.novuApiHostname $ }}'
+      FRONT_BASE_URL: 'https://{{ tpl .Values.global.novuDashboardHostname $ }}'
+      DISABLE_USER_REGISTRATION: "false"
+  worker:
+    image: ghcr.io/novuhq/novu/worker:3.19.0
+  ws:
+    image: ghcr.io/novuhq/novu/ws:3.19.0
+  dashboard:
+    image: ghcr.io/novuhq/novu/dashboard:3.19.0
+    apiExternalEndpoint: 'https://{{ tpl .Values.global.novuApiHostname $ }}'
+    wsExternalEndpoint: 'https://{{ tpl .Values.global.novuWsHostname $ }}'
+  mongodb:
+    image: docker.io/openg2p/mongodb:6.0.10-debian-11-r8
+    username: novu
+    password: ''
+    rootPassword: ''
+    database: novu
+    persistence:
+      size: 8Gi
+  # Object storage is the commons MinIO. Create the bucket before enabling.
+  s3:
+    endpoint: 'http://{{ .Release.Name }}-minio:9000'
+    bucket: novu
+    region: us-east-1
+    existingSecret: '{{ .Release.Name }}-minio'
+    accessKeyKey: root-user
+    secretKeyKey: root-password
+
+# Dedicated Redis for Novu queues. Not commons redis and not redis-auth.
+novu-redis:
+  nameOverride: novu-redis
+  architecture: standalone
+  image:
+    registry: docker.io
+    repository: openg2p/redis
+    tag: 7.2.5-debian-12-r4
+  auth:
+    enabled: true
+  master:
+    persistence:
+      enabled: true
+      size: 2Gi
+    resources:
+      requests:
+        cpu: 50m
+        memory: 64Mi
 
 keycloak:
   enabled: true
