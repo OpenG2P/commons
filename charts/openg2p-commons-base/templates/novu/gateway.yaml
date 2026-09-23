@@ -1,0 +1,18 @@
+{{- if .Values.novu.enabled }}
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: {{ .Release.Name }}-novu
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+    - hosts:
+        - {{ tpl .Values.global.novuApiHostname $ | quote }}
+        - {{ tpl .Values.global.novuWsHostname $ | quote }}
+        - {{ tpl .Values.global.novuDashboardHostname $ | quote }}
+      port:
+        name: http2
+        number: 8080
+        protocol: HTTP2
+{{- end }}

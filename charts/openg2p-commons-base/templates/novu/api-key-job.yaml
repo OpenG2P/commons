@@ -1,0 +1,194 @@
+{{- if .Values.novu.enabled }}
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ .Release.Name }}-novu-api-key
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ .Release.Name }}-novu-api-key
+rules:
+  - apiGroups: [""]
+    resources: ["secrets"]
+    resourceNames: ["{{ .Release.Name }}-novu"]
+    verbs: ["get", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ .Release.Name }}-novu-api-key
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ .Release.Name }}-novu-api-key
+subjects:
+  - kind: ServiceAccount
+    name: {{ .Release.Name }}-novu-api-key
+    namespace: {{ .Release.Namespace }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-novu-api-key
+data:
+  api-key.js: |
+    const http = require("http");
+    const https = require("https");
+    const fs = require("fs");
+
+    const novuHost = process.env.NOVU_HOST;
+    const secretName = process.env.SECRET_NAME;
+
+    function request(client, options, body) {
+      return new Promise((resolve, reject) => {
+        const data = body == null ? null : JSON.stringify(body);
+        const headers = Object.assign({}, options.headers || {});
+        if (data) headers["Content-Length"] = Buffer.byteLength(data);
+        const req = client.request(Object.assign({}, options, { headers }), (res) => {
+          let raw = "";
+          res.on("data", (chunk) => { raw += chunk; });
+          res.on("end", () => {
+            let parsed = {};
+            if (raw) {
+              try { parsed = JSON.parse(raw); } catch (err) { parsed = { message: raw }; }
+            }
+            resolve({ status: res.statusCode, body: parsed });
+          });
+        });
+        req.on("error", reject);
+        if (data) req.write(data);
+        req.end();
+      });
+    }
+
+    function novu(method, path, body, token) {
+      const headers = { Accept: "application/json" };
+      if (body != null) headers["Content-Type"] = "application/json";
+      if (token) headers.Authorization = "Bearer " + token;
+      return request(http, { hostname: novuHost, port: 3000, path, method, headers }, body);
+    }
+
+    function rows(body) {
+      if (Array.isArray(body)) return body;
+      if (body && Array.isArray(body.data)) return body.data;
+      return [];
+    }
+
+    async function waitForApi() {
+      for (let i = 0; i < 60; i++) {
+        try {
+          const res = await novu("GET", "/v1/health-check");
+          if (res.status === 200) return;
+        } catch (err) {}
+        await new Promise((resolve) => setTimeout(resolve, 5000));
+      }
+      throw new Error("Novu API did not become ready");
+    }
+
+    async function session(email, password) {
+      const registered = await novu("POST", "/v1/auth/register", {
+        email,
+        password,
+        firstName: "Novu",
+        lastName: "Admin",
+        organizationName: "OpenG2P",
+      });
+      if (registered.body && registered.body.token) return registered.body.token;
+      const loggedIn = await novu("POST", "/v1/auth/login", { email, password });
+      if (loggedIn.body && loggedIn.body.token) return loggedIn.body.token;
+      const message = (loggedIn.body && loggedIn.body.message) || (registered.body && registered.body.message) || loggedIn.status;
+      throw new Error("Could not sign in to Novu: " + message);
+    }
+
+    function developmentKey(environments) {
+      const named = environments.find((env) => /development/i.test(env.name || ""));
+      const chosen = named || environments[0];
+      const keys = (chosen && chosen.apiKeys) || [];
+      const found = keys.find((item) => item && item.key);
+      return found ? found.key : "";
+    }
+
+    async function readSecret() {
+      const token = fs.readFileSync("/var/run/secrets/kubernetes.io/serviceaccount/token", "utf8");
+      const namespace = fs.readFileSync("/var/run/secrets/kubernetes.io/serviceaccount/namespace", "utf8");
+      const res = await request(https, {
+        hostname: "kubernetes.default.svc",
+        port: 443,
+        path: "/api/v1/namespaces/" + namespace + "/secrets/" + secretName,
+        method: "GET",
+        ca: fs.readFileSync("/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"),
+        headers: { Authorization: "Bearer " + token, Accept: "application/json" },
+      });
+      if (res.status !== 200) throw new Error("Could not read " + secretName + " (" + res.status + ")");
+      return { token, namespace, secret: res.body };
+    }
+
+    async function patchApiKey(token, namespace, apiKey) {
+      const res = await request(https, {
+        hostname: "kubernetes.default.svc",
+        port: 443,
+        path: "/api/v1/namespaces/" + namespace + "/secrets/" + secretName,
+        method: "PATCH",
+        ca: fs.readFileSync("/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"),
+        headers: {
+          Authorization: "Bearer " + token,
+          Accept: "application/json",
+          "Content-Type": "application/merge-patch+json",
+        },
+      }, { data: { "api-key": Buffer.from(apiKey).toString("base64") } });
+      if (res.status !== 200) throw new Error("Could not store api-key (" + res.status + ")");
+    }
+
+    async function main() {
+      await waitForApi();
+      const { token: kubeToken, namespace, secret } = await readSecret();
+      const data = secret.data || {};
+      if (data["api-key"] && Buffer.from(data["api-key"], "base64").toString()) {
+        console.log("api-key already set");
+        return;
+      }
+      const email = Buffer.from(data["admin-email"] || "", "base64").toString();
+      const password = Buffer.from(data["admin-password"] || "", "base64").toString();
+      const sessionToken = await session(email, password);
+      const environments = await novu("GET", "/v1/environments", null, sessionToken);
+      const apiKey = developmentKey(rows(environments.body));
+      if (!apiKey) throw new Error("Novu did not return a Development API key");
+      await patchApiKey(kubeToken, namespace, apiKey);
+      console.log("Stored Novu api-key on " + secretName);
+    }
+
+    main().catch((err) => {
+      console.error(err.message || err);
+      process.exit(1);
+    });
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Release.Name }}-novu-api-key-{{ .Release.Revision }}
+spec:
+  backoffLimit: 8
+  ttlSecondsAfterFinished: 86400
+  template:
+    spec:
+      restartPolicy: OnFailure
+      serviceAccountName: {{ .Release.Name }}-novu-api-key
+      containers:
+        - name: api-key
+          image: {{ .Values.novu.api.image }}
+          imagePullPolicy: IfNotPresent
+          command: ["node", "/script/api-key.js"]
+          env:
+            - name: NOVU_HOST
+              value: {{ .Release.Name }}-novu-api
+            - name: SECRET_NAME
+              value: {{ .Release.Name }}-novu
+          volumeMounts:
+            - name: script
+              mountPath: /script
+      volumes:
+        - name: script
+          configMap:
+            name: {{ .Release.Name }}-novu-api-key
+{{- end }}
