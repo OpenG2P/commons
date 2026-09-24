@@ -686,8 +686,6 @@ novu:
       tag: 3.19.0
     istio:
       enabled: false
-  web:
-    enabled: false
   dashboard:
     enabled: true
     image:
