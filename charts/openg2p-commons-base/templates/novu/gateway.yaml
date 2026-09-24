@@ -1,18 +1,25 @@
 {{- if .Values.novu.enabled }}
+{{- if .Values.novu.istio.enabled }}
+{{- if .Values.novu.istio.gateway.enabled }}
+{{- $apiHost := include "common.tplvalues.render" (dict "value" .Values.novu.istio.virtualservice.apiHost "context" $) }}
+{{- $wsHost := include "common.tplvalues.render" (dict "value" .Values.novu.istio.virtualservice.wsHost "context" $) }}
+{{- $dashboardHost := include "common.tplvalues.render" (dict "value" .Values.novu.istio.virtualservice.dashboardHost "context" $) }}
 apiVersion: networking.istio.io/v1beta1
 kind: Gateway
 metadata:
   name: {{ .Release.Name }}-novu
 spec:
   selector:
-    istio: ingressgateway
+    {{ toYaml .Values.novu.istio.gateway.ingressController | nindent 4 }}
   servers:
     - hosts:
-        - {{ tpl .Values.global.novuApiHostname $ | quote }}
-        - {{ tpl .Values.global.novuWsHostname $ | quote }}
-        - {{ tpl .Values.global.novuDashboardHostname $ | quote }}
+        - {{ $apiHost | quote }}
+        - {{ $wsHost | quote }}
+        - {{ $dashboardHost | quote }}
       port:
         name: http2
         number: 8080
         protocol: HTTP2
+{{- end }}
+{{- end }}
 {{- end }}
