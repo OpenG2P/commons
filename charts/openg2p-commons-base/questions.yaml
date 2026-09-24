@@ -28,7 +28,7 @@ questions:
 # Novu (OpenG2P Notification)
 - variable: novu.enabled
   description: >-
-    Install Novu (API, worker, WebSocket, dashboard 3.19.0, Mongo, and its own Redis).
+    Install the Novu chart from openg2p-helm (published from openg2p-deployment).
     Leave off while a standalone novu release is still installed in this namespace.
   type: boolean
   label: Install Novu?

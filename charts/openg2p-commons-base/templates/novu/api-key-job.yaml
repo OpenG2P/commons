@@ -1,4 +1,6 @@
-{{- if .Values.novu.enabled }}
+{{- if and .Values.novu.enabled .Values.novu.apiKeyJob.enabled }}
+{{- $secretName := printf "%s-novu" .Release.Name }}
+{{- $image := .Values.novu.api.image }}
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -11,7 +13,7 @@ metadata:
 rules:
   - apiGroups: [""]
     resources: ["secrets"]
-    resourceNames: ["{{ .Release.Name }}-novu"]
+    resourceNames: [{{ $secretName | quote }}]
     verbs: ["get", "patch"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -176,14 +178,14 @@ spec:
       serviceAccountName: {{ .Release.Name }}-novu-api-key
       containers:
         - name: api-key
-          image: {{ .Values.novu.api.image }}
-          imagePullPolicy: IfNotPresent
+          image: {{ printf "%s/%s:%s" $image.registry $image.repository $image.tag | quote }}
+          imagePullPolicy: {{ $image.pullPolicy | default "IfNotPresent" }}
           command: ["node", "/script/api-key.js"]
           env:
             - name: NOVU_HOST
-              value: {{ .Release.Name }}-novu-api
+              value: {{ printf "%s-novu-api" .Release.Name | quote }}
             - name: SECRET_NAME
-              value: {{ .Release.Name }}-novu
+              value: {{ $secretName | quote }}
           volumeMounts:
             - name: script
               mountPath: /script
