@@ -25,6 +25,36 @@ questions:
   label: MinIO Hostname
   group: Service Hostnames
 
+# Novu (OpenG2P Notification)
+- variable: novu.enabled
+  description: >-
+    Install the Novu chart from openg2p-helm (published from openg2p-deployment).
+    Leave off while a standalone novu release is still installed in this namespace.
+  type: boolean
+  label: Install Novu?
+  group: Novu
+
+- variable: global.novuApiHostname
+  description: >-
+    Hostname for the Novu API. Defaults to novu-api.<baseDomain>.
+  type: string
+  label: Novu API Hostname
+  group: Service Hostnames
+
+- variable: global.novuWsHostname
+  description: >-
+    Hostname for the Novu WebSocket service. Defaults to novu-ws.<baseDomain>.
+  type: string
+  label: Novu WebSocket Hostname
+  group: Service Hostnames
+
+- variable: global.novuDashboardHostname
+  description: >-
+    Hostname for the Novu dashboard. Defaults to novu.<baseDomain>.
+  type: string
+  label: Novu Dashboard Hostname
+  group: Service Hostnames
+
 # Keycloak
 - variable: keycloak.enabled
   description: >-

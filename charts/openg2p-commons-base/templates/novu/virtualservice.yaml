@@ -1,0 +1,76 @@
+{{- if .Values.novu.enabled }}
+{{- if .Values.novu.istio.enabled }}
+{{- if .Values.novu.istio.virtualservice.enabled }}
+{{- $apiHost := include "common.tplvalues.render" (dict "value" .Values.novu.istio.virtualservice.apiHost "context" $) }}
+{{- $wsHost := include "common.tplvalues.render" (dict "value" .Values.novu.istio.virtualservice.wsHost "context" $) }}
+{{- $dashboardHost := include "common.tplvalues.render" (dict "value" .Values.novu.istio.virtualservice.dashboardHost "context" $) }}
+{{- $gateway := .Values.novu.istio.virtualservice.gateway | default (printf "%s-novu" .Release.Name) }}
+{{- $apiDestination := include "common.tplvalues.render" (dict "value" .Values.novu.istio.virtualservice.apiDestination "context" $) }}
+{{- $wsDestination := include "common.tplvalues.render" (dict "value" .Values.novu.istio.virtualservice.wsDestination "context" $) }}
+{{- $dashboardDestination := include "common.tplvalues.render" (dict "value" .Values.novu.istio.virtualservice.dashboardDestination "context" $) }}
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: {{ .Release.Name }}-novu-api
+spec:
+  hosts:
+    - {{ $apiHost | quote }}
+  gateways:
+    - {{ $gateway }}
+  http:
+    - headers:
+        request:
+          set:
+            x-forwarded-host: {{ $apiHost | quote }}
+            x-forwarded-proto: https
+      route:
+        - destination:
+            host: {{ $apiDestination }}
+            port:
+              number: {{ .Values.novu.istio.virtualservice.apiPort }}
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: {{ .Release.Name }}-novu-ws
+spec:
+  hosts:
+    - {{ $wsHost | quote }}
+  gateways:
+    - {{ $gateway }}
+  http:
+    - headers:
+        request:
+          set:
+            x-forwarded-host: {{ $wsHost | quote }}
+            x-forwarded-proto: https
+      route:
+        - destination:
+            host: {{ $wsDestination }}
+            port:
+              number: {{ .Values.novu.istio.virtualservice.wsPort }}
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: {{ .Release.Name }}-novu-dashboard
+spec:
+  hosts:
+    - {{ $dashboardHost | quote }}
+  gateways:
+    - {{ $gateway }}
+  http:
+    - headers:
+        request:
+          set:
+            x-forwarded-host: {{ $dashboardHost | quote }}
+            x-forwarded-proto: https
+      route:
+        - destination:
+            host: {{ $dashboardDestination }}
+            port:
+              number: {{ .Values.novu.istio.virtualservice.dashboardPort }}
+{{- end }}
+{{- end }}
+{{- end }}
