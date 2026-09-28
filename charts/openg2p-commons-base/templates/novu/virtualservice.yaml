@@ -4,7 +4,7 @@
 {{- $apiHost := include "common.tplvalues.render" (dict "value" .Values.novu.istio.virtualservice.apiHost "context" $) }}
 {{- $wsHost := include "common.tplvalues.render" (dict "value" .Values.novu.istio.virtualservice.wsHost "context" $) }}
 {{- $dashboardHost := include "common.tplvalues.render" (dict "value" .Values.novu.istio.virtualservice.dashboardHost "context" $) }}
-{{- $gateway := .Values.novu.istio.virtualservice.gateway | default (printf "%s-novu" .Release.Name) }}
+{{- $gateway := include "common.tplvalues.render" (dict "value" (.Values.novu.istio.virtualservice.gateway | default (printf "%s-novu" .Release.Name)) "context" $) }}
 {{- $apiDestination := include "common.tplvalues.render" (dict "value" .Values.novu.istio.virtualservice.apiDestination "context" $) }}
 {{- $wsDestination := include "common.tplvalues.render" (dict "value" .Values.novu.istio.virtualservice.wsDestination "context" $) }}
 {{- $dashboardDestination := include "common.tplvalues.render" (dict "value" .Values.novu.istio.virtualservice.dashboardDestination "context" $) }}
