@@ -96,9 +96,11 @@ data:
         lastName: "Admin",
         organizationName: "OpenG2P",
       });
-      if (registered.body && registered.body.token) return registered.body.token;
+      const registeredToken = (registered.body && (registered.body.token || (registered.body.data && registered.body.data.token))) || "";
+      if (registeredToken) return registeredToken;
       const loggedIn = await novu("POST", "/v1/auth/login", { email, password });
-      if (loggedIn.body && loggedIn.body.token) return loggedIn.body.token;
+      const loginToken = (loggedIn.body && (loggedIn.body.token || (loggedIn.body.data && loggedIn.body.data.token))) || "";
+      if (loginToken) return loginToken;
       const message = (loggedIn.body && loggedIn.body.message) || (registered.body && registered.body.message) || loggedIn.status;
       throw new Error("Could not sign in to Novu: " + message);
     }
