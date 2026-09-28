@@ -21,6 +21,7 @@ global:
   # Service hostnames owned by commons-base — single source of truth used by both
   # the actual service deployments and the keycloak-init redirect URIs below.
   kafkaUiHostname: 'kafka.{{ tpl .Values.global.baseDomain $ }}'
+  garageHostname: 'garage.{{ tpl .Values.global.baseDomain $ }}'
   minioHostname: 'minio.{{ tpl .Values.global.baseDomain $ }}'
   novuApiHostname: 'novu-api.{{ tpl .Values.global.baseDomain $ }}'
   novuWsHostname: 'novu-ws.{{ tpl .Values.global.baseDomain $ }}'
@@ -51,7 +52,7 @@ global:
   postgresqlSecretKey: postgres-password
   mailInstallationName: '{{ .Release.Name }}-mail'
   minioInstallationName: '{{ .Release.Name }}-minio'
-
+  garageInstallationName: '{{ .Release.Name }}-garage'
   sysAdminEmail: admin@openg2p.sandbox.org
   redisInstallationName: '{{ .Release.Name }}-redis'
   redisAuthInstallationName: '{{ .Release.Name }}-redis-auth'
@@ -255,7 +256,7 @@ redis-auth:
       enabled: false
 
 minio:
-  enabled: true
+  enabled: false
   hostname: '{{ tpl .Values.global.minioHostname $ }}'
   persistence:
     enabled: true
@@ -344,6 +345,24 @@ minio:
       tls:
         mode: SIMPLE
         credentialName: ""
+
+garage:
+  enabled: true
+  garage:
+    replicationFactor: "1"
+    s3:
+      api:
+        region: "us-east-1"
+  persistence:
+    enabled: true
+    data:
+      size: 16Gi
+    meta:
+      size: 1Gi
+  deployment:
+    replicaCount: 1
+
+
 
 kafka:
   enabled: true
