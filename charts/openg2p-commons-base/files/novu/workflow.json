@@ -1,0 +1,1015 @@
+[
+  {
+    "event": "change_request.created",
+    "trigger": "change-request-created",
+    "name": "Change request created",
+    "description": "Registrant email and SMS when a change request is created.",
+    "tags": [
+      "openg2p",
+      "registry"
+    ],
+    "payload_schema": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "record_name": {
+          "type": "string"
+        },
+        "change_request_id": {
+          "type": "string"
+        },
+        "register_mnemonic": {
+          "type": "string"
+        }
+      }
+    },
+    "steps": [
+      {
+        "name": "Email",
+        "type": "email",
+        "controlValues": {
+          "subject": "Change request received",
+          "body": "<p>We received a change request for {{payload.record_name}}. We will email you when it is approved or rejected.</p>",
+          "editorType": "html"
+        }
+      },
+      {
+        "name": "SMS",
+        "type": "sms",
+        "controlValues": {
+          "body": "Change request received. We received a change request for {{payload.record_name}}. We will message you when it is approved or rejected."
+        }
+      }
+    ]
+  },
+  {
+    "event": "change_request.approved",
+    "trigger": "change-request-approved",
+    "name": "Change request approved",
+    "description": "Registrant email and SMS when a change request is approved.",
+    "tags": [
+      "openg2p",
+      "registry"
+    ],
+    "payload_schema": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "record_name": {
+          "type": "string"
+        },
+        "change_request_id": {
+          "type": "string"
+        },
+        "register_mnemonic": {
+          "type": "string"
+        }
+      }
+    },
+    "steps": [
+      {
+        "name": "Email",
+        "type": "email",
+        "controlValues": {
+          "subject": "Change request approved",
+          "body": "<p>The change request for {{payload.record_name}} was approved.</p>",
+          "editorType": "html"
+        }
+      },
+      {
+        "name": "SMS",
+        "type": "sms",
+        "controlValues": {
+          "body": "Change request approved. The change request for {{payload.record_name}} was approved."
+        }
+      }
+    ]
+  },
+  {
+    "event": "change_request.rejected",
+    "trigger": "change-request-rejected",
+    "name": "Change request rejected",
+    "description": "Registrant email and SMS when a change request is rejected.",
+    "tags": [
+      "openg2p",
+      "registry"
+    ],
+    "payload_schema": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "record_name": {
+          "type": "string"
+        },
+        "rejection_reason": {
+          "type": "string"
+        },
+        "change_request_id": {
+          "type": "string"
+        },
+        "register_mnemonic": {
+          "type": "string"
+        }
+      }
+    },
+    "steps": [
+      {
+        "name": "Email",
+        "type": "email",
+        "controlValues": {
+          "subject": "Change request rejected",
+          "body": "<p>The change request for {{payload.record_name}} was rejected. {% if payload.rejection_reason %}Reason: {{payload.rejection_reason}}.{% endif %}</p>",
+          "editorType": "html"
+        }
+      },
+      {
+        "name": "SMS",
+        "type": "sms",
+        "controlValues": {
+          "body": "Change request rejected. The change request for {{payload.record_name}} was rejected. {% if payload.rejection_reason %}Reason: {{payload.rejection_reason}}.{% endif %}"
+        }
+      }
+    ]
+  },
+  {
+    "event": "intake_form.submission_created",
+    "trigger": "intake-form-submission-created",
+    "name": "Intake form submission created",
+    "description": "Registrant email and SMS when an intake application is received.",
+    "tags": [
+      "openg2p",
+      "registry"
+    ],
+    "payload_schema": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "application_reference": {
+          "type": "string"
+        },
+        "record_name": {
+          "type": "string"
+        },
+        "submission_id": {
+          "type": "string"
+        },
+        "register_mnemonic": {
+          "type": "string"
+        }
+      }
+    },
+    "steps": [
+      {
+        "name": "Email",
+        "type": "email",
+        "controlValues": {
+          "subject": "Application received",
+          "body": "<p>We received your application {{payload.application_reference}} for {{payload.record_name}}. We will email you when it is approved or rejected.</p>",
+          "editorType": "html"
+        }
+      },
+      {
+        "name": "SMS",
+        "type": "sms",
+        "controlValues": {
+          "body": "Application received. We received your application {{payload.application_reference}} for {{payload.record_name}}."
+        }
+      }
+    ]
+  },
+  {
+    "event": "intake_form.submission_approved",
+    "trigger": "intake-form-submission-approved",
+    "name": "Intake form submission approved",
+    "description": "Registrant email and SMS when an intake application is approved.",
+    "tags": [
+      "openg2p",
+      "registry"
+    ],
+    "payload_schema": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "application_reference": {
+          "type": "string"
+        },
+        "record_name": {
+          "type": "string"
+        },
+        "submission_id": {
+          "type": "string"
+        },
+        "register_mnemonic": {
+          "type": "string"
+        }
+      }
+    },
+    "steps": [
+      {
+        "name": "Email",
+        "type": "email",
+        "controlValues": {
+          "subject": "Application approved",
+          "body": "<p>Your application {{payload.application_reference}} for {{payload.record_name}} was approved.</p>",
+          "editorType": "html"
+        }
+      },
+      {
+        "name": "SMS",
+        "type": "sms",
+        "controlValues": {
+          "body": "Application approved. Your application {{payload.application_reference}} for {{payload.record_name}} was approved."
+        }
+      }
+    ]
+  },
+  {
+    "event": "intake_form.submission_rejected",
+    "trigger": "intake-form-submission-rejected",
+    "name": "Intake form submission rejected",
+    "description": "Registrant email and SMS when an intake application is rejected.",
+    "tags": [
+      "openg2p",
+      "registry"
+    ],
+    "payload_schema": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "application_reference": {
+          "type": "string"
+        },
+        "record_name": {
+          "type": "string"
+        },
+        "submission_id": {
+          "type": "string"
+        },
+        "register_mnemonic": {
+          "type": "string"
+        }
+      }
+    },
+    "steps": [
+      {
+        "name": "Email",
+        "type": "email",
+        "controlValues": {
+          "subject": "Application rejected",
+          "body": "<p>Your application {{payload.application_reference}} for {{payload.record_name}} was rejected.</p>",
+          "editorType": "html"
+        }
+      },
+      {
+        "name": "SMS",
+        "type": "sms",
+        "controlValues": {
+          "body": "Application rejected. Your application {{payload.application_reference}} for {{payload.record_name}} was rejected."
+        }
+      }
+    ]
+  },
+  {
+    "event": "register_export.completed",
+    "trigger": "register-export-completed",
+    "name": "Register export completed",
+    "description": "Staff in-app and email when an export is ready.",
+    "tags": [
+      "openg2p",
+      "registry"
+    ],
+    "payload_schema": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "export_format": {
+          "type": "string"
+        },
+        "register_mnemonic": {
+          "type": "string"
+        },
+        "total_records_exported": {
+          "type": "string"
+        },
+        "file_url_expires_at": {
+          "type": "string"
+        },
+        "file_presigned_url": {
+          "type": "string"
+        },
+        "staff_portal_base_url": {
+          "type": "string"
+        }
+      }
+    },
+    "steps": [
+      {
+        "name": "In-App",
+        "type": "in_app",
+        "controlValues": {
+          "subject": "Export ready",
+          "body": "Your {{payload.export_format}} export of {{payload.register_mnemonic}} is ready. {{payload.total_records_exported}} records were exported.",
+          "primaryAction": {
+            "label": "Open register",
+            "redirect": {
+              "url": "{{payload.staff_portal_base_url}}/en/register/{{payload.register_mnemonic}}",
+              "target": "_self"
+            }
+          }
+        }
+      },
+      {
+        "name": "Email",
+        "type": "email",
+        "controlValues": {
+          "subject": "Export ready",
+          "body": "<p>Your {{payload.export_format}} export of {{payload.register_mnemonic}} is ready. {{payload.total_records_exported}} records were exported. The download link expires at {{payload.file_url_expires_at}}.</p><p><a href=\"{{payload.file_presigned_url}}\">Download</a></p>",
+          "editorType": "html"
+        }
+      }
+    ]
+  },
+  {
+    "event": "register_export.failed",
+    "trigger": "register-export-failed",
+    "name": "Register export failed",
+    "description": "Staff in-app and email when an export fails.",
+    "tags": [
+      "openg2p",
+      "registry"
+    ],
+    "payload_schema": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "export_format": {
+          "type": "string"
+        },
+        "register_mnemonic": {
+          "type": "string"
+        },
+        "staff_portal_base_url": {
+          "type": "string"
+        }
+      }
+    },
+    "steps": [
+      {
+        "name": "In-App",
+        "type": "in_app",
+        "controlValues": {
+          "subject": "Export failed",
+          "body": "Your {{payload.export_format}} export of {{payload.register_mnemonic}} failed.",
+          "primaryAction": {
+            "label": "Open register",
+            "redirect": {
+              "url": "{{payload.staff_portal_base_url}}/en/register/{{payload.register_mnemonic}}",
+              "target": "_self"
+            }
+          }
+        }
+      },
+      {
+        "name": "Email",
+        "type": "email",
+        "controlValues": {
+          "subject": "Export failed",
+          "body": "<p>Your {{payload.export_format}} export of {{payload.register_mnemonic}} failed. Open the register and try again.</p>",
+          "editorType": "html"
+        }
+      }
+    ]
+  },
+  {
+    "event": "approval.stage_started",
+    "trigger": "approval-stage-started",
+    "name": "Approval stage started",
+    "description": "Staff in-app and email to a stage's approvers when the stage activates.",
+    "tags": [
+      "openg2p",
+      "awe"
+    ],
+    "payload_schema": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "request_id": {
+          "type": "string"
+        },
+        "artifact_type": {
+          "type": "string"
+        },
+        "artifact_id": {
+          "type": "string"
+        },
+        "stage_name": {
+          "type": "string"
+        },
+        "stage_order": {
+          "type": "string"
+        },
+        "policy_key": {
+          "type": "string"
+        },
+        "source_service": {
+          "type": "string"
+        },
+        "requester": {
+          "type": "string"
+        },
+        "due_at": {
+          "type": "string"
+        },
+        "staff_portal_base_url": {
+          "type": "string"
+        },
+        "task_path": {
+          "type": "string"
+        },
+        "tasks_list_path": {
+          "type": "string"
+        },
+        "register_mnemonic": {
+          "type": "string"
+        }
+      }
+    },
+    "steps": [
+      {
+        "name": "In-App",
+        "type": "in_app",
+        "controlValues": {
+          "subject": "Approval needed: {{payload.stage_name}}",
+          "body": "Stage {{payload.stage_name}} of {{payload.artifact_type}} {{payload.artifact_id}} needs your approval. Request {{payload.request_id}}.{% if payload.due_at %} Due by {{payload.due_at}}.{% endif %}",
+          "primaryAction": {
+            "label": "View task",
+            "redirect": {
+              "url": "{{payload.staff_portal_base_url}}/en{{payload.task_path}}",
+              "target": "_self"
+            }
+          },
+          "secondaryAction": {
+            "label": "Show all tasks",
+            "redirect": {
+              "url": "{{payload.staff_portal_base_url}}/en{{payload.tasks_list_path}}",
+              "target": "_self"
+            }
+          }
+        }
+      },
+      {
+        "name": "Email",
+        "type": "email",
+        "controlValues": {
+          "subject": "Approval needed: {{payload.stage_name}}",
+          "body": "<p>Stage {{payload.stage_name}} of {{payload.artifact_type}} {{payload.artifact_id}} needs your approval. Request {{payload.request_id}}.{% if payload.due_at %} Due by {{payload.due_at}}.{% endif %}</p><p><a href=\"{{payload.staff_portal_base_url}}/en{{payload.task_path}}\">View task</a></p>",
+          "editorType": "html"
+        }
+      }
+    ]
+  },
+  {
+    "event": "approval.task_reassigned",
+    "trigger": "approval-task-reassigned",
+    "name": "Approval task reassigned",
+    "description": "Staff in-app and email to the new assignee when a task is reassigned.",
+    "tags": [
+      "openg2p",
+      "awe"
+    ],
+    "payload_schema": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "request_id": {
+          "type": "string"
+        },
+        "artifact_type": {
+          "type": "string"
+        },
+        "artifact_id": {
+          "type": "string"
+        },
+        "stage_name": {
+          "type": "string"
+        },
+        "stage_order": {
+          "type": "string"
+        },
+        "reassigned_from": {
+          "type": "string"
+        },
+        "actor": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "string"
+        },
+        "staff_portal_base_url": {
+          "type": "string"
+        },
+        "task_path": {
+          "type": "string"
+        },
+        "tasks_list_path": {
+          "type": "string"
+        },
+        "register_mnemonic": {
+          "type": "string"
+        }
+      }
+    },
+    "steps": [
+      {
+        "name": "In-App",
+        "type": "in_app",
+        "controlValues": {
+          "subject": "Approval task reassigned to you",
+          "body": "The stage {{payload.stage_name}} task for {{payload.artifact_type}} {{payload.artifact_id}} (request {{payload.request_id}}) was reassigned from {{payload.reassigned_from}} to you by {{payload.actor}}.{% if payload.reason %} Reason: {{payload.reason}}.{% endif %}",
+          "primaryAction": {
+            "label": "View task",
+            "redirect": {
+              "url": "{{payload.staff_portal_base_url}}/en{{payload.task_path}}",
+              "target": "_self"
+            }
+          },
+          "secondaryAction": {
+            "label": "Show all tasks",
+            "redirect": {
+              "url": "{{payload.staff_portal_base_url}}/en{{payload.tasks_list_path}}",
+              "target": "_self"
+            }
+          }
+        }
+      },
+      {
+        "name": "Email",
+        "type": "email",
+        "controlValues": {
+          "subject": "Approval task reassigned to you",
+          "body": "<p>The stage {{payload.stage_name}} task for {{payload.artifact_type}} {{payload.artifact_id}} (request {{payload.request_id}}) was reassigned from {{payload.reassigned_from}} to you by {{payload.actor}}.{% if payload.reason %} Reason: {{payload.reason}}.{% endif %}</p><p><a href=\"{{payload.staff_portal_base_url}}/en{{payload.task_path}}\">View task</a></p>",
+          "editorType": "html"
+        }
+      }
+    ]
+  },
+  {
+    "event": "approval.stage_escalated",
+    "trigger": "approval-stage-escalated",
+    "name": "Approval stage escalated",
+    "description": "Staff in-app and email to approvers added when a stage breaches its SLA.",
+    "tags": [
+      "openg2p",
+      "awe"
+    ],
+    "payload_schema": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "request_id": {
+          "type": "string"
+        },
+        "artifact_type": {
+          "type": "string"
+        },
+        "artifact_id": {
+          "type": "string"
+        },
+        "stage_name": {
+          "type": "string"
+        },
+        "stage_order": {
+          "type": "string"
+        },
+        "actor": {
+          "type": "string"
+        },
+        "due_at": {
+          "type": "string"
+        },
+        "staff_portal_base_url": {
+          "type": "string"
+        },
+        "task_path": {
+          "type": "string"
+        },
+        "tasks_list_path": {
+          "type": "string"
+        },
+        "register_mnemonic": {
+          "type": "string"
+        }
+      }
+    },
+    "steps": [
+      {
+        "name": "In-App",
+        "type": "in_app",
+        "controlValues": {
+          "subject": "Escalated approval needs you",
+          "body": "Stage {{payload.stage_name}} of {{payload.artifact_type}} {{payload.artifact_id}} breached its SLA and you were added as an approver (request {{payload.request_id}}).",
+          "primaryAction": {
+            "label": "View task",
+            "redirect": {
+              "url": "{{payload.staff_portal_base_url}}/en{{payload.task_path}}",
+              "target": "_self"
+            }
+          },
+          "secondaryAction": {
+            "label": "Show all tasks",
+            "redirect": {
+              "url": "{{payload.staff_portal_base_url}}/en{{payload.tasks_list_path}}",
+              "target": "_self"
+            }
+          }
+        }
+      },
+      {
+        "name": "Email",
+        "type": "email",
+        "controlValues": {
+          "subject": "Escalated approval needs you",
+          "body": "<p>Stage {{payload.stage_name}} of {{payload.artifact_type}} {{payload.artifact_id}} breached its SLA and you were added as an approver (request {{payload.request_id}}).</p><p><a href=\"{{payload.staff_portal_base_url}}/en{{payload.task_path}}\">View task</a></p>",
+          "editorType": "html"
+        }
+      }
+    ]
+  },
+  {
+    "event": "approval.task_expired",
+    "trigger": "approval-task-expired",
+    "name": "Approval task expired",
+    "description": "Staff in-app and email to an assignee whose approval task expired.",
+    "tags": [
+      "openg2p",
+      "awe"
+    ],
+    "payload_schema": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "request_id": {
+          "type": "string"
+        },
+        "artifact_type": {
+          "type": "string"
+        },
+        "artifact_id": {
+          "type": "string"
+        },
+        "stage_name": {
+          "type": "string"
+        },
+        "stage_order": {
+          "type": "string"
+        },
+        "due_at": {
+          "type": "string"
+        },
+        "staff_portal_base_url": {
+          "type": "string"
+        },
+        "task_path": {
+          "type": "string"
+        },
+        "tasks_list_path": {
+          "type": "string"
+        },
+        "register_mnemonic": {
+          "type": "string"
+        }
+      }
+    },
+    "steps": [
+      {
+        "name": "In-App",
+        "type": "in_app",
+        "controlValues": {
+          "subject": "Your approval task expired",
+          "body": "Your approval task on stage {{payload.stage_name}} of {{payload.artifact_type}} {{payload.artifact_id}} expired{% if payload.due_at %} at {{payload.due_at}}{% endif %}. The stage's on-breach action decides what happens next.",
+          "primaryAction": {
+            "label": "View task",
+            "redirect": {
+              "url": "{{payload.staff_portal_base_url}}/en{{payload.task_path}}",
+              "target": "_self"
+            }
+          },
+          "secondaryAction": {
+            "label": "Show all tasks",
+            "redirect": {
+              "url": "{{payload.staff_portal_base_url}}/en{{payload.tasks_list_path}}",
+              "target": "_self"
+            }
+          }
+        }
+      },
+      {
+        "name": "Email",
+        "type": "email",
+        "controlValues": {
+          "subject": "Your approval task expired",
+          "body": "<p>Your approval task on stage {{payload.stage_name}} of {{payload.artifact_type}} {{payload.artifact_id}} expired{% if payload.due_at %} at {{payload.due_at}}{% endif %}. The stage's on-breach action decides what happens next.</p><p><a href=\"{{payload.staff_portal_base_url}}/en{{payload.task_path}}\">View task</a></p>",
+          "editorType": "html"
+        }
+      }
+    ]
+  },
+  {
+    "event": "approval.request_approved",
+    "trigger": "approval-request-approved",
+    "name": "Approval request approved",
+    "description": "Staff in-app and email to the requester when a request is approved.",
+    "tags": [
+      "openg2p",
+      "awe"
+    ],
+    "payload_schema": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "request_id": {
+          "type": "string"
+        },
+        "artifact_type": {
+          "type": "string"
+        },
+        "artifact_id": {
+          "type": "string"
+        },
+        "policy_key": {
+          "type": "string"
+        },
+        "actor": {
+          "type": "string"
+        },
+        "staff_portal_base_url": {
+          "type": "string"
+        },
+        "task_path": {
+          "type": "string"
+        },
+        "tasks_list_path": {
+          "type": "string"
+        },
+        "register_mnemonic": {
+          "type": "string"
+        }
+      }
+    },
+    "steps": [
+      {
+        "name": "In-App",
+        "type": "in_app",
+        "controlValues": {
+          "subject": "Request approved",
+          "body": "Your approval request for {{payload.artifact_type}} {{payload.artifact_id}} was approved{% if payload.actor %} by {{payload.actor}}{% endif %}.",
+          "primaryAction": {
+            "label": "View task",
+            "redirect": {
+              "url": "{{payload.staff_portal_base_url}}/en{{payload.task_path}}",
+              "target": "_self"
+            }
+          },
+          "secondaryAction": {
+            "label": "Show all tasks",
+            "redirect": {
+              "url": "{{payload.staff_portal_base_url}}/en{{payload.tasks_list_path}}",
+              "target": "_self"
+            }
+          }
+        }
+      },
+      {
+        "name": "Email",
+        "type": "email",
+        "controlValues": {
+          "subject": "Request approved",
+          "body": "<p>Your approval request for {{payload.artifact_type}} {{payload.artifact_id}} was approved{% if payload.actor %} by {{payload.actor}}{% endif %}.</p><p><a href=\"{{payload.staff_portal_base_url}}/en{{payload.task_path}}\">View task</a></p>",
+          "editorType": "html"
+        }
+      }
+    ]
+  },
+  {
+    "event": "approval.request_rejected",
+    "trigger": "approval-request-rejected",
+    "name": "Approval request rejected",
+    "description": "Staff in-app and email to the requester when a request is rejected.",
+    "tags": [
+      "openg2p",
+      "awe"
+    ],
+    "payload_schema": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "request_id": {
+          "type": "string"
+        },
+        "artifact_type": {
+          "type": "string"
+        },
+        "artifact_id": {
+          "type": "string"
+        },
+        "policy_key": {
+          "type": "string"
+        },
+        "actor": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "string"
+        },
+        "staff_portal_base_url": {
+          "type": "string"
+        },
+        "task_path": {
+          "type": "string"
+        },
+        "tasks_list_path": {
+          "type": "string"
+        },
+        "register_mnemonic": {
+          "type": "string"
+        }
+      }
+    },
+    "steps": [
+      {
+        "name": "In-App",
+        "type": "in_app",
+        "controlValues": {
+          "subject": "Request rejected",
+          "body": "Your approval request for {{payload.artifact_type}} {{payload.artifact_id}} was rejected{% if payload.actor %} by {{payload.actor}}{% endif %}.{% if payload.reason %} Reason: {{payload.reason}}.{% endif %}",
+          "primaryAction": {
+            "label": "View task",
+            "redirect": {
+              "url": "{{payload.staff_portal_base_url}}/en{{payload.task_path}}",
+              "target": "_self"
+            }
+          },
+          "secondaryAction": {
+            "label": "Show all tasks",
+            "redirect": {
+              "url": "{{payload.staff_portal_base_url}}/en{{payload.tasks_list_path}}",
+              "target": "_self"
+            }
+          }
+        }
+      },
+      {
+        "name": "Email",
+        "type": "email",
+        "controlValues": {
+          "subject": "Request rejected",
+          "body": "<p>Your approval request for {{payload.artifact_type}} {{payload.artifact_id}} was rejected{% if payload.actor %} by {{payload.actor}}{% endif %}.{% if payload.reason %} Reason: {{payload.reason}}.{% endif %}</p><p><a href=\"{{payload.staff_portal_base_url}}/en{{payload.task_path}}\">View task</a></p>",
+          "editorType": "html"
+        }
+      }
+    ]
+  },
+  {
+    "event": "approval.request_cancelled",
+    "trigger": "approval-request-cancelled",
+    "name": "Approval request cancelled",
+    "description": "Staff in-app and email to the requester when a request is cancelled.",
+    "tags": [
+      "openg2p",
+      "awe"
+    ],
+    "payload_schema": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "request_id": {
+          "type": "string"
+        },
+        "artifact_type": {
+          "type": "string"
+        },
+        "artifact_id": {
+          "type": "string"
+        },
+        "actor": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "string"
+        },
+        "staff_portal_base_url": {
+          "type": "string"
+        },
+        "task_path": {
+          "type": "string"
+        },
+        "tasks_list_path": {
+          "type": "string"
+        },
+        "register_mnemonic": {
+          "type": "string"
+        }
+      }
+    },
+    "steps": [
+      {
+        "name": "In-App",
+        "type": "in_app",
+        "controlValues": {
+          "subject": "Request cancelled",
+          "body": "Your approval request for {{payload.artifact_type}} {{payload.artifact_id}} was cancelled{% if payload.actor %} by {{payload.actor}}{% endif %}.{% if payload.reason %} Reason: {{payload.reason}}.{% endif %}",
+          "primaryAction": {
+            "label": "View task",
+            "redirect": {
+              "url": "{{payload.staff_portal_base_url}}/en{{payload.task_path}}",
+              "target": "_self"
+            }
+          },
+          "secondaryAction": {
+            "label": "Show all tasks",
+            "redirect": {
+              "url": "{{payload.staff_portal_base_url}}/en{{payload.tasks_list_path}}",
+              "target": "_self"
+            }
+          }
+        }
+      },
+      {
+        "name": "Email",
+        "type": "email",
+        "controlValues": {
+          "subject": "Request cancelled",
+          "body": "<p>Your approval request for {{payload.artifact_type}} {{payload.artifact_id}} was cancelled{% if payload.actor %} by {{payload.actor}}{% endif %}.{% if payload.reason %} Reason: {{payload.reason}}.{% endif %}</p><p><a href=\"{{payload.staff_portal_base_url}}/en{{payload.task_path}}\">View task</a></p>",
+          "editorType": "html"
+        }
+      }
+    ]
+  },
+  {
+    "event": "approval.stage_quorum_skipped",
+    "trigger": "approval-stage-quorum-skipped",
+    "name": "Approval stage quorum skipped",
+    "description": "Staff in-app to approvers whose tasks were closed as skipped once quorum was met.",
+    "tags": [
+      "openg2p",
+      "awe"
+    ],
+    "payload_schema": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "request_id": {
+          "type": "string"
+        },
+        "artifact_type": {
+          "type": "string"
+        },
+        "artifact_id": {
+          "type": "string"
+        },
+        "stage_name": {
+          "type": "string"
+        },
+        "stage_order": {
+          "type": "string"
+        },
+        "staff_portal_base_url": {
+          "type": "string"
+        },
+        "task_path": {
+          "type": "string"
+        },
+        "tasks_list_path": {
+          "type": "string"
+        },
+        "register_mnemonic": {
+          "type": "string"
+        }
+      }
+    },
+    "steps": [
+      {
+        "name": "In-App",
+        "type": "in_app",
+        "controlValues": {
+          "subject": "No action needed",
+          "body": "Quorum was met on stage {{payload.stage_name}}; your approval task was closed as no longer needed.",
+          "primaryAction": {
+            "label": "View task",
+            "redirect": {
+              "url": "{{payload.staff_portal_base_url}}/en{{payload.task_path}}",
+              "target": "_self"
+            }
+          },
+          "secondaryAction": {
+            "label": "Show all tasks",
+            "redirect": {
+              "url": "{{payload.staff_portal_base_url}}/en{{payload.tasks_list_path}}",
+              "target": "_self"
+            }
+          }
+        }
+      }
+    ]
+  }
+]

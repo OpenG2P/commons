@@ -1,0 +1,160 @@
+{{- if and .Values.novu.enabled .Values.novu.workflowsJob.enabled }}
+{{- $secretName := printf "%s-novu" .Release.Name }}
+{{- $image := .Values.novu.api.image }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-novu-workflows
+data:
+  workflows.js: |
+    const http = require("http");
+    const fs = require("fs");
+
+    const novuHost = process.env.NOVU_HOST;
+    const apiKey = process.env.NOVU_API_KEY;
+
+    function request(options, body) {
+      return new Promise((resolve, reject) => {
+        const data = body == null ? null : JSON.stringify(body);
+        const headers = Object.assign({}, options.headers || {});
+        if (data) headers["Content-Length"] = Buffer.byteLength(data);
+        const req = http.request(Object.assign({}, options, { headers }), (res) => {
+          let raw = "";
+          res.on("data", (chunk) => { raw += chunk; });
+          res.on("end", () => {
+            let parsed = {};
+            if (raw) {
+              try { parsed = JSON.parse(raw); } catch (err) { parsed = { message: raw }; }
+            }
+            resolve({ status: res.statusCode, body: parsed });
+          });
+        });
+        req.on("error", reject);
+        if (data) req.write(data);
+        req.end();
+      });
+    }
+
+    function novu(method, path, body) {
+      const headers = { Accept: "application/json", Authorization: "ApiKey " + apiKey };
+      if (body != null) headers["Content-Type"] = "application/json";
+      return request({ hostname: novuHost, port: 3000, path, method, headers }, body);
+    }
+
+    function messageOf(body, status) {
+      if (body && body.message) return body.message;
+      if (body && Object.keys(body).length) return JSON.stringify(body);
+      return String(status);
+    }
+
+    async function waitForApi() {
+      for (let i = 0; i < 60; i++) {
+        try {
+          const res = await novu("GET", "/v1/health-check");
+          if (res.status === 200) return;
+        } catch (err) {}
+        await new Promise((resolve) => setTimeout(resolve, 5000));
+      }
+      throw new Error("Novu API did not become ready");
+    }
+
+    async function listWorkflows() {
+      const found = {};
+      let offset = 0;
+      const limit = 50;
+      while (true) {
+        const res = await novu("GET", "/v2/workflows?limit=" + limit + "&offset=" + offset);
+        if (res.status !== 200) throw new Error("Could not list workflows (" + res.status + "): " + messageOf(res.body, res.status));
+        const data = (res.body && res.body.data) || res.body || {};
+        const rows = Array.isArray(data.workflows) ? data.workflows : (Array.isArray(data) ? data : null);
+        if (!rows) throw new Error("Unexpected workflow list payload");
+        rows.forEach((row) => {
+          if (row && row.workflowId) found[row.workflowId] = row;
+        });
+        const total = typeof data.totalCount === "number" ? data.totalCount : null;
+        offset += rows.length;
+        if (!rows.length || (total != null && offset >= total) || rows.length < limit) return found;
+      }
+    }
+
+    async function upsert(existing, spec) {
+      const trigger = spec.trigger;
+      const current = existing[trigger];
+      if (current) {
+        const deleted = await novu("DELETE", "/v2/workflows/" + encodeURIComponent(trigger));
+        if (deleted.status !== 200 && deleted.status !== 204) {
+          throw new Error(spec.name + " could not be replaced (" + deleted.status + "): " + messageOf(deleted.body, deleted.status));
+        }
+      }
+      const created = await novu("POST", "/v2/workflows", {
+        name: spec.name,
+        workflowId: trigger,
+        description: spec.description,
+        tags: spec.tags,
+        active: true,
+        __source: "editor",
+        payloadSchema: spec.payload_schema,
+        validatePayload: false,
+        steps: spec.steps,
+      });
+      const action = current ? "replaced" : "created";
+      if (created.status !== 200 && created.status !== 201) {
+        throw new Error(spec.name + " " + action + " failed (" + created.status + "): " + messageOf(created.body, created.status));
+      }
+      const data = (created.body && created.body.data) || {};
+      const stored = data.workflowId || trigger;
+      if (stored !== trigger) throw new Error(spec.name + " was stored as trigger " + stored + ", expected " + trigger);
+      if (data.origin !== "novu-cloud") {
+        throw new Error(spec.name + " origin is " + data.origin + ", expected novu-cloud so the dashboard can edit it.");
+      }
+      const steps = (spec.steps || []).map((step) => step.type).join(", ");
+      console.log(spec.event + " -> " + trigger + ": " + action + " [" + steps + "] origin=" + data.origin);
+    }
+
+    async function main() {
+      await waitForApi();
+      const specs = JSON.parse(fs.readFileSync("/workflows/workflow.json", "utf8"));
+      if (!Array.isArray(specs)) throw new Error("workflow.json must be a JSON array of workflows");
+      const existing = await listWorkflows();
+      for (const spec of specs) await upsert(existing, spec);
+      console.log("Stored " + specs.length + " Novu workflows");
+    }
+
+    main().catch((err) => {
+      console.error(err.message || err);
+      process.exit(1);
+    });
+  workflow.json: |-
+{{ .Files.Get "files/novu/workflow.json" | indent 4 }}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Release.Name }}-novu-workflows-{{ .Release.Revision }}
+spec:
+  backoffLimit: 8
+  ttlSecondsAfterFinished: 86400
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: workflows
+          image: {{ printf "%s/%s:%s" $image.registry $image.repository $image.tag | quote }}
+          imagePullPolicy: {{ $image.pullPolicy | default "IfNotPresent" }}
+          command: ["node", "/workflows/workflows.js"]
+          env:
+            - name: NOVU_HOST
+              value: {{ printf "%s-novu-api" .Release.Name | quote }}
+            - name: NOVU_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $secretName }}
+                  key: api-key
+          volumeMounts:
+            - name: workflows
+              mountPath: /workflows
+      volumes:
+        - name: workflows
+          configMap:
+            name: {{ .Release.Name }}-novu-workflows
+{{- end }}

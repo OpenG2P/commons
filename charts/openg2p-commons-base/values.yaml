@@ -620,7 +620,7 @@ kafkaUi:
 
 # Novu chart is published from openg2p-deployment to openg2p-helm
 # (push_trigger.yml → gh-pages). Commons passes values and owns the
-# overlays in templates/novu (secret, API-key Job, Istio), same as MinIO.
+# overlays in templates/novu (secret, API-key Job, workflow Job, Istio), same as MinIO.
 # Disabled until the standalone `novu` release is removed from the namespace.
 # Under release name commons: API service commons-novu-api, secret commons-novu.
 novu:
@@ -630,6 +630,8 @@ novu:
   notificationApiKey: ''
   # Parent Job only (templates/novu/api-key-job.yaml).
   apiKeyJob:
+    enabled: true
+  workflowsJob:
     enabled: true
   bootstrap:
     email: admin@openg2p.org
