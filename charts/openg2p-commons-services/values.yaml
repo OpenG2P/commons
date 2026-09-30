@@ -92,8 +92,8 @@ master-data:
     # Plain DB names (no release-name prefix). Only one instance per env.
     masterDataDB: master_data
     masterDataDBUser: master_data_user
-    masterDataDBSecret: master-data
-    masterDataDBUserPasswordKey: master-data-db-user
+    masterDataDBSecret: master-data-db-user
+    masterDataDBUserPasswordKey: master-data-db-user-password
   # The country this environment serves — declared HERE and nowhere else.
   #
   # One Master Data per environment means one geography, one set of code lists
