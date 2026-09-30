@@ -152,6 +152,8 @@ master-data:
       # Both subcharts produce the same default name (commons-postgres-init).
       name: master-data-postgres-init
     job: {}
+  keycloak-init:
+    nameOverride: master-data-kc-init
 
 odk-central:
   enabled: true
