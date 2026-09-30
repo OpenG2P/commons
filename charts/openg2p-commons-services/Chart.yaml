@@ -2,13 +2,16 @@ apiVersion: v2
 name: openg2p-commons-services
 description: Helm chart for OpenG2P Commons application services
 type: application
-version: 0.0.0-develop
+version: 2.3.3
 dependencies:
 - name: openg2p-master-data
-  version: 1.1.3
+  version: 1.1.4-rc.100
   repository: https://openg2p.github.io/openg2p-helm
-  condition: masterData.enabled
-  alias: masterData
+  condition: master-data.enabled
+  # Must be DNS-1123 (lowercase). Helm sets .Chart.Name to the alias for
+  # dependency templates; camelCase `masterData` breaks iam-register hooks
+  # (e.g. commons-services-masterData-iam-register-payload).
+  alias: master-data
 - name: artifactory
   version: 12.0.3
   repository: https://openg2p.github.io/openg2p-helm
@@ -26,7 +29,7 @@ dependencies:
   repository: https://openg2p.github.io/openg2p-helm
   condition: esignet.enabled
 - name: mock-identity-system
-  version: 0.0.0-develop.7
+  version: 0.0.0-develop.9
   repository: https://openg2p.github.io/openg2p-helm
   condition: mock-identity-system.enabled
 - name: odk-central
@@ -34,7 +37,7 @@ dependencies:
   repository: https://openg2p.github.io/openg2p-helm
   condition: odk-central.enabled
 - name: openg2p-iam-service
-  version: 1.4.3
+  version: 1.4.3-rc.118
   repository: https://openg2p.github.io/openg2p-helm
   condition: openg2p-iam-service.enabled
 - name: openg2p-inji-certify

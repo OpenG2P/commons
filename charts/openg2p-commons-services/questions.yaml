@@ -161,7 +161,7 @@ questions:
 # no per-service logging configuration is needed here anymore.
 
 # Master data
-- variable: masterData.enabled
+- variable: master-data.enabled
   type: boolean
   label: Enable Master Data service
   group: Master Data
@@ -169,37 +169,37 @@ questions:
 # The country pack. This is the ONE place an environment declares which country
 # it serves — registries read the geography, code lists and sample people from
 # Master Data and name no country of their own.
-- variable: masterData.geoSeed.countryPack
+- variable: master-data.geoSeed.countryPack
   description: "Directory name of the pack to seed, from packs/ in github.com/openg2p/openg2p-data — ETH (Ethiopia) or XKM (Kamuntu, fictitious, for demos). Any other pack in that folder works; use its exact directory name."
   type: string
-  default: ETH
+  default: XKM
   label: Country Pack
   group: Master Data
-  show_if: masterData.enabled=true
+  show_if: master-data.enabled=true
 
-- variable: masterData.geoSeed.load.codelists
+- variable: master-data.geoSeed.load.codelists
   description: "Seed the country's code lists (gender, education level, water source, ...) and their semantic role tags. Registries copy these into their own tables at install; with this off, each falls back to the values its extension ships and the role tags are absent entirely — nothing else provides them."
   type: boolean
   default: true
   label: Seed Country Code Lists
   group: Master Data
-  show_if: masterData.enabled=true
+  show_if: master-data.enabled=true
 
-- variable: masterData.geoSeed.load.samples
+- variable: master-data.geoSeed.load.samples
   description: "Seed the pack's sample people — a couple of dozen, coherent with the geography and the code lists — so a fresh install shows something rather than an empty registry. Not bulk analytics data, which each registry generates for itself."
   type: boolean
   default: true
   label: Seed Sample People
   group: Master Data
-  show_if: masterData.enabled=true
+  show_if: master-data.enabled=true
 
-- variable: masterData.geoSeed.domains
+- variable: master-data.geoSeed.domains
   description: "Domain code lists to seed on top of the core ones, comma-separated. Use 'agriculture' (crops, livestock) when a Farmer Registry will use this environment; a social registry never reads them. Leave empty otherwise."
   type: string
   default: ""
   label: Domain Code Lists
   group: Master Data
-  show_if: masterData.enabled=true
+  show_if: master-data.enabled=true
 
 # ODK
 - variable: odk-central.enabled
