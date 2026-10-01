@@ -12,13 +12,94 @@
       "type": "object",
       "additionalProperties": true,
       "properties": {
-        "record_name": {
-          "type": "string"
-        },
         "change_request_id": {
           "type": "string"
         },
+        "record_name": {
+          "type": "string"
+        },
+        "register_id": {
+          "type": "string"
+        },
         "register_mnemonic": {
+          "type": "string"
+        },
+        "register_subject": {
+          "type": "string"
+        },
+        "register_description": {
+          "type": "string"
+        },
+        "tab_id": {
+          "type": "string"
+        },
+        "section_id": {
+          "type": "string"
+        },
+        "section_mnemonic": {
+          "type": "string"
+        },
+        "section_register_id": {
+          "type": "string"
+        },
+        "internal_record_id": {
+          "type": "string"
+        },
+        "functional_record_id": {
+          "type": "string"
+        },
+        "approval_status": {
+          "type": "string"
+        },
+        "no_of_verifications_required": {
+          "type": "string"
+        },
+        "no_of_verifications_done": {
+          "type": "string"
+        },
+        "created_by": {
+          "type": "string"
+        },
+        "created_at": {
+          "type": "string"
+        },
+        "approved_by": {
+          "type": "string"
+        },
+        "approved_at": {
+          "type": "string"
+        },
+        "change_request_source": {
+          "type": "string"
+        },
+        "source_partner_id": {
+          "type": "string"
+        },
+        "remarks": {
+          "type": "string"
+        },
+        "rejection_reason": {
+          "type": "string"
+        },
+        "awe_request_id": {
+          "type": "string"
+        },
+        "awe_request_status_summary": {
+          "type": "string"
+        },
+        "deduplication_register_status": {
+          "type": "string"
+        },
+        "deduplication_register_failure_reason": {
+          "type": "string"
+        },
+        "deduplication_change_request_status": {
+          "type": "string"
+        },
+        "deduplication_change_request_failure_reason": {
+          "type": "string"
+        },
+        "registry_name": {
           "type": "string"
         }
       }
@@ -28,16 +109,16 @@
         "name": "Email",
         "type": "email",
         "controlValues": {
-          "subject": "Change request received",
-          "body": "<p>We received a change request for {{payload.record_name}}. We will email you when it is approved or rejected.</p>",
-          "editorType": "html"
+          "subject": "We received your change request for {{payload.record_name}}",
+          "editorType": "html",
+          "bodyFile": "email/change-request-created.html"
         }
       },
       {
         "name": "SMS",
         "type": "sms",
         "controlValues": {
-          "body": "Change request received. We received a change request for {{payload.record_name}}. We will message you when it is approved or rejected."
+          "body": "Change request received for {{payload.record_name}}. We will message you when it is approved or rejected."
         }
       }
     ]
@@ -55,13 +136,94 @@
       "type": "object",
       "additionalProperties": true,
       "properties": {
-        "record_name": {
-          "type": "string"
-        },
         "change_request_id": {
           "type": "string"
         },
+        "record_name": {
+          "type": "string"
+        },
+        "register_id": {
+          "type": "string"
+        },
         "register_mnemonic": {
+          "type": "string"
+        },
+        "register_subject": {
+          "type": "string"
+        },
+        "register_description": {
+          "type": "string"
+        },
+        "tab_id": {
+          "type": "string"
+        },
+        "section_id": {
+          "type": "string"
+        },
+        "section_mnemonic": {
+          "type": "string"
+        },
+        "section_register_id": {
+          "type": "string"
+        },
+        "internal_record_id": {
+          "type": "string"
+        },
+        "functional_record_id": {
+          "type": "string"
+        },
+        "approval_status": {
+          "type": "string"
+        },
+        "no_of_verifications_required": {
+          "type": "string"
+        },
+        "no_of_verifications_done": {
+          "type": "string"
+        },
+        "created_by": {
+          "type": "string"
+        },
+        "created_at": {
+          "type": "string"
+        },
+        "approved_by": {
+          "type": "string"
+        },
+        "approved_at": {
+          "type": "string"
+        },
+        "change_request_source": {
+          "type": "string"
+        },
+        "source_partner_id": {
+          "type": "string"
+        },
+        "remarks": {
+          "type": "string"
+        },
+        "rejection_reason": {
+          "type": "string"
+        },
+        "awe_request_id": {
+          "type": "string"
+        },
+        "awe_request_status_summary": {
+          "type": "string"
+        },
+        "deduplication_register_status": {
+          "type": "string"
+        },
+        "deduplication_register_failure_reason": {
+          "type": "string"
+        },
+        "deduplication_change_request_status": {
+          "type": "string"
+        },
+        "deduplication_change_request_failure_reason": {
+          "type": "string"
+        },
+        "registry_name": {
           "type": "string"
         }
       }
@@ -71,16 +233,16 @@
         "name": "Email",
         "type": "email",
         "controlValues": {
-          "subject": "Change request approved",
-          "body": "<p>The change request for {{payload.record_name}} was approved.</p>",
-          "editorType": "html"
+          "subject": "Your change request for {{payload.record_name}} was approved",
+          "editorType": "html",
+          "bodyFile": "email/change-request-approved.html"
         }
       },
       {
         "name": "SMS",
         "type": "sms",
         "controlValues": {
-          "body": "Change request approved. The change request for {{payload.record_name}} was approved."
+          "body": "Approved: your change request for {{payload.record_name}} is now complete."
         }
       }
     ]
@@ -98,16 +260,94 @@
       "type": "object",
       "additionalProperties": true,
       "properties": {
+        "change_request_id": {
+          "type": "string"
+        },
         "record_name": {
+          "type": "string"
+        },
+        "register_id": {
+          "type": "string"
+        },
+        "register_mnemonic": {
+          "type": "string"
+        },
+        "register_subject": {
+          "type": "string"
+        },
+        "register_description": {
+          "type": "string"
+        },
+        "tab_id": {
+          "type": "string"
+        },
+        "section_id": {
+          "type": "string"
+        },
+        "section_mnemonic": {
+          "type": "string"
+        },
+        "section_register_id": {
+          "type": "string"
+        },
+        "internal_record_id": {
+          "type": "string"
+        },
+        "functional_record_id": {
+          "type": "string"
+        },
+        "approval_status": {
+          "type": "string"
+        },
+        "no_of_verifications_required": {
+          "type": "string"
+        },
+        "no_of_verifications_done": {
+          "type": "string"
+        },
+        "created_by": {
+          "type": "string"
+        },
+        "created_at": {
+          "type": "string"
+        },
+        "approved_by": {
+          "type": "string"
+        },
+        "approved_at": {
+          "type": "string"
+        },
+        "change_request_source": {
+          "type": "string"
+        },
+        "source_partner_id": {
+          "type": "string"
+        },
+        "remarks": {
           "type": "string"
         },
         "rejection_reason": {
           "type": "string"
         },
-        "change_request_id": {
+        "awe_request_id": {
           "type": "string"
         },
-        "register_mnemonic": {
+        "awe_request_status_summary": {
+          "type": "string"
+        },
+        "deduplication_register_status": {
+          "type": "string"
+        },
+        "deduplication_register_failure_reason": {
+          "type": "string"
+        },
+        "deduplication_change_request_status": {
+          "type": "string"
+        },
+        "deduplication_change_request_failure_reason": {
+          "type": "string"
+        },
+        "registry_name": {
           "type": "string"
         }
       }
@@ -117,16 +357,16 @@
         "name": "Email",
         "type": "email",
         "controlValues": {
-          "subject": "Change request rejected",
-          "body": "<p>The change request for {{payload.record_name}} was rejected. {% if payload.rejection_reason %}Reason: {{payload.rejection_reason}}.{% endif %}</p>",
-          "editorType": "html"
+          "subject": "Your change request for {{payload.record_name}} was not approved",
+          "editorType": "html",
+          "bodyFile": "email/change-request-rejected.html"
         }
       },
       {
         "name": "SMS",
         "type": "sms",
         "controlValues": {
-          "body": "Change request rejected. The change request for {{payload.record_name}} was rejected. {% if payload.rejection_reason %}Reason: {{payload.rejection_reason}}.{% endif %}"
+          "body": "Not approved: change request for {{payload.record_name}}.{% if payload.rejection_reason %} Reason: {{payload.rejection_reason}}.{% endif %}"
         }
       }
     ]
@@ -144,16 +384,124 @@
       "type": "object",
       "additionalProperties": true,
       "properties": {
+        "submission_id": {
+          "type": "string"
+        },
         "application_reference": {
           "type": "string"
         },
         "record_name": {
           "type": "string"
         },
-        "submission_id": {
+        "register_id": {
           "type": "string"
         },
         "register_mnemonic": {
+          "type": "string"
+        },
+        "register_subject": {
+          "type": "string"
+        },
+        "register_description": {
+          "type": "string"
+        },
+        "intake_form_mnemonic": {
+          "type": "string"
+        },
+        "form_id": {
+          "type": "string"
+        },
+        "internal_record_id": {
+          "type": "string"
+        },
+        "functional_record_id": {
+          "type": "string"
+        },
+        "approval_status": {
+          "type": "string"
+        },
+        "draft_status": {
+          "type": "string"
+        },
+        "created_by": {
+          "type": "string"
+        },
+        "first_created_at": {
+          "type": "string"
+        },
+        "last_updated_at": {
+          "type": "string"
+        },
+        "finalized_at": {
+          "type": "string"
+        },
+        "approved_by": {
+          "type": "string"
+        },
+        "approved_at": {
+          "type": "string"
+        },
+        "remarks": {
+          "type": "string"
+        },
+        "rejection_reason": {
+          "type": "string"
+        },
+        "submission_source": {
+          "type": "string"
+        },
+        "partner_id": {
+          "type": "string"
+        },
+        "awe_request_id": {
+          "type": "string"
+        },
+        "awe_request_status_summary": {
+          "type": "string"
+        },
+        "number_of_verifications_required": {
+          "type": "string"
+        },
+        "number_of_verifications_done": {
+          "type": "string"
+        },
+        "register_ingest_process_status": {
+          "type": "string"
+        },
+        "register_ingest_processed_timestamp": {
+          "type": "string"
+        },
+        "register_ingest_process_attempts": {
+          "type": "string"
+        },
+        "register_ingest_process_last_error_code": {
+          "type": "string"
+        },
+        "deduplication_status_vs_intake_forms": {
+          "type": "string"
+        },
+        "deduplication_intake_forms_process_timestamp": {
+          "type": "string"
+        },
+        "deduplication_intake_forms_attempts": {
+          "type": "string"
+        },
+        "deduplication_intake_forms_error": {
+          "type": "string"
+        },
+        "deduplication_status_vs_register": {
+          "type": "string"
+        },
+        "deduplication_register_process_timestamp": {
+          "type": "string"
+        },
+        "deduplication_register_forms_attempts": {
+          "type": "string"
+        },
+        "deduplication_register_error": {
+          "type": "string"
+        },
+        "registry_name": {
           "type": "string"
         }
       }
@@ -163,16 +511,16 @@
         "name": "Email",
         "type": "email",
         "controlValues": {
-          "subject": "Application received",
-          "body": "<p>We received your application {{payload.application_reference}} for {{payload.record_name}}. We will email you when it is approved or rejected.</p>",
-          "editorType": "html"
+          "subject": "Application {{payload.application_reference}} received",
+          "editorType": "html",
+          "bodyFile": "email/intake-form-submission-created.html"
         }
       },
       {
         "name": "SMS",
         "type": "sms",
         "controlValues": {
-          "body": "Application received. We received your application {{payload.application_reference}} for {{payload.record_name}}."
+          "body": "Application {{payload.application_reference}} received for {{payload.record_name}}. We will message you with the decision."
         }
       }
     ]
@@ -190,16 +538,124 @@
       "type": "object",
       "additionalProperties": true,
       "properties": {
+        "submission_id": {
+          "type": "string"
+        },
         "application_reference": {
           "type": "string"
         },
         "record_name": {
           "type": "string"
         },
-        "submission_id": {
+        "register_id": {
           "type": "string"
         },
         "register_mnemonic": {
+          "type": "string"
+        },
+        "register_subject": {
+          "type": "string"
+        },
+        "register_description": {
+          "type": "string"
+        },
+        "intake_form_mnemonic": {
+          "type": "string"
+        },
+        "form_id": {
+          "type": "string"
+        },
+        "internal_record_id": {
+          "type": "string"
+        },
+        "functional_record_id": {
+          "type": "string"
+        },
+        "approval_status": {
+          "type": "string"
+        },
+        "draft_status": {
+          "type": "string"
+        },
+        "created_by": {
+          "type": "string"
+        },
+        "first_created_at": {
+          "type": "string"
+        },
+        "last_updated_at": {
+          "type": "string"
+        },
+        "finalized_at": {
+          "type": "string"
+        },
+        "approved_by": {
+          "type": "string"
+        },
+        "approved_at": {
+          "type": "string"
+        },
+        "remarks": {
+          "type": "string"
+        },
+        "rejection_reason": {
+          "type": "string"
+        },
+        "submission_source": {
+          "type": "string"
+        },
+        "partner_id": {
+          "type": "string"
+        },
+        "awe_request_id": {
+          "type": "string"
+        },
+        "awe_request_status_summary": {
+          "type": "string"
+        },
+        "number_of_verifications_required": {
+          "type": "string"
+        },
+        "number_of_verifications_done": {
+          "type": "string"
+        },
+        "register_ingest_process_status": {
+          "type": "string"
+        },
+        "register_ingest_processed_timestamp": {
+          "type": "string"
+        },
+        "register_ingest_process_attempts": {
+          "type": "string"
+        },
+        "register_ingest_process_last_error_code": {
+          "type": "string"
+        },
+        "deduplication_status_vs_intake_forms": {
+          "type": "string"
+        },
+        "deduplication_intake_forms_process_timestamp": {
+          "type": "string"
+        },
+        "deduplication_intake_forms_attempts": {
+          "type": "string"
+        },
+        "deduplication_intake_forms_error": {
+          "type": "string"
+        },
+        "deduplication_status_vs_register": {
+          "type": "string"
+        },
+        "deduplication_register_process_timestamp": {
+          "type": "string"
+        },
+        "deduplication_register_forms_attempts": {
+          "type": "string"
+        },
+        "deduplication_register_error": {
+          "type": "string"
+        },
+        "registry_name": {
           "type": "string"
         }
       }
@@ -209,16 +665,16 @@
         "name": "Email",
         "type": "email",
         "controlValues": {
-          "subject": "Application approved",
-          "body": "<p>Your application {{payload.application_reference}} for {{payload.record_name}} was approved.</p>",
-          "editorType": "html"
+          "subject": "Application {{payload.application_reference}} approved",
+          "editorType": "html",
+          "bodyFile": "email/intake-form-submission-approved.html"
         }
       },
       {
         "name": "SMS",
         "type": "sms",
         "controlValues": {
-          "body": "Application approved. Your application {{payload.application_reference}} for {{payload.record_name}} was approved."
+          "body": "Approved: application {{payload.application_reference}} for {{payload.record_name}}."
         }
       }
     ]
@@ -236,16 +692,124 @@
       "type": "object",
       "additionalProperties": true,
       "properties": {
+        "submission_id": {
+          "type": "string"
+        },
         "application_reference": {
           "type": "string"
         },
         "record_name": {
           "type": "string"
         },
-        "submission_id": {
+        "register_id": {
           "type": "string"
         },
         "register_mnemonic": {
+          "type": "string"
+        },
+        "register_subject": {
+          "type": "string"
+        },
+        "register_description": {
+          "type": "string"
+        },
+        "intake_form_mnemonic": {
+          "type": "string"
+        },
+        "form_id": {
+          "type": "string"
+        },
+        "internal_record_id": {
+          "type": "string"
+        },
+        "functional_record_id": {
+          "type": "string"
+        },
+        "approval_status": {
+          "type": "string"
+        },
+        "draft_status": {
+          "type": "string"
+        },
+        "created_by": {
+          "type": "string"
+        },
+        "first_created_at": {
+          "type": "string"
+        },
+        "last_updated_at": {
+          "type": "string"
+        },
+        "finalized_at": {
+          "type": "string"
+        },
+        "approved_by": {
+          "type": "string"
+        },
+        "approved_at": {
+          "type": "string"
+        },
+        "remarks": {
+          "type": "string"
+        },
+        "rejection_reason": {
+          "type": "string"
+        },
+        "submission_source": {
+          "type": "string"
+        },
+        "partner_id": {
+          "type": "string"
+        },
+        "awe_request_id": {
+          "type": "string"
+        },
+        "awe_request_status_summary": {
+          "type": "string"
+        },
+        "number_of_verifications_required": {
+          "type": "string"
+        },
+        "number_of_verifications_done": {
+          "type": "string"
+        },
+        "register_ingest_process_status": {
+          "type": "string"
+        },
+        "register_ingest_processed_timestamp": {
+          "type": "string"
+        },
+        "register_ingest_process_attempts": {
+          "type": "string"
+        },
+        "register_ingest_process_last_error_code": {
+          "type": "string"
+        },
+        "deduplication_status_vs_intake_forms": {
+          "type": "string"
+        },
+        "deduplication_intake_forms_process_timestamp": {
+          "type": "string"
+        },
+        "deduplication_intake_forms_attempts": {
+          "type": "string"
+        },
+        "deduplication_intake_forms_error": {
+          "type": "string"
+        },
+        "deduplication_status_vs_register": {
+          "type": "string"
+        },
+        "deduplication_register_process_timestamp": {
+          "type": "string"
+        },
+        "deduplication_register_forms_attempts": {
+          "type": "string"
+        },
+        "deduplication_register_error": {
+          "type": "string"
+        },
+        "registry_name": {
           "type": "string"
         }
       }
@@ -255,16 +819,16 @@
         "name": "Email",
         "type": "email",
         "controlValues": {
-          "subject": "Application rejected",
-          "body": "<p>Your application {{payload.application_reference}} for {{payload.record_name}} was rejected.</p>",
-          "editorType": "html"
+          "subject": "Application {{payload.application_reference}} was not approved",
+          "editorType": "html",
+          "bodyFile": "email/intake-form-submission-rejected.html"
         }
       },
       {
         "name": "SMS",
         "type": "sms",
         "controlValues": {
-          "body": "Application rejected. Your application {{payload.application_reference}} for {{payload.record_name}} was rejected."
+          "body": "Not approved: application {{payload.application_reference}}.{% if payload.rejection_reason %} Reason: {{payload.rejection_reason}}.{% endif %}"
         }
       }
     ]
@@ -282,22 +846,79 @@
       "type": "object",
       "additionalProperties": true,
       "properties": {
-        "export_format": {
+        "export_id": {
+          "type": "string"
+        },
+        "register_id": {
           "type": "string"
         },
         "register_mnemonic": {
           "type": "string"
         },
+        "register_subject": {
+          "type": "string"
+        },
+        "export_format": {
+          "type": "string"
+        },
+        "export_status": {
+          "type": "string"
+        },
+        "selection_mode": {
+          "type": "string"
+        },
+        "selected_record_count": {
+          "type": "string"
+        },
         "total_records_exported": {
           "type": "string"
         },
-        "file_url_expires_at": {
+        "export_latest_error_code": {
+          "type": "string"
+        },
+        "export_no_of_attempts": {
+          "type": "string"
+        },
+        "export_latest_timestamp": {
+          "type": "string"
+        },
+        "file_object_name": {
           "type": "string"
         },
         "file_presigned_url": {
           "type": "string"
         },
+        "file_url_expires_at": {
+          "type": "string"
+        },
+        "requested_by": {
+          "type": "string"
+        },
+        "queued_at": {
+          "type": "string"
+        },
         "staff_portal_base_url": {
+          "type": "string"
+        },
+        "batch_size": {
+          "type": "string"
+        },
+        "last_processed_offset": {
+          "type": "string"
+        },
+        "search_text": {
+          "type": "string"
+        },
+        "sort_by": {
+          "type": "string"
+        },
+        "filter_by": {
+          "type": "string"
+        },
+        "policy_mnemonics": {
+          "type": "string"
+        },
+        "registry_name": {
           "type": "string"
         }
       }
@@ -308,7 +929,7 @@
         "type": "in_app",
         "controlValues": {
           "subject": "Export ready",
-          "body": "Your {{payload.export_format}} export of {{payload.register_mnemonic}} is ready. {{payload.total_records_exported}} records were exported.",
+          "body": "Your {{payload.export_format}} export of {{payload.register_mnemonic}} is ready ({{payload.total_records_exported}} records).",
           "primaryAction": {
             "label": "Open register",
             "redirect": {
@@ -322,9 +943,9 @@
         "name": "Email",
         "type": "email",
         "controlValues": {
-          "subject": "Export ready",
-          "body": "<p>Your {{payload.export_format}} export of {{payload.register_mnemonic}} is ready. {{payload.total_records_exported}} records were exported. The download link expires at {{payload.file_url_expires_at}}.</p><p><a href=\"{{payload.file_presigned_url}}\">Download</a></p>",
-          "editorType": "html"
+          "subject": "Export ready: {{payload.register_mnemonic}} ({{payload.export_format}})",
+          "editorType": "html",
+          "bodyFile": "email/register-export-completed.html"
         }
       }
     ]
@@ -342,13 +963,79 @@
       "type": "object",
       "additionalProperties": true,
       "properties": {
-        "export_format": {
+        "export_id": {
+          "type": "string"
+        },
+        "register_id": {
           "type": "string"
         },
         "register_mnemonic": {
           "type": "string"
         },
+        "register_subject": {
+          "type": "string"
+        },
+        "export_format": {
+          "type": "string"
+        },
+        "export_status": {
+          "type": "string"
+        },
+        "selection_mode": {
+          "type": "string"
+        },
+        "selected_record_count": {
+          "type": "string"
+        },
+        "total_records_exported": {
+          "type": "string"
+        },
+        "export_latest_error_code": {
+          "type": "string"
+        },
+        "export_no_of_attempts": {
+          "type": "string"
+        },
+        "export_latest_timestamp": {
+          "type": "string"
+        },
+        "file_object_name": {
+          "type": "string"
+        },
+        "file_presigned_url": {
+          "type": "string"
+        },
+        "file_url_expires_at": {
+          "type": "string"
+        },
+        "requested_by": {
+          "type": "string"
+        },
+        "queued_at": {
+          "type": "string"
+        },
         "staff_portal_base_url": {
+          "type": "string"
+        },
+        "batch_size": {
+          "type": "string"
+        },
+        "last_processed_offset": {
+          "type": "string"
+        },
+        "search_text": {
+          "type": "string"
+        },
+        "sort_by": {
+          "type": "string"
+        },
+        "filter_by": {
+          "type": "string"
+        },
+        "policy_mnemonics": {
+          "type": "string"
+        },
+        "registry_name": {
           "type": "string"
         }
       }
@@ -359,7 +1046,7 @@
         "type": "in_app",
         "controlValues": {
           "subject": "Export failed",
-          "body": "Your {{payload.export_format}} export of {{payload.register_mnemonic}} failed.",
+          "body": "Your {{payload.export_format}} export of {{payload.register_mnemonic}} failed{% if payload.export_latest_error_code %}: {{payload.export_latest_error_code}}{% endif %}.",
           "primaryAction": {
             "label": "Open register",
             "redirect": {
@@ -373,9 +1060,9 @@
         "name": "Email",
         "type": "email",
         "controlValues": {
-          "subject": "Export failed",
-          "body": "<p>Your {{payload.export_format}} export of {{payload.register_mnemonic}} failed. Open the register and try again.</p>",
-          "editorType": "html"
+          "subject": "Export failed: {{payload.register_mnemonic}} ({{payload.export_format}})",
+          "editorType": "html",
+          "bodyFile": "email/register-export-failed.html"
         }
       }
     ]
@@ -399,25 +1086,34 @@
         "artifact_type": {
           "type": "string"
         },
+        "artifact_type_label": {
+          "type": "string"
+        },
         "artifact_id": {
           "type": "string"
         },
-        "stage_name": {
+        "change_request_id": {
           "type": "string"
         },
-        "stage_order": {
+        "submission_id": {
           "type": "string"
         },
-        "policy_key": {
+        "application_reference": {
           "type": "string"
         },
-        "source_service": {
+        "register_mnemonic": {
           "type": "string"
         },
-        "requester": {
+        "register_subject": {
           "type": "string"
         },
-        "due_at": {
+        "record_name": {
+          "type": "string"
+        },
+        "section_mnemonic": {
+          "type": "string"
+        },
+        "intake_form_mnemonic": {
           "type": "string"
         },
         "staff_portal_base_url": {
@@ -429,7 +1125,94 @@
         "tasks_list_path": {
           "type": "string"
         },
-        "register_mnemonic": {
+        "policy_key": {
+          "type": "string"
+        },
+        "policy_id": {
+          "type": "string"
+        },
+        "policy_name": {
+          "type": "string"
+        },
+        "policy_description": {
+          "type": "string"
+        },
+        "policy_version": {
+          "type": "string"
+        },
+        "source_service": {
+          "type": "string"
+        },
+        "requester": {
+          "type": "string"
+        },
+        "requester_name": {
+          "type": "string"
+        },
+        "request_status": {
+          "type": "string"
+        },
+        "current_stage_order": {
+          "type": "string"
+        },
+        "request_created_at": {
+          "type": "string"
+        },
+        "completed_at": {
+          "type": "string"
+        },
+        "stage_id": {
+          "type": "string"
+        },
+        "stage_name": {
+          "type": "string"
+        },
+        "stage_order": {
+          "type": "string"
+        },
+        "stage_mode": {
+          "type": "string"
+        },
+        "stage_mode_value": {
+          "type": "string"
+        },
+        "sla_hours": {
+          "type": "string"
+        },
+        "on_breach": {
+          "type": "string"
+        },
+        "on_empty": {
+          "type": "string"
+        },
+        "parallel_group": {
+          "type": "string"
+        },
+        "due_at": {
+          "type": "string"
+        },
+        "task_id": {
+          "type": "string"
+        },
+        "assignee": {
+          "type": "string"
+        },
+        "assignee_name": {
+          "type": "string"
+        },
+        "task_kind": {
+          "type": "string"
+        },
+        "task_status": {
+          "type": "string"
+        },
+        "delegated_from": {
+          "type": "string"
+        },
+        "claimed_at": {
+          "type": "string"
+        },
+        "approvers": {
           "type": "string"
         }
       }
@@ -440,7 +1223,7 @@
         "type": "in_app",
         "controlValues": {
           "subject": "Approval needed: {{payload.stage_name}}",
-          "body": "Stage {{payload.stage_name}} of {{payload.artifact_type}} {{payload.artifact_id}} needs your approval. Request {{payload.request_id}}.{% if payload.due_at %} Due by {{payload.due_at}}.{% endif %}",
+          "body": "{{payload.stage_name}} needs your approval for {% if payload.record_name %}{{payload.record_name}}{% elsif payload.application_reference %}application {{payload.application_reference}}{% else %}{{payload.artifact_type_label}}{% endif %}{% if payload.register_subject %} ({% if payload.register_subject %}{{payload.register_subject}}{% elsif payload.register_mnemonic %}{{payload.register_mnemonic}}{% else %}—{% endif %}){% endif %}.{% if payload.due_at %} Due by {{payload.due_at}}.{% endif %}",
           "primaryAction": {
             "label": "View task",
             "redirect": {
@@ -461,9 +1244,9 @@
         "name": "Email",
         "type": "email",
         "controlValues": {
-          "subject": "Approval needed: {{payload.stage_name}}",
-          "body": "<p>Stage {{payload.stage_name}} of {{payload.artifact_type}} {{payload.artifact_id}} needs your approval. Request {{payload.request_id}}.{% if payload.due_at %} Due by {{payload.due_at}}.{% endif %}</p><p><a href=\"{{payload.staff_portal_base_url}}/en{{payload.task_path}}\">View task</a></p>",
-          "editorType": "html"
+          "subject": "Action required: approve {{payload.stage_name}}",
+          "editorType": "html",
+          "bodyFile": "email/approval-stage-started.html"
         }
       }
     ]
@@ -487,22 +1270,34 @@
         "artifact_type": {
           "type": "string"
         },
+        "artifact_type_label": {
+          "type": "string"
+        },
         "artifact_id": {
           "type": "string"
         },
-        "stage_name": {
+        "change_request_id": {
           "type": "string"
         },
-        "stage_order": {
+        "submission_id": {
           "type": "string"
         },
-        "reassigned_from": {
+        "application_reference": {
           "type": "string"
         },
-        "actor": {
+        "register_mnemonic": {
           "type": "string"
         },
-        "reason": {
+        "register_subject": {
+          "type": "string"
+        },
+        "record_name": {
+          "type": "string"
+        },
+        "section_mnemonic": {
+          "type": "string"
+        },
+        "intake_form_mnemonic": {
           "type": "string"
         },
         "staff_portal_base_url": {
@@ -514,7 +1309,109 @@
         "tasks_list_path": {
           "type": "string"
         },
-        "register_mnemonic": {
+        "policy_key": {
+          "type": "string"
+        },
+        "policy_id": {
+          "type": "string"
+        },
+        "policy_name": {
+          "type": "string"
+        },
+        "policy_description": {
+          "type": "string"
+        },
+        "policy_version": {
+          "type": "string"
+        },
+        "source_service": {
+          "type": "string"
+        },
+        "requester": {
+          "type": "string"
+        },
+        "requester_name": {
+          "type": "string"
+        },
+        "request_status": {
+          "type": "string"
+        },
+        "current_stage_order": {
+          "type": "string"
+        },
+        "request_created_at": {
+          "type": "string"
+        },
+        "completed_at": {
+          "type": "string"
+        },
+        "stage_id": {
+          "type": "string"
+        },
+        "stage_name": {
+          "type": "string"
+        },
+        "stage_order": {
+          "type": "string"
+        },
+        "stage_mode": {
+          "type": "string"
+        },
+        "stage_mode_value": {
+          "type": "string"
+        },
+        "sla_hours": {
+          "type": "string"
+        },
+        "on_breach": {
+          "type": "string"
+        },
+        "on_empty": {
+          "type": "string"
+        },
+        "parallel_group": {
+          "type": "string"
+        },
+        "due_at": {
+          "type": "string"
+        },
+        "task_id": {
+          "type": "string"
+        },
+        "assignee": {
+          "type": "string"
+        },
+        "assignee_name": {
+          "type": "string"
+        },
+        "task_kind": {
+          "type": "string"
+        },
+        "task_status": {
+          "type": "string"
+        },
+        "delegated_from": {
+          "type": "string"
+        },
+        "claimed_at": {
+          "type": "string"
+        },
+        "reassigned_from": {
+          "type": "string"
+        },
+        "reassigned_from_name": {
+          "type": "string"
+        },
+        "actor": {
+          "type": "string"
+        },
+        "actor_name": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "string"
+        },
+        "new_task_id": {
           "type": "string"
         }
       }
@@ -525,7 +1422,7 @@
         "type": "in_app",
         "controlValues": {
           "subject": "Approval task reassigned to you",
-          "body": "The stage {{payload.stage_name}} task for {{payload.artifact_type}} {{payload.artifact_id}} (request {{payload.request_id}}) was reassigned from {{payload.reassigned_from}} to you by {{payload.actor}}.{% if payload.reason %} Reason: {{payload.reason}}.{% endif %}",
+          "body": "{{payload.stage_name}} for {% if payload.record_name %}{{payload.record_name}}{% elsif payload.application_reference %}application {{payload.application_reference}}{% else %}{{payload.artifact_type_label}}{% endif %} was reassigned to you from {% if payload.reassigned_from_name %}{{payload.reassigned_from_name}}{% elsif payload.reassigned_from %}{{payload.reassigned_from}}{% else %}—{% endif %}{% if payload.actor_name %} by {{payload.actor_name}}{% elsif payload.actor %} by {{payload.actor}}{% endif %}.{% if payload.reason %} Reason: {{payload.reason}}.{% endif %}",
           "primaryAction": {
             "label": "View task",
             "redirect": {
@@ -546,9 +1443,9 @@
         "name": "Email",
         "type": "email",
         "controlValues": {
-          "subject": "Approval task reassigned to you",
-          "body": "<p>The stage {{payload.stage_name}} task for {{payload.artifact_type}} {{payload.artifact_id}} (request {{payload.request_id}}) was reassigned from {{payload.reassigned_from}} to you by {{payload.actor}}.{% if payload.reason %} Reason: {{payload.reason}}.{% endif %}</p><p><a href=\"{{payload.staff_portal_base_url}}/en{{payload.task_path}}\">View task</a></p>",
-          "editorType": "html"
+          "subject": "Approval task reassigned to you: {{payload.stage_name}}",
+          "editorType": "html",
+          "bodyFile": "email/approval-task-reassigned.html"
         }
       }
     ]
@@ -572,19 +1469,34 @@
         "artifact_type": {
           "type": "string"
         },
+        "artifact_type_label": {
+          "type": "string"
+        },
         "artifact_id": {
           "type": "string"
         },
-        "stage_name": {
+        "change_request_id": {
           "type": "string"
         },
-        "stage_order": {
+        "submission_id": {
           "type": "string"
         },
-        "actor": {
+        "application_reference": {
           "type": "string"
         },
-        "due_at": {
+        "register_mnemonic": {
+          "type": "string"
+        },
+        "register_subject": {
+          "type": "string"
+        },
+        "record_name": {
+          "type": "string"
+        },
+        "section_mnemonic": {
+          "type": "string"
+        },
+        "intake_form_mnemonic": {
           "type": "string"
         },
         "staff_portal_base_url": {
@@ -596,7 +1508,100 @@
         "tasks_list_path": {
           "type": "string"
         },
-        "register_mnemonic": {
+        "policy_key": {
+          "type": "string"
+        },
+        "policy_id": {
+          "type": "string"
+        },
+        "policy_name": {
+          "type": "string"
+        },
+        "policy_description": {
+          "type": "string"
+        },
+        "policy_version": {
+          "type": "string"
+        },
+        "source_service": {
+          "type": "string"
+        },
+        "requester": {
+          "type": "string"
+        },
+        "requester_name": {
+          "type": "string"
+        },
+        "request_status": {
+          "type": "string"
+        },
+        "current_stage_order": {
+          "type": "string"
+        },
+        "request_created_at": {
+          "type": "string"
+        },
+        "completed_at": {
+          "type": "string"
+        },
+        "stage_id": {
+          "type": "string"
+        },
+        "stage_name": {
+          "type": "string"
+        },
+        "stage_order": {
+          "type": "string"
+        },
+        "stage_mode": {
+          "type": "string"
+        },
+        "stage_mode_value": {
+          "type": "string"
+        },
+        "sla_hours": {
+          "type": "string"
+        },
+        "on_breach": {
+          "type": "string"
+        },
+        "on_empty": {
+          "type": "string"
+        },
+        "parallel_group": {
+          "type": "string"
+        },
+        "due_at": {
+          "type": "string"
+        },
+        "task_id": {
+          "type": "string"
+        },
+        "assignee": {
+          "type": "string"
+        },
+        "assignee_name": {
+          "type": "string"
+        },
+        "task_kind": {
+          "type": "string"
+        },
+        "task_status": {
+          "type": "string"
+        },
+        "delegated_from": {
+          "type": "string"
+        },
+        "claimed_at": {
+          "type": "string"
+        },
+        "actor": {
+          "type": "string"
+        },
+        "actor_name": {
+          "type": "string"
+        },
+        "added_approvers": {
           "type": "string"
         }
       }
@@ -607,7 +1612,7 @@
         "type": "in_app",
         "controlValues": {
           "subject": "Escalated approval needs you",
-          "body": "Stage {{payload.stage_name}} of {{payload.artifact_type}} {{payload.artifact_id}} breached its SLA and you were added as an approver (request {{payload.request_id}}).",
+          "body": "{{payload.stage_name}} for {% if payload.record_name %}{{payload.record_name}}{% elsif payload.application_reference %}application {{payload.application_reference}}{% else %}{{payload.artifact_type_label}}{% endif %} breached its SLA. You were added as an escalated approver.{% if payload.due_at %} New due time: {{payload.due_at}}.{% endif %}",
           "primaryAction": {
             "label": "View task",
             "redirect": {
@@ -628,9 +1633,9 @@
         "name": "Email",
         "type": "email",
         "controlValues": {
-          "subject": "Escalated approval needs you",
-          "body": "<p>Stage {{payload.stage_name}} of {{payload.artifact_type}} {{payload.artifact_id}} breached its SLA and you were added as an approver (request {{payload.request_id}}).</p><p><a href=\"{{payload.staff_portal_base_url}}/en{{payload.task_path}}\">View task</a></p>",
-          "editorType": "html"
+          "subject": "Escalated approval: {{payload.stage_name}} needs you",
+          "editorType": "html",
+          "bodyFile": "email/approval-stage-escalated.html"
         }
       }
     ]
@@ -654,16 +1659,34 @@
         "artifact_type": {
           "type": "string"
         },
+        "artifact_type_label": {
+          "type": "string"
+        },
         "artifact_id": {
           "type": "string"
         },
-        "stage_name": {
+        "change_request_id": {
           "type": "string"
         },
-        "stage_order": {
+        "submission_id": {
           "type": "string"
         },
-        "due_at": {
+        "application_reference": {
+          "type": "string"
+        },
+        "register_mnemonic": {
+          "type": "string"
+        },
+        "register_subject": {
+          "type": "string"
+        },
+        "record_name": {
+          "type": "string"
+        },
+        "section_mnemonic": {
+          "type": "string"
+        },
+        "intake_form_mnemonic": {
           "type": "string"
         },
         "staff_portal_base_url": {
@@ -675,7 +1698,91 @@
         "tasks_list_path": {
           "type": "string"
         },
-        "register_mnemonic": {
+        "policy_key": {
+          "type": "string"
+        },
+        "policy_id": {
+          "type": "string"
+        },
+        "policy_name": {
+          "type": "string"
+        },
+        "policy_description": {
+          "type": "string"
+        },
+        "policy_version": {
+          "type": "string"
+        },
+        "source_service": {
+          "type": "string"
+        },
+        "requester": {
+          "type": "string"
+        },
+        "requester_name": {
+          "type": "string"
+        },
+        "request_status": {
+          "type": "string"
+        },
+        "current_stage_order": {
+          "type": "string"
+        },
+        "request_created_at": {
+          "type": "string"
+        },
+        "completed_at": {
+          "type": "string"
+        },
+        "stage_id": {
+          "type": "string"
+        },
+        "stage_name": {
+          "type": "string"
+        },
+        "stage_order": {
+          "type": "string"
+        },
+        "stage_mode": {
+          "type": "string"
+        },
+        "stage_mode_value": {
+          "type": "string"
+        },
+        "sla_hours": {
+          "type": "string"
+        },
+        "on_breach": {
+          "type": "string"
+        },
+        "on_empty": {
+          "type": "string"
+        },
+        "parallel_group": {
+          "type": "string"
+        },
+        "due_at": {
+          "type": "string"
+        },
+        "task_id": {
+          "type": "string"
+        },
+        "assignee": {
+          "type": "string"
+        },
+        "assignee_name": {
+          "type": "string"
+        },
+        "task_kind": {
+          "type": "string"
+        },
+        "task_status": {
+          "type": "string"
+        },
+        "delegated_from": {
+          "type": "string"
+        },
+        "claimed_at": {
           "type": "string"
         }
       }
@@ -686,7 +1793,7 @@
         "type": "in_app",
         "controlValues": {
           "subject": "Your approval task expired",
-          "body": "Your approval task on stage {{payload.stage_name}} of {{payload.artifact_type}} {{payload.artifact_id}} expired{% if payload.due_at %} at {{payload.due_at}}{% endif %}. The stage's on-breach action decides what happens next.",
+          "body": "Your task on {{payload.stage_name}} for {% if payload.record_name %}{{payload.record_name}}{% elsif payload.application_reference %}application {{payload.application_reference}}{% else %}{{payload.artifact_type_label}}{% endif %} expired{% if payload.due_at %} at {{payload.due_at}}{% endif %}. The stage on-breach policy decides what happens next.",
           "primaryAction": {
             "label": "View task",
             "redirect": {
@@ -707,9 +1814,9 @@
         "name": "Email",
         "type": "email",
         "controlValues": {
-          "subject": "Your approval task expired",
-          "body": "<p>Your approval task on stage {{payload.stage_name}} of {{payload.artifact_type}} {{payload.artifact_id}} expired{% if payload.due_at %} at {{payload.due_at}}{% endif %}. The stage's on-breach action decides what happens next.</p><p><a href=\"{{payload.staff_portal_base_url}}/en{{payload.task_path}}\">View task</a></p>",
-          "editorType": "html"
+          "subject": "Your approval task expired: {{payload.stage_name}}",
+          "editorType": "html",
+          "bodyFile": "email/approval-task-expired.html"
         }
       }
     ]
@@ -733,13 +1840,34 @@
         "artifact_type": {
           "type": "string"
         },
+        "artifact_type_label": {
+          "type": "string"
+        },
         "artifact_id": {
           "type": "string"
         },
-        "policy_key": {
+        "change_request_id": {
           "type": "string"
         },
-        "actor": {
+        "submission_id": {
+          "type": "string"
+        },
+        "application_reference": {
+          "type": "string"
+        },
+        "register_mnemonic": {
+          "type": "string"
+        },
+        "register_subject": {
+          "type": "string"
+        },
+        "record_name": {
+          "type": "string"
+        },
+        "section_mnemonic": {
+          "type": "string"
+        },
+        "intake_form_mnemonic": {
           "type": "string"
         },
         "staff_portal_base_url": {
@@ -751,7 +1879,52 @@
         "tasks_list_path": {
           "type": "string"
         },
-        "register_mnemonic": {
+        "policy_key": {
+          "type": "string"
+        },
+        "policy_id": {
+          "type": "string"
+        },
+        "policy_name": {
+          "type": "string"
+        },
+        "policy_description": {
+          "type": "string"
+        },
+        "policy_version": {
+          "type": "string"
+        },
+        "source_service": {
+          "type": "string"
+        },
+        "requester": {
+          "type": "string"
+        },
+        "requester_name": {
+          "type": "string"
+        },
+        "request_status": {
+          "type": "string"
+        },
+        "current_stage_order": {
+          "type": "string"
+        },
+        "request_created_at": {
+          "type": "string"
+        },
+        "completed_at": {
+          "type": "string"
+        },
+        "actor": {
+          "type": "string"
+        },
+        "actor_name": {
+          "type": "string"
+        },
+        "decision_id": {
+          "type": "string"
+        },
+        "decision_comment": {
           "type": "string"
         }
       }
@@ -762,7 +1935,7 @@
         "type": "in_app",
         "controlValues": {
           "subject": "Request approved",
-          "body": "Your approval request for {{payload.artifact_type}} {{payload.artifact_id}} was approved{% if payload.actor %} by {{payload.actor}}{% endif %}.",
+          "body": "Your approval request for {% if payload.record_name %}{{payload.record_name}}{% elsif payload.application_reference %}application {{payload.application_reference}}{% else %}{{payload.artifact_type_label}}{% endif %}{% if payload.register_subject %} ({% if payload.register_subject %}{{payload.register_subject}}{% elsif payload.register_mnemonic %}{{payload.register_mnemonic}}{% else %}—{% endif %}){% endif %} was approved{% if payload.actor_name %} by {{payload.actor_name}}{% elsif payload.actor %} by {{payload.actor}}{% endif %}.",
           "primaryAction": {
             "label": "View task",
             "redirect": {
@@ -783,9 +1956,9 @@
         "name": "Email",
         "type": "email",
         "controlValues": {
-          "subject": "Request approved",
-          "body": "<p>Your approval request for {{payload.artifact_type}} {{payload.artifact_id}} was approved{% if payload.actor %} by {{payload.actor}}{% endif %}.</p><p><a href=\"{{payload.staff_portal_base_url}}/en{{payload.task_path}}\">View task</a></p>",
-          "editorType": "html"
+          "subject": "Approved: {% if payload.record_name %}{{payload.record_name}}{% elsif payload.application_reference %}application {{payload.application_reference}}{% else %}{{payload.artifact_type_label}}{% endif %}",
+          "editorType": "html",
+          "bodyFile": "email/approval-request-approved.html"
         }
       }
     ]
@@ -809,16 +1982,34 @@
         "artifact_type": {
           "type": "string"
         },
+        "artifact_type_label": {
+          "type": "string"
+        },
         "artifact_id": {
           "type": "string"
         },
-        "policy_key": {
+        "change_request_id": {
           "type": "string"
         },
-        "actor": {
+        "submission_id": {
           "type": "string"
         },
-        "reason": {
+        "application_reference": {
+          "type": "string"
+        },
+        "register_mnemonic": {
+          "type": "string"
+        },
+        "register_subject": {
+          "type": "string"
+        },
+        "record_name": {
+          "type": "string"
+        },
+        "section_mnemonic": {
+          "type": "string"
+        },
+        "intake_form_mnemonic": {
           "type": "string"
         },
         "staff_portal_base_url": {
@@ -830,7 +2021,55 @@
         "tasks_list_path": {
           "type": "string"
         },
-        "register_mnemonic": {
+        "policy_key": {
+          "type": "string"
+        },
+        "policy_id": {
+          "type": "string"
+        },
+        "policy_name": {
+          "type": "string"
+        },
+        "policy_description": {
+          "type": "string"
+        },
+        "policy_version": {
+          "type": "string"
+        },
+        "source_service": {
+          "type": "string"
+        },
+        "requester": {
+          "type": "string"
+        },
+        "requester_name": {
+          "type": "string"
+        },
+        "request_status": {
+          "type": "string"
+        },
+        "current_stage_order": {
+          "type": "string"
+        },
+        "request_created_at": {
+          "type": "string"
+        },
+        "completed_at": {
+          "type": "string"
+        },
+        "actor": {
+          "type": "string"
+        },
+        "actor_name": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "string"
+        },
+        "decision_id": {
+          "type": "string"
+        },
+        "decision_comment": {
           "type": "string"
         }
       }
@@ -841,7 +2080,7 @@
         "type": "in_app",
         "controlValues": {
           "subject": "Request rejected",
-          "body": "Your approval request for {{payload.artifact_type}} {{payload.artifact_id}} was rejected{% if payload.actor %} by {{payload.actor}}{% endif %}.{% if payload.reason %} Reason: {{payload.reason}}.{% endif %}",
+          "body": "Your approval request for {% if payload.record_name %}{{payload.record_name}}{% elsif payload.application_reference %}application {{payload.application_reference}}{% else %}{{payload.artifact_type_label}}{% endif %}{% if payload.register_subject %} ({% if payload.register_subject %}{{payload.register_subject}}{% elsif payload.register_mnemonic %}{{payload.register_mnemonic}}{% else %}—{% endif %}){% endif %} was rejected{% if payload.actor_name %} by {{payload.actor_name}}{% elsif payload.actor %} by {{payload.actor}}{% endif %}.{% if payload.reason %} Reason: {{payload.reason}}.{% endif %}",
           "primaryAction": {
             "label": "View task",
             "redirect": {
@@ -862,9 +2101,9 @@
         "name": "Email",
         "type": "email",
         "controlValues": {
-          "subject": "Request rejected",
-          "body": "<p>Your approval request for {{payload.artifact_type}} {{payload.artifact_id}} was rejected{% if payload.actor %} by {{payload.actor}}{% endif %}.{% if payload.reason %} Reason: {{payload.reason}}.{% endif %}</p><p><a href=\"{{payload.staff_portal_base_url}}/en{{payload.task_path}}\">View task</a></p>",
-          "editorType": "html"
+          "subject": "Rejected: {% if payload.record_name %}{{payload.record_name}}{% elsif payload.application_reference %}application {{payload.application_reference}}{% else %}{{payload.artifact_type_label}}{% endif %}",
+          "editorType": "html",
+          "bodyFile": "email/approval-request-rejected.html"
         }
       }
     ]
@@ -888,13 +2127,34 @@
         "artifact_type": {
           "type": "string"
         },
+        "artifact_type_label": {
+          "type": "string"
+        },
         "artifact_id": {
           "type": "string"
         },
-        "actor": {
+        "change_request_id": {
           "type": "string"
         },
-        "reason": {
+        "submission_id": {
+          "type": "string"
+        },
+        "application_reference": {
+          "type": "string"
+        },
+        "register_mnemonic": {
+          "type": "string"
+        },
+        "register_subject": {
+          "type": "string"
+        },
+        "record_name": {
+          "type": "string"
+        },
+        "section_mnemonic": {
+          "type": "string"
+        },
+        "intake_form_mnemonic": {
           "type": "string"
         },
         "staff_portal_base_url": {
@@ -906,7 +2166,49 @@
         "tasks_list_path": {
           "type": "string"
         },
-        "register_mnemonic": {
+        "policy_key": {
+          "type": "string"
+        },
+        "policy_id": {
+          "type": "string"
+        },
+        "policy_name": {
+          "type": "string"
+        },
+        "policy_description": {
+          "type": "string"
+        },
+        "policy_version": {
+          "type": "string"
+        },
+        "source_service": {
+          "type": "string"
+        },
+        "requester": {
+          "type": "string"
+        },
+        "requester_name": {
+          "type": "string"
+        },
+        "request_status": {
+          "type": "string"
+        },
+        "current_stage_order": {
+          "type": "string"
+        },
+        "request_created_at": {
+          "type": "string"
+        },
+        "completed_at": {
+          "type": "string"
+        },
+        "actor": {
+          "type": "string"
+        },
+        "actor_name": {
+          "type": "string"
+        },
+        "reason": {
           "type": "string"
         }
       }
@@ -917,7 +2219,7 @@
         "type": "in_app",
         "controlValues": {
           "subject": "Request cancelled",
-          "body": "Your approval request for {{payload.artifact_type}} {{payload.artifact_id}} was cancelled{% if payload.actor %} by {{payload.actor}}{% endif %}.{% if payload.reason %} Reason: {{payload.reason}}.{% endif %}",
+          "body": "Your approval request for {% if payload.record_name %}{{payload.record_name}}{% elsif payload.application_reference %}application {{payload.application_reference}}{% else %}{{payload.artifact_type_label}}{% endif %}{% if payload.register_subject %} ({% if payload.register_subject %}{{payload.register_subject}}{% elsif payload.register_mnemonic %}{{payload.register_mnemonic}}{% else %}—{% endif %}){% endif %} was cancelled{% if payload.actor_name %} by {{payload.actor_name}}{% elsif payload.actor %} by {{payload.actor}}{% endif %}.{% if payload.reason %} Reason: {{payload.reason}}.{% endif %}",
           "primaryAction": {
             "label": "View task",
             "redirect": {
@@ -938,9 +2240,9 @@
         "name": "Email",
         "type": "email",
         "controlValues": {
-          "subject": "Request cancelled",
-          "body": "<p>Your approval request for {{payload.artifact_type}} {{payload.artifact_id}} was cancelled{% if payload.actor %} by {{payload.actor}}{% endif %}.{% if payload.reason %} Reason: {{payload.reason}}.{% endif %}</p><p><a href=\"{{payload.staff_portal_base_url}}/en{{payload.task_path}}\">View task</a></p>",
-          "editorType": "html"
+          "subject": "Cancelled: {% if payload.record_name %}{{payload.record_name}}{% elsif payload.application_reference %}application {{payload.application_reference}}{% else %}{{payload.artifact_type_label}}{% endif %}",
+          "editorType": "html",
+          "bodyFile": "email/approval-request-cancelled.html"
         }
       }
     ]
@@ -964,13 +2266,34 @@
         "artifact_type": {
           "type": "string"
         },
+        "artifact_type_label": {
+          "type": "string"
+        },
         "artifact_id": {
           "type": "string"
         },
-        "stage_name": {
+        "change_request_id": {
           "type": "string"
         },
-        "stage_order": {
+        "submission_id": {
+          "type": "string"
+        },
+        "application_reference": {
+          "type": "string"
+        },
+        "register_mnemonic": {
+          "type": "string"
+        },
+        "register_subject": {
+          "type": "string"
+        },
+        "record_name": {
+          "type": "string"
+        },
+        "section_mnemonic": {
+          "type": "string"
+        },
+        "intake_form_mnemonic": {
           "type": "string"
         },
         "staff_portal_base_url": {
@@ -982,7 +2305,97 @@
         "tasks_list_path": {
           "type": "string"
         },
-        "register_mnemonic": {
+        "policy_key": {
+          "type": "string"
+        },
+        "policy_id": {
+          "type": "string"
+        },
+        "policy_name": {
+          "type": "string"
+        },
+        "policy_description": {
+          "type": "string"
+        },
+        "policy_version": {
+          "type": "string"
+        },
+        "source_service": {
+          "type": "string"
+        },
+        "requester": {
+          "type": "string"
+        },
+        "requester_name": {
+          "type": "string"
+        },
+        "request_status": {
+          "type": "string"
+        },
+        "current_stage_order": {
+          "type": "string"
+        },
+        "request_created_at": {
+          "type": "string"
+        },
+        "completed_at": {
+          "type": "string"
+        },
+        "stage_id": {
+          "type": "string"
+        },
+        "stage_name": {
+          "type": "string"
+        },
+        "stage_order": {
+          "type": "string"
+        },
+        "stage_mode": {
+          "type": "string"
+        },
+        "stage_mode_value": {
+          "type": "string"
+        },
+        "sla_hours": {
+          "type": "string"
+        },
+        "on_breach": {
+          "type": "string"
+        },
+        "on_empty": {
+          "type": "string"
+        },
+        "parallel_group": {
+          "type": "string"
+        },
+        "due_at": {
+          "type": "string"
+        },
+        "task_id": {
+          "type": "string"
+        },
+        "assignee": {
+          "type": "string"
+        },
+        "assignee_name": {
+          "type": "string"
+        },
+        "task_kind": {
+          "type": "string"
+        },
+        "task_status": {
+          "type": "string"
+        },
+        "delegated_from": {
+          "type": "string"
+        },
+        "claimed_at": {
+          "type": "string"
+        },
+        "skipped_assignees": {
+          "type": "string"
+        },
+        "skipped_assignee_names": {
           "type": "string"
         }
       }
@@ -993,7 +2406,7 @@
         "type": "in_app",
         "controlValues": {
           "subject": "No action needed",
-          "body": "Quorum was met on stage {{payload.stage_name}}; your approval task was closed as no longer needed.",
+          "body": "Quorum was already met on {{payload.stage_name}}. Your approval task for {% if payload.record_name %}{{payload.record_name}}{% elsif payload.application_reference %}application {{payload.application_reference}}{% else %}{{payload.artifact_type_label}}{% endif %} was closed as no longer needed.",
           "primaryAction": {
             "label": "View task",
             "redirect": {
