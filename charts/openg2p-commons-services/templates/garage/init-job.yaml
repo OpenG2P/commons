@@ -1,0 +1,84 @@
+{{- if .Values.garage.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Release.Name }}-garage-init
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "5"
+    "helm.sh/hook-delete-policy": before-hook-creation
+spec:
+  backoffLimit: 5
+  template:
+    spec:
+      restartPolicy: OnFailure
+      serviceAccountName: {{ .Release.Name }}-garage-init
+      containers:
+        - name: garage-init
+          image: bitnami/kubectl:latest
+          command:
+            - sh
+            - -c
+            - |
+              set -e
+              NS={{ .Release.Namespace }}
+              POD={{ .Release.Name }}-garage-0
+              KX="kubectl exec -n $NS $POD --"
+
+              echo "Waiting for Garage node..."
+              until $KX ./garage status > /dev/null 2>&1; do
+                sleep 3
+              done
+
+              NODE_ID=$($KX ./garage status | awk '/NO ROLE ASSIGNED/{print $1}')
+              if [ -n "$NODE_ID" ]; then
+                echo "Assigning layout to $NODE_ID"
+                $KX ./garage layout assign "$NODE_ID" -z zone1 -c 1G
+                $KX ./garage layout apply --version 1
+              else
+                echo "Layout already assigned, skipping."
+              fi
+
+              # ---- Shared read-write key (used by ODK Central and Registry) ----
+              echo "Ensuring garage-key..."
+              $KX ./garage key create garage-key || true
+              GARAGE_KEY_ID=$($KX ./garage key list | grep garage-key | awk '{print $1}')
+              GARAGE_SECRET=$($KX ./garage key info "$GARAGE_KEY_ID" --show-secret | grep "Secret key" | awk '{print $3}')
+
+              # ---- Read-only key (used by Registry for read-only access) ----
+              echo "Ensuring garage-readonly-key..."
+              $KX ./garage key create garage-readonly-key || true
+              READONLY_KEY_ID=$($KX ./garage key list | grep garage-readonly-key | awk '{print $1}')
+              READONLY_SECRET=$($KX ./garage key info "$READONLY_KEY_ID" --show-secret | grep "Secret key" | awk '{print $3}')
+
+              # ---- Create buckets (idempotent) ----
+              BUCKETS="odk-central default documents templates"
+              for bucket in $BUCKETS; do
+                echo "Ensuring bucket $bucket..."
+                $KX ./garage bucket create "$bucket" || true
+              done
+
+              # ---- Grant permissions on buckets ----
+              for bucket in $BUCKETS; do
+                echo "Granting read-write on $bucket to garage-key"
+                $KX ./garage bucket allow --read --write --owner "$bucket" --key "$GARAGE_KEY_ID"
+              done
+
+              for bucket in default documents templates; do
+                echo "Granting read-only on $bucket to garage-readonly-key"
+                $KX ./garage bucket allow --read --owner "$bucket" --key "$READONLY_KEY_ID"
+              done
+
+              # ---- Single consolidated secret: commons-minio ----
+              # Used by ODK Central, Registry, and any other consumer.
+              # 4 key pairs: root (read-write) creds + readonly creds.
+              kubectl create secret generic commons-minio \
+                -n $NS \
+                --from-literal=root-user="$GARAGE_KEY_ID" \
+                --from-literal=root-password="$GARAGE_SECRET" \
+                --from-literal=readonly-user="$READONLY_KEY_ID" \
+                --from-literal=readonly-password="$READONLY_SECRET" \
+                --dry-run=client -o yaml | kubectl apply -f -
+
+              echo "Garage provisioning complete."
+{{- end }}
