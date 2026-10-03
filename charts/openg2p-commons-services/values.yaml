@@ -120,6 +120,7 @@ masterData:
   enabled: true
   global:
     masterDataHostname: 'master-data.{{ tpl .Values.global.baseDomain $ }}'
+    masterDataUiHostname: 'master-data-ui.{{ tpl .Values.global.baseDomain $ }}'
     # Plain DB names (no release-name prefix). Only one instance per env.
     masterDataDB: master_data
     masterDataDBUser: master_data_user
@@ -186,6 +187,10 @@ masterData:
       requests:
         cpu: 50m
         memory: 512Mi
+  masterDataUi:
+    iamPublicUrl: 'https://{{ tpl .Values.global.staffPortalApiHostname $ }}'
+    envVars:
+      COOKIE_DOMAIN: '{{ tpl .Values.global.staffPortalCookieDomain $ }}'
   postgres-init:
     serviceAccount:
       # Use a unique name to avoid collision with the main postgres-init ServiceAccount.
@@ -878,6 +883,8 @@ openg2p-iam-service:
       requests:
         cpu: 50m
         memory: 256Mi
+  iamStaffUi:
+    hostname: 'iam-staff-ui.{{ tpl .Values.global.baseDomain $ }}'
   iamAgentPortalApi:
     hostname: '{{ tpl .Values.global.agentPortalApiHostname $ }}'
     # Same profile as the staff API — a Python FastAPI app doing OIDC login.
@@ -886,8 +893,6 @@ openg2p-iam-service:
         cpu: 50m
         memory: 256Mi
   global:
-    iamHostname: '{{ tpl .Values.global.iamHostname $ }}'
-    postgresqlHost: '{{ tpl .Values.global.postgresqlHost $ }}'
     # Plain DB names (no release-name prefix). Only one instance per env.
     iamDB: iam
     iamDBUser: iam_user
@@ -897,14 +902,16 @@ openg2p-iam-service:
     # global.keycloakBaseUrl into the subchart. The IAM chart must tpl
     # IAM_*_KEYCLOAK_BASE_URL (same as ADMIN_URL) so the nested baseDomain
     # template resolves instead of leaking as literal '{{ tpl ... }}' text.
-    staffPortalDefaultRedirectUri: 'https://staff-portal.{{ tpl .Values.global.baseDomain $ }}'
+    staffPortalDefaultRedirectUri: 'https://{{ tpl .Values.global.staffPortalHostname $ }}'
     # Without this the subchart default pins the agent redirect to the literal
     # 'trial' domain, so every other environment gets a redirect it does not own.
     agentPortalDefaultRedirectUri: 'https://{{ tpl .Values.global.agentPortalHostname $ }}'
-    keycloakApplicationUrl: 'https://keycloak.{{ tpl .Values.global.baseDomain $ }}'
+    keycloakApplicationUrl: '{{ tpl .Values.global.keycloakBaseUrl $ }}'
     registryApplicationUrl: 'https://registry.{{ tpl .Values.global.baseDomain $ }}'
     minioApplicationUrl: 'https://minio.{{ tpl .Values.global.baseDomain $ }}'
     supersetApplicationUrl: 'https://{{ tpl .Values.global.supersetHostname $ }}'
+    authCookieDomain: '.{{ tpl .Values.global.baseDomain $ }}'
+    iamStaffUiApplicationUrl: 'https://iam-staff-ui.{{ tpl .Values.global.baseDomain $ }}'
   postgres-init:
     enabled: true
     nameOverride: iam-pg-init
@@ -975,13 +982,17 @@ openg2p-staff-portal-ui:
     # rendering. Override any of these via --set or in commons globals (top-level
     # globals are also exposed in questions.yaml).
     staffPortalHostname: '{{ tpl .Values.global.staffPortalHostname $ }}'
-    cookieDomain: '{{ tpl .Values.global.staffPortalCookieDomain $ }}'
+    domain: '{{ tpl .Values.global.baseDomain $ }}'
     keycloakBaseUrl: '{{ tpl .Values.global.keycloakBaseUrl $ }}'
     keycloakRealm: '{{ tpl .Values.global.keycloakRealm $ }}'
-    iamServiceUrl: '{{ tpl .Values.global.iamServiceUrl $ }}'
+    iamUrl: 'https://{{ tpl .Values.global.staffPortalApiHostname $ }}'
   staffPortalUi:
     enabled: true
     nameOverride: staff-portal-ui
+    envVars:
+      # The subchart builds this as '.<namespace>.<domain>', but commons baseDomain
+      # already carries the namespace, so it would be doubled.
+      COOKIE_DOMAIN: '{{ tpl .Values.global.staffPortalCookieDomain $ }}'
     replicaCount: 1
     # Lightweight Node.js UI.
     resources:
