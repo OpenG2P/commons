@@ -25,6 +25,13 @@ questions:
   label: MinIO Hostname
   group: Service Hostnames
 
+- variable: global.garageHostname
+  description: >-
+    Hostname for the Garage S3 API. Defaults to garage.<baseDomain>.
+  type: string
+  label: Garage Hostname
+  group: Service Hostnames
+
 # Novu (OpenG2P Notification)
 - variable: novu.enabled
   description: >-
@@ -143,6 +150,13 @@ questions:
   type: boolean
   label: Install Minio?
   group: Minio
+
+# Garage
+- variable: garage.enabled
+  description: This installs Garage, an S3-compatible object store.
+  type: boolean
+  label: Install Garage?
+  group: Garage
 
 # Kafka
 - variable: kafka.enabled
