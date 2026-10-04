@@ -203,7 +203,9 @@ odk-central:
   hostname: '{{ tpl .Values.global.odkHostname $ }}'
 
   postgresqlInstallationName: '{{ tpl .Values.global.postgresqlHost $ }}'
-  minioInstallationName: '{{ tpl .Values.global.garageInstallationName $ }}'
+  # Name of the S3 credentials SECRET (keys root-user / root-password), not the
+  # S3 host. The Garage init job in commons-base writes them to commons-minio.
+  minioInstallationName: '{{ tpl .Values.global.minioInstallationName $ }}'
   mailInstallationName: '{{ tpl .Values.global.mailInstallationName $ }}'
 
   oidcClientId: openg2p-odk
@@ -214,9 +216,9 @@ odk-central:
   oidcClientSecretKey: 'client_secret'
 
   s3BlobsEnabled: true
-  # MinIO S3 API port (the bitnami chart exposes S3 on 9000, console on 9001).
-  # Use the internal cluster service name — pod-to-pod, not via Istio.
-  s3ServerUrl: 'http://{{ tpl .Values.global.garageInstallationName $ }}:9000'
+  # Garage S3 API port (3900). Use the internal cluster service name — pod-to-pod,
+  # not via Istio.
+  s3ServerUrl: 'http://{{ tpl .Values.global.garageInstallationName $ }}:3900'
 
   odk-central-enketo:
     enabled: true

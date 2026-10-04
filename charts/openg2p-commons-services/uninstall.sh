@@ -247,6 +247,11 @@ _blue "==> [2/7] Delete leftover Jobs and their Pods"
 if [[ "$NAMESPACE_EXISTS" == true ]]; then
   run "kubectl -n '$NAMESPACE' delete job -l '$LABEL' --ignore-not-found --wait=true --timeout=2m"
   run "kubectl -n '$NAMESPACE' delete pod -l '$LABEL' --ignore-not-found --field-selector=status.phase!=Running"
+  # The upstream Apache Superset chart puts no app.kubernetes.io/instance label on
+  # its init-db hook Job, so the label sweep above misses it; a failed run would
+  # otherwise linger (with its Error pod) after uninstall. Deleting the Job
+  # cascades to its pods.
+  run "kubectl -n '$NAMESPACE' delete job '${RELEASE}-superset-init-db' --ignore-not-found --wait=true --timeout=2m"
 else
   echo "  (skipped — namespace not present)"
 fi
@@ -271,6 +276,16 @@ _blue "==> [4/7] Sweep leftover Secrets / ConfigMaps"
 if [[ "$NAMESPACE_EXISTS" == true ]]; then
   run "kubectl -n '$NAMESPACE' delete secret    -l '$LABEL' --ignore-not-found"
   run "kubectl -n '$NAMESPACE' delete configmap -l '$LABEL' --ignore-not-found"
+  # Inji Certify's p12-backup sidecar copies the signing keystore into this Secret
+  # with `kubectl create`, so it has no labels and helm does not own it -- it
+  # survived every uninstall, leaving an old private signing key in the namespace.
+  # The key is only meaningful alongside the inji_certify DB, so it goes with the
+  # DB and is kept with it under --keep-dbs.
+  if [[ "$KEEP_DBS" == true ]]; then
+    echo "  (keeping ${RELEASE}-inji-certify-p12-backup — --keep-dbs)"
+  else
+    run "kubectl -n '$NAMESPACE' delete secret '${RELEASE}-inji-certify-p12-backup' --ignore-not-found"
+  fi
 else
   echo "  (skipped — namespace not present)"
 fi
