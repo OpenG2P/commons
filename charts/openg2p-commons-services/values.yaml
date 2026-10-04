@@ -179,12 +179,13 @@ masterData:
       # A couple of dozen country-coherent people, so a fresh install shows
       # something rather than an empty registry. Not bulk analytics data.
       samples: true
-    # Sector code lists, on top of the core ones. 'agriculture' (crops, seasons,
-    # seed, fertiliser, pests, livestock, ...) is required by the Farmer Registry
-    # and the Crop Sown Registry — without it their dropdowns are empty and coded
-    # entries are rejected; a social registry never reads them. Comma-separated
-    # in the Rancher form, a list here.
-    domains: []
+    # Sector code lists, on top of the core ones. Defaults to 'agriculture'
+    # (crops, seasons, seed, fertiliser, pests, livestock, ...), which the Farmer
+    # Registry and the Crop Sown Registry need — without it their dropdowns are
+    # empty and coded entries are rejected. A pack without a requested domain
+    # skips it with a warning in the geo-seed Job log; set [] to load only the
+    # core lists. Comma-separated in the Rancher form, a list here.
+    domains: ["agriculture"]
 
   # Based on observed usage ~442Mi.
   # Key is masterDataAPI (capital API) -- the subchart's component key. It was
