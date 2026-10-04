@@ -145,6 +145,11 @@ masterData:
   # install cannot attach invented figures to a real country. A real deployment
   # names its country, so this one does.
   geoSeed:
+    # Same store as masterDataAPI.catalogue.boundaryStore above. Literal for the
+    # same reason: geo-seed-job.yaml uses it with no tpl at all.
+    objectStore:
+      endpoint: http://commons-garage:3900
+      bucket: openg2p-geo
     # The value is a DIRECTORY NAME under packs/ in openg2p-data
     # (https://github.com/openg2p/openg2p-data), conventionally the ISO 3166
     # alpha-3 code. Not a fixed list — adding a country means adding data to that
@@ -182,11 +187,22 @@ masterData:
     domains: []
 
   # Based on observed usage ~442Mi.
-  masterDataApi:
+  # Key is masterDataAPI (capital API) -- the subchart's component key. It was
+  # 'masterDataApi' here, which matched nothing, so these overrides never applied.
+  masterDataAPI:
     resources:
       requests:
         cpu: 50m
         memory: 512Mi
+    catalogue:
+      # Boundary GeoJSON store -- Garage, not the retired MinIO. The subchart
+      # default is http://commons-minio:9000. Must be a LITERAL: the subchart
+      # renders it through a single tpl pass, so a nested {{ }} would leak.
+      # Credentials stay in the commons-minio Secret (written by the Garage init
+      # job in commons-base). Keep in step with geoSeed.objectStore below.
+      boundaryStore:
+        endpoint: http://commons-garage:3900
+        bucket: openg2p-geo
   masterDataUi:
     iamPublicUrl: 'https://{{ tpl .Values.global.staffPortalApiHostname $ }}'
     envVars:
