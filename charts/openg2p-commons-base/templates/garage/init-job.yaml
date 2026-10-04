@@ -52,7 +52,7 @@ spec:
               READONLY_SECRET=$($KX ./garage key info "$READONLY_KEY_ID" --show-secret | grep "Secret key" | awk '{print $3}')
 
               # ---- Create buckets (idempotent) ----
-              BUCKETS="odk-central default documents templates openg2p-geo"
+              BUCKETS="odk-central default documents templates import-files export-files openg2p-geo"
               for bucket in $BUCKETS; do
                 echo "Ensuring bucket $bucket..."
                 $KX ./garage bucket create "$bucket" || true
@@ -64,7 +64,7 @@ spec:
                 $KX ./garage bucket allow --read --write --owner "$bucket" --key "$GARAGE_KEY_ID"
               done
 
-              for bucket in default documents templates; do
+              for bucket in default documents templates export-files; do
                 echo "Granting read-only on $bucket to garage-readonly-key"
                 $KX ./garage bucket allow --read --owner "$bucket" --key "$READONLY_KEY_ID"
               done
