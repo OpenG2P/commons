@@ -5,7 +5,7 @@ type: application
 version: 2.3.3
 dependencies:
 - name: openg2p-master-data
-  version: 1.1.4-rc.100
+  version: 1.1.4-rc.102
   repository: https://openg2p.github.io/openg2p-helm
   condition: master-data.enabled
   # Must be DNS-1123 (lowercase). Helm sets .Chart.Name to the alias for
