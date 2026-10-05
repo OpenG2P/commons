@@ -26,7 +26,7 @@ dependencies:
   repository: https://openg2p.github.io/openg2p-helm
   condition: esignet.enabled
 - name: mock-identity-system
-  version: 0.0.0-develop.7
+  version: 0.0.0-develop.9
   repository: https://openg2p.github.io/openg2p-helm
   condition: mock-identity-system.enabled
 - name: odk-central
@@ -38,11 +38,11 @@ dependencies:
   repository: https://openg2p.github.io/openg2p-helm
   condition: openg2p-iam-service.enabled
 - name: openg2p-inji-certify
-  version: 0.0.0-develop.16
+  version: 0.0.0-develop.17
   repository: https://openg2p.github.io/openg2p-helm
   condition: openg2p-inji-certify.enabled
 - name: openg2p-inji-verify
-  version: 0.0.0-develop.16
+  version: 0.0.0-develop.17
   repository: https://openg2p.github.io/openg2p-helm
   condition: openg2p-inji-verify.enabled
 - name: openg2p-audit-manager
@@ -58,11 +58,11 @@ dependencies:
   repository: https://openg2p.github.io/openg2p-helm
   condition: openg2p-awe.enabled
 - name: partner-management
-  version: 0.0.0-develop.26
+  version: 0.0.0-develop.27
   repository: https://openg2p.github.io/openg2p-helm
   condition: partner-management.enabled
 - name: openg2p-consent-manager
-  version: 0.0.0-develop.61
+  version: 0.0.0-develop.63
   repository: https://openg2p.github.io/openg2p-helm
   condition: openg2p-consent-manager.enabled
 - name: keycloak-init
