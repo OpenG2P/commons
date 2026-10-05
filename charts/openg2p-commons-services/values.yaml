@@ -705,6 +705,15 @@ esignet:
     rawConfig: ""
 
 mock-identity-system:
+  identitySeed:
+    masterData:
+      # Pinned here because mock-identity-system 0.0.0-develop.9 (commit ac821ec,
+      # "match renamed secrets") changed its default to a Secret named
+      # 'master-data-db-user' with key 'master-data-db-user-password' -- neither
+      # exists. The real Secret is masterData.global.masterDataDBSecret above.
+      # Drop this once mock-id's default is corrected.
+      existingSecret: master-data-db
+      existingSecretKey: master-data-db-user
   # ── Probe budgets ────────────────────────────────────────────────────────
   # Raised from the subchart defaults (startup 300s / liveness 80s).
   #
