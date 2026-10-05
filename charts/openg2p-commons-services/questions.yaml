@@ -317,6 +317,18 @@ questions:
   group: Consent Manager
   show_if: openg2p-consent-manager.enabled=true
 
+- variable: openg2p-consent-manager.global.aweEnabled
+  description: >-
+    Require AWE approval for policy changes that widen a partner's access (and
+    for a new binding's first policy). Seeds CM's approval policy and callback
+    secret into the shared AWE. Approvers need the consent-manager client role
+    CONSENT_MANAGER_APPROVER. Requires AWE. OFF by default.
+  type: boolean
+  default: false
+  label: Require AWE Approval for Policy Widening?
+  group: Consent Manager
+  show_if: openg2p-consent-manager.enabled=true
+
 - variable: openg2p-consent-manager.sanity.runE2e
   description: >-
     Run the full end-to-end sanity (signed /validate round-trip) on each

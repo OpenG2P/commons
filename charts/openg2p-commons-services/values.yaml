@@ -1148,6 +1148,24 @@ openg2p-consent-manager:
     partnerManagementApiUrl: http://commons-services-pm-partner-api
     partnerManagementAdminApiUrl: http://commons-services-pm-staff-portal-api
     pmSeedClientId: commons-services-staff-portal
+    # ── AWE approval of data-share policy widenings (OFF by default) ─────────
+    # Set true to gate policy widenings behind the shared AWE above. Nothing
+    # else is needed here: the CM chart derives
+    #   - the callback URL from its staff api Service (commons-services-cm-api,
+    #     via consentManagerApi.nameOverride below),
+    #   - the AWE base URL from global.aweHostname,
+    #   - the service-token URL from global.keycloakExternalIssuerUrl (the
+    #     issuer AWE trusts; normally CM forwards the admin's own token anyway),
+    # and its awe-callback-seed Job registers CM's callback secret and seeds the
+    # approval policy `consent-manager.policy_change.v1` (approvers: holders of
+    # the consent-manager client role CONSENT_MANAGER_APPROVER) into the AWE DB.
+    aweEnabled: false
+    # CM's callback-secret row id in the SHARED AWE DB and its K8s Secret. The
+    # chart defaults are release-scoped (<release> / <release>-awe-callback-hmac),
+    # which here would be the generic `commons-services`; name them after CM so
+    # they cannot collide with another caller's row/Secret.
+    aweCallbackSecretId: consent-manager
+    aweCallbackHmacSecretName: consent-manager-awe-callback-hmac
   # STAFF api — commons-services-cm-api. Token `iss` is the EXTERNAL issuer; JWKS
   # is fetched from the INTERNAL Keycloak URL (commons splits these two).
   consentManagerApi:
@@ -1205,6 +1223,16 @@ openg2p-consent-manager:
     istio:
       virtualservice:
         destination: '{{ .Release.Name }}-cm-ui'
+  # AWE callback-secret / approval-policy seed (only rendered when aweEnabled):
+  # run as regular resources, like the other Jobs here (Rancher skips hooks).
+  aweSeed:
+    annotations:
+      "helm.sh/hook": null
+      "helm.sh/hook-weight": null
+      "helm.sh/hook-delete-policy": null
+  aweCallbackHmacSecret:
+    annotations:
+      "helm.sh/hook": null
   postgres-init:
     enabled: true
     # Distinct Job name; run as a regular resource (Rancher skips helm hooks).
