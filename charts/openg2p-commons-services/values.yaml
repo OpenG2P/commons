@@ -111,6 +111,14 @@ global:
 # removed. No app-level logging config is required here anymore.
 
 masterData:
+  # IAM registration (permissions + roles) as a regular resource, not a Helm hook:
+  # in this umbrella every subchart's post-install hooks run as one chain, so a
+  # failing/timed-out hook elsewhere (or Rancher skipping hooks) left this
+  # application unregistered in IAM. Needs a chart version with runAsHook (nulls
+  # here cannot remove the subchart's default hook annotations). The Job name
+  # carries the release revision, so each upgrade makes a fresh, idempotent run.
+  iamRegister:
+    runAsHook: false
   keycloak-init:
     # Distinct name: without it this subchart's kc-init ConfigMap resolves to the
     # same name as the parent's own keycloak-init, the parent's wins, and the
@@ -1039,6 +1047,14 @@ openg2p-staff-portal-ui:
 # callback secret into this AWE's DB.
 # ─────────────────────────────────────────────────────────────────────────────
 openg2p-awe:
+  # IAM registration (permissions + roles) as a regular resource, not a Helm hook:
+  # in this umbrella every subchart's post-install hooks run as one chain, so a
+  # failing/timed-out hook elsewhere (or Rancher skipping hooks) left this
+  # application unregistered in IAM. Needs a chart version with runAsHook (nulls
+  # here cannot remove the subchart's default hook annotations). The Job name
+  # carries the release revision, so each upgrade makes a fresh, idempotent run.
+  iamRegister:
+    runAsHook: false
   enabled: true
   # Keycloak issuer split (same as Partner Management / Consent Manager): the
   # token `iss` is the EXTERNAL issuer — real users log in via the public
@@ -1073,6 +1089,14 @@ openg2p-awe:
 # It inherits keycloak/postgres/iam from the shared `global`.
 # ─────────────────────────────────────────────────────────────────────────────
 partner-management:
+  # IAM registration (permissions + roles) as a regular resource, not a Helm hook:
+  # in this umbrella every subchart's post-install hooks run as one chain, so a
+  # failing/timed-out hook elsewhere (or Rancher skipping hooks) left this
+  # application unregistered in IAM. Needs a chart version with runAsHook (nulls
+  # here cannot remove the subchart's default hook annotations). The Job name
+  # carries the release revision, so each upgrade makes a fresh, idempotent run.
+  iamRegister:
+    runAsHook: false
   enabled: true
   global:
     # Plain DB name/user/secret (no release-name prefix), like iam / audit_manager.
