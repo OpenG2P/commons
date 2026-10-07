@@ -203,9 +203,6 @@ postgres-init:
       secret: keycloak-db-user
       secretUserPasswordKey: keycloak-db-user-password
 
-mail:
-  enabled: false
-  mailname: admin@openg2p.sandbox.org
 
 # Redis without auth enabled.
 redis:

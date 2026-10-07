@@ -24,7 +24,6 @@ global:
   # for external PostgreSQL). install.sh sets this from BASE_RELEASE.
   postgresqlSecret: commons-postgresql
   postgresqlSecretKey: postgres-password
-  mailInstallationName: commons-mail
   garageInstallationName: commons-garage
   minioInstallationName: commons-minio
 
@@ -231,7 +230,12 @@ odk-central:
   # Name of the S3 credentials SECRET (keys root-user / root-password), not the
   # S3 host. The Garage init job in commons-base writes them to commons-minio.
   minioInstallationName: '{{ tpl .Values.global.minioInstallationName $ }}'
-  mailInstallationName: '{{ tpl .Values.global.mailInstallationName $ }}'
+  # SMTP host for ODK's own mail (invitations). ODK only speaks SMTP -- it cannot
+  # use Novu -- and there is no in-cluster mail relay any more, so this is empty
+  # (ODK runs; only email-sending actions fail). To enable ODK mail, set it to a
+  # real SMTP server and add backend.envVars EMAIL_PORT / EMAIL_USER /
+  # EMAIL_PASSWORD / EMAIL_SECURE as that server needs.
+  mailInstallationName: ''
 
   oidcClientId: openg2p-odk
   # Name of the secret in Kubernetes containing (DO NOT put password directly here)
