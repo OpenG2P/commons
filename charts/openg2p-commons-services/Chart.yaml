@@ -5,7 +5,7 @@ type: application
 version: 0.0.0-develop
 dependencies:
 - name: openg2p-master-data
-  version: 0.0.0-develop.105
+  version: 0.0.0-develop.110
   repository: https://openg2p.github.io/openg2p-helm
   condition: masterData.enabled
   alias: masterData
@@ -54,11 +54,11 @@ dependencies:
   repository: https://openg2p.github.io/openg2p-helm
   condition: openg2p-staff-portal-ui.enabled
 - name: openg2p-awe
-  version: 0.0.0-develop.90
+  version: 0.0.0-develop.92
   repository: https://openg2p.github.io/openg2p-helm
   condition: openg2p-awe.enabled
 - name: partner-management
-  version: 0.0.0-develop.27
+  version: 0.0.0-develop.29
   repository: https://openg2p.github.io/openg2p-helm
   condition: partner-management.enabled
 - name: openg2p-consent-manager
