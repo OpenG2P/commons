@@ -69,10 +69,10 @@ questions:
 # Object store
 - variable: global.garageHostname
   description: >-
-    Public hostname of the Garage S3 API (the object store). Defaults to
+    Public hostname of the S3-compatible object store API. Defaults to
     garage.<Base Domain>.
   type: string
-  label: Garage S3 Hostname
+  label: Object Store (S3) Hostname
   group: Object Store
 
 # Kafka
@@ -116,13 +116,6 @@ questions:
   label: Kafka UI Hostname
   group: Kafka
   show_if: kafkaUi.enabled=true
-
-# Mail
-- variable: mail.enabled
-  description: Install an SMTP relay that forwards mail to your mail provider.
-  type: boolean
-  label: Install Mail Relay?
-  group: Mail
 
 # Novu (notifications)
 - variable: novu.enabled

@@ -96,7 +96,6 @@ helm upgrade --install "$RELEASE" "$SCRIPT_DIR" \
   --set global.redisInstallationName="${BASE_RELEASE}-redis" \
   --set global.redisAuthInstallationName="${BASE_RELEASE}-redis-auth" \
   --set global.minioInstallationName="${BASE_RELEASE}-minio" \
-  --set global.mailInstallationName="${BASE_RELEASE}-mail" \
   --set global.kafkaInstallationName="${BASE_RELEASE}-kafka" \
   --set global.softhsmInstallationName="${BASE_RELEASE}-softhsm" \
   --timeout 20m \
