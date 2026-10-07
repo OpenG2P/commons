@@ -3,204 +3,154 @@ questions:
 # General
 - variable: global.baseDomain
   description: >-
-    Base domain for all services. All service hostnames are derived as
-    <service>.baseDomain (e.g., superset.example.openg2p.org).
+    Domain all hostnames sit under: each service gets <service>.<Base Domain>
+    (e.g. kafka.trial.openg2p.org). Defaults to <namespace>.openg2p.org.
   type: string
   label: Base Domain
   required: true
   group: General
 
-# Service hostnames (used both for service deployments and Keycloak redirect URIs)
-- variable: global.kafkaUiHostname
-  description: >-
-    Hostname for Kafka UI. Defaults to kafka.<baseDomain>.
-  type: string
-  label: Kafka UI Hostname
-  group: Service Hostnames
-
-- variable: global.minioHostname
-  description: >-
-    Hostname for the MinIO console. Defaults to minio.<baseDomain>.
-  type: string
-  label: MinIO Hostname
-  group: Service Hostnames
-
-- variable: global.garageHostname
-  description: >-
-    Hostname for the Garage S3 API. Defaults to garage.<baseDomain>.
-  type: string
-  label: Garage Hostname
-  group: Service Hostnames
-
-# Novu (OpenG2P Notification)
-- variable: novu.enabled
-  description: >-
-    Install the Novu chart from openg2p-helm (published from openg2p-deployment).
-    Leave off while a standalone novu release is still installed in this namespace.
-  type: boolean
-  label: Install Novu?
-  group: Novu
-
-- variable: global.novuApiHostname
-  description: >-
-    Hostname for the Novu API. Defaults to novu-api.<baseDomain>.
-  type: string
-  label: Novu API Hostname
-  group: Service Hostnames
-
-- variable: global.novuWsHostname
-  description: >-
-    Hostname for the Novu WebSocket service. Defaults to novu-ws.<baseDomain>.
-  type: string
-  label: Novu WebSocket Hostname
-  group: Service Hostnames
-
-- variable: global.novuDashboardHostname
-  description: >-
-    Hostname for the Novu dashboard. Defaults to novu.<baseDomain>.
-  type: string
-  label: Novu Dashboard Hostname
-  group: Service Hostnames
-
 # Keycloak
 - variable: keycloak.enabled
   description: >-
-    Install a per-environment Keycloak instance. Disable only when using
-    an external Keycloak and set global.keycloakBaseUrl accordingly.
+    Install Keycloak in this environment. Turn off only to use an external
+    Keycloak, and then set its URL below.
   type: boolean
   label: Install Keycloak?
   group: Keycloak
 
 - variable: global.keycloakBaseUrl
   description: >-
-    Keycloak Base URL used in all components. Defaults to
-    https://keycloak.<baseDomain>. Override only for external Keycloak.
+    URL of the external Keycloak, e.g. https://keycloak.example.org. With the
+    bundled Keycloak this is https://keycloak.<Base Domain> and needs no change.
   type: string
-  label: Keycloak Base URL (override)
+  label: External Keycloak URL
   group: Keycloak
-
-- variable: keycloak.image.tag
-  description: >-
-    Docker image tag for Keycloak. Uses openg2p/keycloak image from the chart.
-  type: string
-  label: Keycloak Image Tag
-  group: Keycloak
-
-- variable: keycloak-init.enabled
-  description: >-
-    Enable Keycloak client initialization. Creates OIDC realms, clients,
-    and secrets for Superset, Kafka, MinIO, and ODK.
-  type: boolean
-  label: Run Keycloak Init?
-  group: Keycloak
+  show_if: keycloak.enabled=false
 
 - variable: keycloak-init.staffAdminEmail
-  description: >-
-    Email address for the default admin user created in the staff realm.
+  description: Email of the admin user created in the staff realm.
   type: string
   label: Staff Admin Email
   group: Keycloak
 
 # PostgreSQL
 - variable: postgresql.enabled
-  description: Disable for external PostgreSQL server
+  description: >-
+    Install PostgreSQL in this environment. Turn off to use an external
+    PostgreSQL server, and then set its host and superuser Secret below.
   type: boolean
-  label: Install PostgreSQL
-  group: Postgres
+  label: Install PostgreSQL?
+  group: PostgreSQL
 
 - variable: global.postgresqlHost
-  description: Hostname of PostgreSQL installation. Change this only for external PostgreSQL server.
+  description: Hostname or IP address of the external PostgreSQL server.
   type: string
-  label: PostgreSQL Hostname
-  group: Postgres
+  label: External PostgreSQL Host
+  group: PostgreSQL
+  show_if: postgresql.enabled=false
 
 - variable: global.postgresqlSecret
   description: >-
-    Name of the Kubernetes secret containing the PostgreSQL superuser password.
-    For embedded PostgreSQL this is auto-created. For external PostgreSQL,
-    pre-create this secret manually and set the name here.
+    Kubernetes Secret holding the external server's superuser password. Create
+    it in this namespace before installing.
   type: string
-  label: PostgreSQL Superuser Secret Name
-  group: Postgres
+  label: Superuser Password Secret
+  group: PostgreSQL
+  show_if: postgresql.enabled=false
 
 - variable: global.postgresqlSecretKey
+  description: Key inside that Secret that holds the password.
+  type: string
+  label: Superuser Password Secret Key
+  group: PostgreSQL
+  show_if: postgresql.enabled=false
+
+# Object store
+- variable: global.garageHostname
   description: >-
-    Key inside the superuser secret that holds the password. Defaults to
-    'postgres-password'. Change if your external secret uses a different key.
+    Public hostname of the Garage S3 API (the object store). Defaults to
+    garage.<Base Domain>.
   type: string
-  label: PostgreSQL Superuser Secret Key
-  group: Postgres
-
-# Mail
-- variable: mail.enabled
-  description: This installs Mail server for relaying SMTP requests to preferred backend.
-  type: boolean
-  label: Install Mail SMTP Server?
-  group: Mail
-
-- variable: global.mailInstallationName
-  description: Hostname of the Mail server. Change for external installations.
-  type: string
-  label: Mail Server Hostname
-  group: Mail
-
-# Minio
-- variable: minio.enabled
-  description: This installs Minio for document store.
-  type: boolean
-  label: Install Minio?
-  group: Minio
-
-# Garage
-- variable: garage.enabled
-  description: This installs Garage, an S3-compatible object store.
-  type: boolean
-  label: Install Garage?
-  group: Garage
+  label: Garage S3 Hostname
+  group: Object Store
 
 # Kafka
 - variable: kafka.enabled
-  description: This installs Kafka.
+  description: >-
+    Install Kafka. Audit Manager and eSignet in commons-services need it.
   type: boolean
   label: Install Kafka?
   group: Kafka
 
 - variable: kafka.controller.replicaCount
   description: >-
-    Number of Kafka controller replicas. Use 1 for sandbox, 3 for production
-    (quorum-based consensus requires odd number, minimum 3).
+    Kafka nodes, each both controller and broker, with its data on a persistent
+    volume. 1 for a sandbox, 3 for production (an odd number).
   type: int
-  label: Kafka Controller Replicas
+  label: Kafka Nodes
   group: Kafka
-
-- variable: kafka.broker.replicaCount
-  description: >-
-    Number of Kafka broker replicas. Use 1 for sandbox, 3 for production
-    (matches replication factor and provides fault tolerance).
-  type: int
-  label: Kafka Broker Replicas
-  group: Kafka
-
-- variable: kafka.broker.persistence.enabled
-  description: >-
-    Enable persistent storage for Kafka brokers. Must be true in production
-    to prevent data loss on pod restart.
-  type: boolean
-  label: Kafka Broker Persistence?
-  group: Kafka
+  show_if: kafka.enabled=true
 
 - variable: kafka.extraConfig
   description: >-
-    Kafka server.properties overrides. For production, set:
+    Kafka server.properties overrides. For production set
     default.replication.factor=3, offsets.topic.replication.factor=3,
     transaction.state.log.replication.factor=3, transaction.state.log.min.isr=2,
-    min.insync.replicas=2, log.retention.hours=168.
+    min.insync.replicas=2 and log.retention.hours=168.
   type: multiline
   label: Kafka Extra Config
   group: Kafka
+  show_if: kafka.enabled=true
 
 - variable: kafkaUi.enabled
-  description: This installs Kafka UI
+  description: Install Kafka UI, the web console for topics and consumers.
   type: boolean
   label: Install Kafka UI?
   group: Kafka
+  show_if: kafka.enabled=true
+
+- variable: global.kafkaUiHostname
+  description: Hostname of Kafka UI. Defaults to kafka.<Base Domain>.
+  type: string
+  label: Kafka UI Hostname
+  group: Kafka
+  show_if: kafkaUi.enabled=true
+
+# Mail
+- variable: mail.enabled
+  description: Install an SMTP relay that forwards mail to your mail provider.
+  type: boolean
+  label: Install Mail Relay?
+  group: Mail
+
+# Novu (notifications)
+- variable: novu.enabled
+  description: >-
+    Install Novu, the notification service (on by default). Turn off only while a
+    separate novu release is still installed in this namespace.
+  type: boolean
+  default: true
+  label: Install Novu?
+  group: Novu
+
+- variable: global.novuApiHostname
+  description: Hostname of the Novu API. Defaults to novu-api.<Base Domain>.
+  type: string
+  label: Novu API Hostname
+  group: Novu
+  show_if: novu.enabled=true
+
+- variable: global.novuWsHostname
+  description: Hostname of the Novu WebSocket service. Defaults to novu-ws.<Base Domain>.
+  type: string
+  label: Novu WebSocket Hostname
+  group: Novu
+  show_if: novu.enabled=true
+
+- variable: global.novuDashboardHostname
+  description: Hostname of the Novu dashboard. Defaults to novu.<Base Domain>.
+  type: string
+  label: Novu Dashboard Hostname
+  group: Novu
+  show_if: novu.enabled=true

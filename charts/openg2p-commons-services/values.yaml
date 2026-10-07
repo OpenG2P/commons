@@ -316,6 +316,14 @@ artifactory:
       cpu: 20m
       memory: 32Mi
 
+# Standalone MOSIP Keymanager. Nothing in Open Agri Stack calls it (the
+# registries verify partner keys against Partner Management; eSignet, the mock
+# identity system and Inji Certify each embed their own keymanager with a PKCS12
+# keystore). Kept ON by default because other products do use it: PBMS signs
+# G2P Bridge disbursement requests through it (BG_TASK_CELERY_WORKERS_KEYMANAGER_*),
+# and a registry with global.registryCryptoBackend=keymanager verifies partner
+# keys with it. An Agri Stack install can turn it off; nothing in this chart
+# waits for it.
 keymanager:
   enabled: true
   hostname: 'keymanager.{{ tpl .Values.global.baseDomain $ }}'
@@ -326,7 +334,8 @@ keymanager:
       memory: 1Gi
   # Disabling for now. TODO - understand the implications
   authEnabled: false
-  # For country deployments we may for file based keystore instead of SoftHSM
+  # File-based (PKCS12) keystore on the volume below. PKCS11 needs SoftHSM,
+  # which commons-base no longer installs.
   keystoreType: PKCS12
   p12KeystorePass: ''
   # Postgres Init is important
@@ -608,9 +617,7 @@ esignet:
     # Also raised: a slow but healthy service should not be killed outright.
     failureThreshold: 12
     initialDelaySeconds: 60
-  # Requires softhsm (enabled in commons-base): esignet embeds its own keymanager
-  # and initialises signing keys against the HSM (unconditional PKCS11 socket +
-  # security-pin from the softhsm ConfigMap/Secret; no PKCS12 path in this chart).
+  # Embeds its own keymanager, on a PKCS12 keystore (see below); no SoftHSM.
   enabled: true
   hostname: 'esignet.{{ tpl .Values.global.baseDomain $ }}'
   # Based on observed usage ~1940Mi. eSignet is the largest memory consumer.
@@ -742,8 +749,8 @@ mock-identity-system:
     # Also raised: a slow but healthy service should not be killed outright.
     failureThreshold: 12
     initialDelaySeconds: 60
-  # Requires softhsm (same as esignet — embeds its own keymanager, no PKCS12
-  # path). It is also esignet's auth backend, so it runs alongside esignet.
+  # Embeds its own keymanager on a PKCS12 keystore, like esignet. It is
+  # esignet's auth backend, so it runs alongside esignet.
   enabled: true
   hostname: 'esignet.{{ tpl .Values.global.baseDomain $ }}'
   # Based on observed usage ~912Mi.
@@ -1160,8 +1167,8 @@ partner-management:
       "helm.sh/hook-delete-policy": null
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Consent Manager (CM) — the PDP for outbound data sharing. OFF by default;
-# enable with openg2p-consent-manager.enabled=true (surfaced in questions.yaml).
+# Consent Manager (CM) — the PDP for outbound data sharing. ON by default;
+# turn off with openg2p-consent-manager.enabled=false (surfaced in questions.yaml).
 # Deployed as commons-services-cm-* : the staff api, the partner api (the
 # /validate PDP), and the admin UI. CM verifies partner-signed consent objects
 # against the in-cluster Partner Management keys (commons-services-pm-partner-api).

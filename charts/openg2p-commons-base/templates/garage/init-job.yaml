@@ -52,7 +52,7 @@ spec:
               READONLY_SECRET=$($KX ./garage key info "$READONLY_KEY_ID" --show-secret | grep "Secret key" | awk '{print $3}')
 
               # ---- Create buckets (idempotent) ----
-              BUCKETS="odk-central default documents templates import-files export-files openg2p-geo"
+              BUCKETS="odk-central default documents templates import-files export-files openg2p-geo novu"
               for bucket in $BUCKETS; do
                 echo "Ensuring bucket $bucket..."
                 $KX ./garage bucket create "$bucket" || true

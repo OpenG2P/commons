@@ -50,12 +50,6 @@ global:
   # ────────────────────────────────────────────────────────────────────────────
   postgresqlSecret: '{{ .Release.Name }}-postgresql'
   postgresqlSecretKey: postgres-password
-  mailInstallationName: '{{ .Release.Name }}-mail'
-  minioInstallationName: '{{ .Release.Name }}-minio'
-  garageInstallationName: '{{ .Release.Name }}-garage'
-  sysAdminEmail: admin@openg2p.sandbox.org
-  redisInstallationName: '{{ .Release.Name }}-redis'
-  redisAuthInstallationName: '{{ .Release.Name }}-redis-auth'
 
 keycloak-init:
   enabled: true
@@ -256,6 +250,8 @@ redis-auth:
       enabled: false
 
 minio:
+  # Retired: Garage (below) is the object store. Not in the Rancher form. The
+  # Novu block still points at commons-minio, so Novu needs this turned on.
   enabled: false
   hostname: '{{ tpl .Values.global.minioHostname $ }}'
   persistence:
@@ -643,7 +639,7 @@ kafkaUi:
 # Disabled until the standalone `novu` release is removed from the namespace.
 # Under release name commons: API service commons-novu-api, secret commons-novu.
 novu:
-  enabled: false
+  enabled: true
   # Parent-owned Secret (templates/novu/secret.yaml). The subchart skips its own.
   existingSecret: '{{ .Release.Name }}-novu'
   notificationApiKey: ''
@@ -669,9 +665,11 @@ novu:
       API_ROOT_URL: 'https://{{ tpl .Values.global.novuApiHostname $ }}'
       FRONT_BASE_URL: 'https://{{ tpl .Values.global.novuDashboardHostname $ }}'
       NOVU_SECRET_KEY: ''
+    # Object storage is the commons Garage (S3 API on :3900). The '<release>-minio'
+    # Secret holds Garage's keys: the Garage init job writes it under that name.
     extraEnvVars:
       - name: S3_LOCAL_STACK
-        value: 'http://{{ .Release.Name }}-minio:9000'
+        value: 'http://{{ .Release.Name }}-garage:3900'
       - name: AWS_ACCESS_KEY_ID
         valueFrom:
           secretKeyRef:
@@ -689,7 +687,7 @@ novu:
       tag: 3.19.0
     extraEnvVars:
       - name: S3_LOCAL_STACK
-        value: 'http://{{ .Release.Name }}-minio:9000'
+        value: 'http://{{ .Release.Name }}-garage:3900'
       - name: AWS_ACCESS_KEY_ID
         valueFrom:
           secretKeyRef:
@@ -767,10 +765,10 @@ novu:
           memory: 64Mi
   localstack:
     enabled: false
-  # Object storage is the commons MinIO. Create the bucket before enabling.
+  # Object storage is the commons Garage; the Garage init job creates the bucket.
   externalS3:
     storageService: s3
-    endpoint: 'http://commons-minio:9000'
+    endpoint: 'http://commons-garage:3900'
     bucketName: novu
     region: us-east-1
     accessKey: unused
