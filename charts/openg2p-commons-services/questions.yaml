@@ -300,3 +300,22 @@ questions:
   label: Expose Keymanager APIs?
   group: Keymanager
   show_if: keymanager.enabled=true
+
+# WebSub. Uses the Kafka installed by commons-base.
+- variable: websub.enabled
+  description: >-
+    Install the MOSIP WebSub hub and consolidator. Registries publish change
+    events and async search results here. Uses the Kafka from commons-base
+    (commons-kafka). Turn it off only if nothing in this environment publishes
+    or subscribes.
+  type: boolean
+  default: true
+  label: Install WebSub?
+  group: WebSub
+
+- variable: websub.hostname
+  description: Hostname of the WebSub hub. Defaults to websub.<Base Domain>.
+  type: string
+  label: WebSub Hostname
+  group: WebSub
+  show_if: websub.enabled=true

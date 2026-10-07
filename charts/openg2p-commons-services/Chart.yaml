@@ -17,6 +17,10 @@ dependencies:
   version: 12.1.1
   repository: https://openg2p.github.io/openg2p-helm
   condition: keymanager.enabled
+- name: websub
+  version: 1.3.2
+  repository: https://openg2p.github.io/openg2p-helm
+  condition: websub.enabled
 - name: superset
   version: 0.12.11
   repository: https://openg2p.github.io/openg2p-helm

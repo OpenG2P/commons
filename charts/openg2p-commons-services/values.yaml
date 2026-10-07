@@ -104,6 +104,8 @@ global:
   aweDBSecret: awe-db-user
   aweDBUserPasswordKey: awe-db-user-password
 
+  websubHostname: 'websub.{{ tpl .Values.global.baseDomain $ }}'
+
 # Logging is now handled cluster-wide by the OpenTelemetry + Loki stack at the
 # infra layer (the OTel agent DaemonSet tails every pod automatically), so the
 # per-service Fluentd Flow/Output that used to ship to OpenSearch has been
@@ -1387,3 +1389,16 @@ keycloak-init:
           clientRoleMappings:
             openg2p-superset:
               - "Admin"
+
+# MOSIP WebSub hub and consolidator. The chart can install its own Kafka;
+# Commons Base already runs one, so this install uses that broker.
+websub:
+  enabled: true
+  hostname: '{{ tpl .Values.websubHostname $ }}'
+  consolidator:
+    istio:
+      virtualservice:
+        enabled: false
+  kafka:
+    enabled: false
+  kafkaInstallationName: '{{ .Values.global.kafkaInstallationName }}'
