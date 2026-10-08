@@ -87,14 +87,14 @@ questions:
 # Master Data
 - variable: masterData.enabled
   description: >-
-    Install Master Data, the source of geography and code lists for the
+    Install Master Data, the catalogue of geography and datasets for the
     registries.
   type: boolean
   label: Install Master Data?
   group: Master Data
 
 # The country pack. This is the ONE place an environment declares which country
-# it serves — registries read the geography, code lists and sample people from
+# it serves — registries read the geography, datasets and sample people from
 # Master Data and name no country of their own. Its own group, so it is not lost
 # among the Master Data service settings.
 - variable: masterData.geoSeed.countryPack
@@ -106,23 +106,23 @@ questions:
   show_if: masterData.enabled=true
 
 - variable: masterData.geoSeed.domains
-  description: "Sector code lists to load on top of the core ones, comma-separated, from the pack's domains/ folder. Defaults to 'agriculture' (crops, seasons, seed, fertiliser, pests, livestock, soil, water), which the Farmer Registry and the Crop Sown Registry need: they read these lists live from Master Data, and without them their dropdowns are empty and every coded entry is rejected. A pack without a requested domain skips it with a warning in the geo-seed Job log. Clear the field to load only the core lists."
+  description: "Dataset themes (sector datasets) to load on top of the core datasets, comma-separated, from the pack's domains/ folder. Defaults to 'agriculture' (crops, seasons, seed, fertiliser, pests, livestock, soil, water), which the Farmer Registry and the Crop Sown Registry need: they read these lists live from Master Data, and without them their dropdowns are empty and every coded entry is rejected. A pack without a requested domain skips it with a warning in the geo-seed Job log. Clear the field to load only the core lists."
   type: string
   default: "agriculture"
-  label: Domain Code Lists
+  label: Dataset Themes
   group: Country Pack
   show_if: masterData.enabled=true
 
 - variable: masterData.geoSeed.load.codelists
-  description: "Load the country's core code lists (gender, education level, water source, ...) and their semantic role tags. Registries read code lists live from Master Data, so with this off their coded dropdowns are empty."
+  description: "Load the country's core datasets (gender, education level, water source, ...) and their semantic role tags. Registries read datasets live from Master Data, so with this off their coded dropdowns are empty."
   type: boolean
   default: true
-  label: Load Code Lists
+  label: Load Datasets
   group: Country Pack
   show_if: masterData.enabled=true
 
 - variable: masterData.geoSeed.load.samples
-  description: "Load the pack's sample people — a couple of dozen, coherent with the geography and the code lists — so a fresh install shows something rather than an empty registry. Not bulk analytics data, which each registry generates for itself."
+  description: "Load the pack's sample people — a couple of dozen, coherent with the geography and the datasets — so a fresh install shows something rather than an empty registry. Not bulk analytics data, which each registry generates for itself."
   type: boolean
   default: true
   label: Load Sample People
