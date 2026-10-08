@@ -2,13 +2,15 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: {{ .Release.Name }}-garage-init
-  annotations:
-    "helm.sh/hook": post-install,post-upgrade
-    "helm.sh/hook-weight": "5"
-    "helm.sh/hook-delete-policy": before-hook-creation
+  # A regular Job, not a post-install hook: Helm runs post-install hooks only
+  # after every resource is ready, but services that need the credentials this
+  # Job writes (e.g. Novu's `commons-minio` Secret) are never ready without it,
+  # so as a hook the install deadlocked until the timeout. It waits for Garage
+  # itself and is idempotent; the revision suffix gives each upgrade a fresh Job.
+  name: {{ .Release.Name }}-garage-init-{{ .Release.Revision }}
 spec:
   backoffLimit: 5
+  ttlSecondsAfterFinished: 600
   template:
     spec:
       restartPolicy: OnFailure
@@ -39,17 +41,40 @@ spec:
                 echo "Layout already assigned, skipping."
               fi
 
-              # ---- Shared read-write key (used by ODK Central and Registry) ----
-              echo "Ensuring garage-key..."
-              $KX ./garage key create garage-key || true
-              GARAGE_KEY_ID=$($KX ./garage key list | grep garage-key | awk '{print $1}')
-              GARAGE_SECRET=$($KX ./garage key info "$GARAGE_KEY_ID" --show-secret | grep "Secret key" | awk '{print $3}')
+              # ---- Access keys (idempotent) ----
+              # `garage key create NAME` never fails on an existing name: it makes
+              # another key with the same name. So reuse the key the commons-minio
+              # Secret already holds (services use it); create one only when there
+              # is none; and always pick exactly one.
+              secret_field() {
+                kubectl get secret commons-minio -n $NS -o jsonpath="{.data.$1}" 2>/dev/null | base64 -d 2>/dev/null || true
+              }
+              ensure_key() {  # $1 key name, $2 Secret field holding its ID
+                id=$(secret_field "$2")
+                if [ -n "$id" ] && $KX ./garage key info "$id" > /dev/null 2>&1; then
+                  echo "$id"; return
+                fi
+                id=$($KX ./garage key list 2>/dev/null | awk -v n="$1" '$3 == n {print $1; exit}')
+                if [ -z "$id" ]; then
+                  $KX ./garage key create "$1" > /dev/null
+                  id=$($KX ./garage key list 2>/dev/null | awk -v n="$1" '$3 == n {print $1; exit}')
+                fi
+                echo "$id"
+              }
+              key_secret() {
+                $KX ./garage key info "$1" --show-secret 2>/dev/null | awk '/Secret key/ {print $3}'
+              }
 
-              # ---- Read-only key (used by Registry for read-only access) ----
+              # Shared read-write key (ODK Central, registries, Master Data, Novu)
+              echo "Ensuring garage-key..."
+              GARAGE_KEY_ID=$(ensure_key garage-key root-user)
+              GARAGE_SECRET=$(key_secret "$GARAGE_KEY_ID")
+              # Read-only key (registries' read-only access)
               echo "Ensuring garage-readonly-key..."
-              $KX ./garage key create garage-readonly-key || true
-              READONLY_KEY_ID=$($KX ./garage key list | grep garage-readonly-key | awk '{print $1}')
-              READONLY_SECRET=$($KX ./garage key info "$READONLY_KEY_ID" --show-secret | grep "Secret key" | awk '{print $3}')
+              READONLY_KEY_ID=$(ensure_key garage-readonly-key readonly-user)
+              READONLY_SECRET=$(key_secret "$READONLY_KEY_ID")
+              [ -n "$GARAGE_KEY_ID" ] && [ -n "$GARAGE_SECRET" ] && [ -n "$READONLY_KEY_ID" ] && [ -n "$READONLY_SECRET" ] || {
+                echo "Could not determine Garage access keys"; exit 1; }
 
               # ---- Create buckets (idempotent) ----
               BUCKETS="odk-central default documents templates import-files export-files openg2p-geo novu"

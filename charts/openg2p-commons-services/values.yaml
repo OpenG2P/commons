@@ -322,16 +322,15 @@ artifactory:
       cpu: 20m
       memory: 32Mi
 
-# Standalone MOSIP Keymanager. Nothing in Open Agri Stack calls it (the
-# registries verify partner keys against Partner Management; eSignet, the mock
-# identity system and Inji Certify each embed their own keymanager with a PKCS12
-# keystore). Kept ON by default because other products do use it: PBMS signs
-# G2P Bridge disbursement requests through it (BG_TASK_CELERY_WORKERS_KEYMANAGER_*),
-# and a registry with global.registryCryptoBackend=keymanager verifies partner
-# keys with it. An Agri Stack install can turn it off; nothing in this chart
-# waits for it.
+# Standalone MOSIP Keymanager. OFF by default: nothing in the registries or Open
+# Agri Stack calls it (registries verify partner keys against Partner
+# Management; eSignet, the mock identity system and Inji Certify each embed their
+# own keymanager with a PKCS12 keystore), and nothing in this chart waits for it.
+# Turn it ON for PBMS, which signs G2P Bridge disbursement requests through it
+# (BG_TASK_CELERY_WORKERS_KEYMANAGER_*), or for a registry with
+# global.registryCryptoBackend=keymanager.
 keymanager:
-  enabled: true
+  enabled: false
   hostname: 'keymanager.{{ tpl .Values.global.baseDomain $ }}'
   # Based on observed usage ~1436Mi. Spring Boot + HSM is memory-hungry.
   resources:
@@ -922,11 +921,8 @@ openg2p-iam-service:
     # Override the subchart default ('staff-{{ iamHostname }}') with our global
     # so the deployment hostname AND the Keycloak redirect URI stay in sync.
     hostname: '{{ tpl .Values.global.staffPortalApiHostname $ }}'
-    image:
-      # Docker Hub: iam publishes here again since the move back to GitHub.
-      # Matches iamAgentPortalApi and iamStaffUi below.
-      repository: openg2p/iam-staff-portal-api
-      tag: "develop"
+    # Image comes from the IAM chart (pinned to the chart version), like
+    # iamAgentPortalApi and iamStaffUi below.
     # Based on observed usage ~159Mi. Python FastAPI app.
     resources:
       requests:
@@ -1396,7 +1392,7 @@ websub:
   enabled: true
   # Registry publishes without a MOSIP auth-manager cookie.
   securityOn: false
-  hostname: '{{ tpl .Values.websubHostname $ }}'
+  hostname: '{{ tpl .Values.global.websubHostname $ }}'
   consolidator:
     istio:
       virtualservice:
