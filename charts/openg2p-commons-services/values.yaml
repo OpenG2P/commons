@@ -322,16 +322,15 @@ artifactory:
       cpu: 20m
       memory: 32Mi
 
-# Standalone MOSIP Keymanager. Nothing in Open Agri Stack calls it (the
-# registries verify partner keys against Partner Management; eSignet, the mock
-# identity system and Inji Certify each embed their own keymanager with a PKCS12
-# keystore). Kept ON by default because other products do use it: PBMS signs
-# G2P Bridge disbursement requests through it (BG_TASK_CELERY_WORKERS_KEYMANAGER_*),
-# and a registry with global.registryCryptoBackend=keymanager verifies partner
-# keys with it. An Agri Stack install can turn it off; nothing in this chart
-# waits for it.
+# Standalone MOSIP Keymanager. OFF by default: nothing in the registries or Open
+# Agri Stack calls it (registries verify partner keys against Partner
+# Management; eSignet, the mock identity system and Inji Certify each embed their
+# own keymanager with a PKCS12 keystore), and nothing in this chart waits for it.
+# Turn it ON for PBMS, which signs G2P Bridge disbursement requests through it
+# (BG_TASK_CELERY_WORKERS_KEYMANAGER_*), or for a registry with
+# global.registryCryptoBackend=keymanager.
 keymanager:
-  enabled: true
+  enabled: false
   hostname: 'keymanager.{{ tpl .Values.global.baseDomain $ }}'
   # Based on observed usage ~1436Mi. Spring Boot + HSM is memory-hungry.
   resources:
