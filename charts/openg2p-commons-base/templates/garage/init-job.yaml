@@ -2,13 +2,15 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: {{ .Release.Name }}-garage-init
-  annotations:
-    "helm.sh/hook": post-install,post-upgrade
-    "helm.sh/hook-weight": "5"
-    "helm.sh/hook-delete-policy": before-hook-creation
+  # A regular Job, not a post-install hook: Helm runs post-install hooks only
+  # after every resource is ready, but services that need the credentials this
+  # Job writes (e.g. Novu's `commons-minio` Secret) are never ready without it,
+  # so as a hook the install deadlocked until the timeout. It waits for Garage
+  # itself and is idempotent; the revision suffix gives each upgrade a fresh Job.
+  name: {{ .Release.Name }}-garage-init-{{ .Release.Revision }}
 spec:
   backoffLimit: 5
+  ttlSecondsAfterFinished: 600
   template:
     spec:
       restartPolicy: OnFailure
