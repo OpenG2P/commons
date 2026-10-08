@@ -1122,6 +1122,10 @@ partner-management:
     nameOverride: pm-staff-portal-api
     istio:
       virtualservice:
+        # Not global.staffPortalApiHostname: the parent's global of that name is
+        # the IAM staff API's hostname, and a parent global overrides the one set
+        # above, so PM's API would share IAM's host and never be reachable.
+        host: 'pm-staff-portal.{{ tpl .Values.global.baseDomain $ }}'
         destination: '{{ .Release.Name }}-pm-staff-portal-api'
     envVars:
       # Token `iss` is the EXTERNAL issuer; JWKS is fetched from the INTERNAL
