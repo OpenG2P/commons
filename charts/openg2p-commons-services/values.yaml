@@ -921,11 +921,8 @@ openg2p-iam-service:
     # Override the subchart default ('staff-{{ iamHostname }}') with our global
     # so the deployment hostname AND the Keycloak redirect URI stay in sync.
     hostname: '{{ tpl .Values.global.staffPortalApiHostname $ }}'
-    image:
-      # Docker Hub: iam publishes here again since the move back to GitHub.
-      # Matches iamAgentPortalApi and iamStaffUi below.
-      repository: openg2p/iam-staff-portal-api
-      tag: "develop"
+    # Image comes from the IAM chart (pinned to the chart version), like
+    # iamAgentPortalApi and iamStaffUi below.
     # Based on observed usage ~159Mi. Python FastAPI app.
     resources:
       requests:
