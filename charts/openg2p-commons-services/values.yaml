@@ -1394,6 +1394,8 @@ keycloak-init:
 # Commons Base already runs one, so this install uses that broker.
 websub:
   enabled: true
+  # Registry publishes without a MOSIP auth-manager cookie.
+  securityOn: false
   hostname: '{{ tpl .Values.global.websubHostname $ }}'
   consolidator:
     istio:
