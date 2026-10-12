@@ -311,6 +311,8 @@ odk-central:
           name: '{{ tpl .Values.oidcClientSecret $ }}'
           key: '{{ tpl .Values.oidcClientSecretKey $ }}'
 
+# Serves runtime files to eSignet, the mock identity system and Keymanager; has its
+# own switch (it does not follow theirs): turn it off when all three are off.
 artifactory:
   enabled: true
   image:

@@ -278,7 +278,17 @@ questions:
   type: boolean
   label: Install Mock Identity System?
   group: Verifiable Credentials
-  show_if: esignet.enabled=true
+
+# Artifactory: serves runtime files (plugins, configs) to eSignet, the mock identity
+# system and Keymanager. It has its own switch, so it stays on unless turned off here.
+- variable: artifactory.enabled
+  description: >-
+    Install Artifactory, which serves runtime files to eSignet, the mock identity
+    system and Keymanager. Needed if any of them is on; turn it off when all three
+    are off.
+  type: boolean
+  label: Install Artifactory?
+  group: Verifiable Credentials
 
 # Keymanager (standalone). Agri Stack does not use it; see values.yaml.
 - variable: keymanager.enabled
