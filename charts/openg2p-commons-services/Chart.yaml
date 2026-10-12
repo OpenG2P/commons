@@ -38,7 +38,7 @@ dependencies:
   repository: https://openg2p.github.io/openg2p-helm
   condition: odk-central.enabled
 - name: openg2p-iam-service
-  version: 0.0.0-develop.101
+  version: 0.0.0-develop.102
   repository: https://openg2p.github.io/openg2p-helm
   condition: openg2p-iam-service.enabled
 - name: openg2p-inji-certify
@@ -66,7 +66,7 @@ dependencies:
   repository: https://openg2p.github.io/openg2p-helm
   condition: partner-management.enabled
 - name: openg2p-consent-manager
-  version: 0.0.0-develop.65
+  version: 0.0.0-develop.68
   repository: https://openg2p.github.io/openg2p-helm
   condition: openg2p-consent-manager.enabled
 - name: keycloak-init
