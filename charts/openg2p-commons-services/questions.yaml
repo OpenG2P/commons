@@ -275,46 +275,46 @@ questions:
   group: Consent Manager
   show_if: openg2p-consent-manager.enabled=true&&openg2p-consent-manager.consentManagerApi.signingKey.mode=existing
 
-# Consent receipts between Consent Managers (e.g. Agri Stack): off by default.
+# Consent tokens between Consent Managers (e.g. Agri Stack): off by default.
 - variable: openg2p-consent-manager.global.agriStackExchange.enabled
   description: >-
-    Consent receipts between Consent Managers (Agri Stack). Exchange role: this
-    CM issues a signed receipt per registry to a composite. Department role:
-    this CM accepts the receipts of an exchange CM. Leave off otherwise.
+    Short-lived consent tokens between Consent Managers (Agri Stack). Exchange
+    role: this CM issues a signed token per registry to a composite. Department
+    role: this CM accepts the tokens of an exchange CM. Leave off otherwise.
   type: boolean
   default: false
-  label: Consent Receipts (Exchange)?
+  label: Consent Tokens (Exchange)?
   group: Consent Manager
   show_if: openg2p-consent-manager.enabled=true
 
 - variable: openg2p-consent-manager.global.agriStackExchange.issuer
   description: >-
-    Exchange role: the issuer ID on the receipts this CM signs, e.g.
-    agri-stack-exchange-cm. Empty = this CM issues no receipts (department
+    Exchange role: the issuer ID on the consent tokens this CM signs, e.g.
+    agri-stack-exchange-cm. Empty = this CM issues no tokens (department
     role only).
   type: string
   default: ""
-  label: Receipt Issuer ID (exchange)
+  label: Token Issuer ID (exchange)
   group: Consent Manager
   show_if: openg2p-consent-manager.enabled=true&&openg2p-consent-manager.global.agriStackExchange.enabled=true
 
 - variable: openg2p-consent-manager.global.agriStackExchange.receiptPresenters
   description: >-
-    Exchange role: comma-separated callers allowed to request receipts, e.g.
+    Exchange role: comma-separated callers allowed to request consent tokens, e.g.
     agri-composite.
   type: string
   default: ""
-  label: Receipt Presenters (exchange)
+  label: Token Presenters (exchange)
   group: Consent Manager
   show_if: openg2p-consent-manager.enabled=true&&openg2p-consent-manager.global.agriStackExchange.enabled=true
 
 - variable: openg2p-consent-manager.global.agriStackExchange.trustedIssuer.issuer
   description: >-
-    Department role: the issuer ID of the exchange CM whose receipts this CM
-    accepts, e.g. agri-stack-exchange-cm. Empty = no receipts accepted.
+    Department role: the issuer ID of the exchange CM whose consent tokens
+    this CM accepts, e.g. agri-stack-exchange-cm. Empty = no tokens accepted.
   type: string
   default: ""
-  label: Trusted Receipt Issuer ID (department)
+  label: Trusted Token Issuer ID (department)
   group: Consent Manager
   show_if: openg2p-consent-manager.enabled=true&&openg2p-consent-manager.global.agriStackExchange.enabled=true
 
@@ -330,7 +330,7 @@ questions:
 
 - variable: openg2p-consent-manager.global.agriStackExchange.trustedIssuer.presenter
   description: >-
-    Department role: the only presenter accepted on that issuer's receipts,
+    Department role: the only presenter accepted on that issuer's tokens,
     e.g. agri-composite.
   type: string
   default: ""
