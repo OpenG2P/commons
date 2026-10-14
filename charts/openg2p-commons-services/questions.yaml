@@ -244,8 +244,8 @@ questions:
     Where the Consent Manager's signing key (.p12) comes from. demo = the
     bundled demo key: public, for testing only. existing = a Secret you create
     in this namespace first (Storage → Secrets, keys cm_signing.p12 and
-    password). Use existing for anything beyond testing, and always for an Agri
-    Stack exchange in production (other Consent Managers trust this key).
+    password). Use existing for anything beyond testing, and always for an
+    exchange in production (other Consent Managers trust this key).
   type: enum
   options:
     - demo
@@ -258,7 +258,7 @@ questions:
 - variable: openg2p-consent-manager.consentManagerApi.signingKey.secretName
   description: >-
     The Secret with the .p12 (key cm_signing.p12) and its password (key
-    password), e.g. agrix-cm-signing.
+    password), e.g. exchange-cm-signing.
   type: string
   default: consent-manager-signing
   label: Signing Key Secret
@@ -268,25 +268,27 @@ questions:
 - variable: openg2p-consent-manager.global.consentSigningKid
   description: >-
     A label (kid) for the signing key, published in the JWKS and stamped on
-    receipts, e.g. agrix-cm-2026-01. Change it when you rotate the key.
+    receipts, e.g. cm-2026-01. Change it when you rotate the key.
   type: string
   default: cm-2025-01
   label: Signing Key ID
   group: Consent Manager
   show_if: openg2p-consent-manager.enabled=true&&openg2p-consent-manager.consentManagerApi.signingKey.mode=existing
 
-# Consent tokens between Consent Managers (Agri Stack): none by default. A
-# role alone works with the Agri Stack test scripts; the fields are overrides.
+# Consent tokens between Consent Managers, for a data exchange (e.g. Agri
+# Stack): none by default. A role alone works with the reference values; the
+# fields are overrides.
 - variable: openg2p-consent-manager.global.agriStackExchange.role
   description: >-
-    Agri Stack only. exchange = this CM issues a consent token per registry to the composite (the exchange install). department = this CM accepts the exchange CM's consent tokens (a registry's install). none = neither.
+    For a data exchange (e.g. Agri Stack) whose composites read several
+    registries. exchange = this CM issues a consent token per registry to the composite (the exchange install). department = this CM accepts the exchange CM's consent tokens (a registry's install). none = neither.
   type: enum
   options:
     - none
     - exchange
     - department
   default: none
-  label: Agri Stack Exchange Role
+  label: Exchange Role
   group: Consent Manager
   show_if: openg2p-consent-manager.enabled=true
 
@@ -351,7 +353,7 @@ questions:
     and upload the subject's signed form; CM staff verify them. Creates the
     Keycloak realm `partner`. After install, run setup-partner-realm.sh once
     (consent-manager repository) for its roles and partner users. On for the
-    Agri Stack exchange.
+    exchange.
   type: boolean
   default: false
   label: Partner Portal?
@@ -362,7 +364,7 @@ questions:
   description: >-
     Require the subject's national-ID login through eSignet on every request
     (with the signed form and the staff check). Needs eSignet and, for testing,
-    the mock identity system. Always on for the Agri Stack exchange role.
+    the mock identity system. Always on for the exchange role.
   type: boolean
   default: false
   label: Require National-ID Login (eSignet)?
@@ -372,8 +374,8 @@ questions:
 - variable: openg2p-consent-manager.partnerPortal.requiredSubjectIdentifiers
   description: >-
     Comma-separated identifiers every request must carry besides the subject
-    ID, checked by staff in the registry. Empty = none; for the Agri Stack
-    exchange role, FARMER_ID.
+    ID, checked by staff in the registry. Empty = none; for the exchange role,
+    FARMER_ID (the reference value).
   type: string
   default: ""
   label: Required Subject Identifiers
@@ -382,9 +384,9 @@ questions:
 
 - variable: openg2p-consent-manager.partnerPortal.compositeUrl
   description: >-
-    Optional: an Agri Stack composite's URL; the portal then lists its use
-    cases and fills requests from them. Empty = none; for the Agri Stack
-    exchange role, https://agri-composite.<this install's domain>.
+    Optional: a composite's URL (an exchange's use-case service); the portal
+    then lists its use cases and fills requests from them. Empty = none; for
+    the exchange role, https://agri-composite.<this install's domain>.
   type: string
   default: ""
   label: Composite URL
@@ -419,7 +421,7 @@ questions:
 - variable: openg2p-inji-verify.enabled
   description: >-
     Install Inji Verify, which checks verifiable credentials presented to it.
-    Not needed where no credentials are verified (e.g. an Agri Stack exchange).
+    Not needed where no credentials are verified (e.g. an exchange).
   type: boolean
   default: true
   label: Install Inji Verify?
