@@ -163,7 +163,7 @@ masterData:
     # (https://github.com/openg2p/openg2p-data), conventionally the ISO 3166
     # alpha-3 code. Not a fixed list — adding a country means adding data to that
     # repository, not changing anything here. To build a pack for a country with
-    # a published COD-AB dataset, see Country Data Architecture in the OpenG2P
+    # a published COD-AB dataset, see Master Data Service → Country Packs in the OpenG2P
     # documentation.
     #
     # Shipped today:
