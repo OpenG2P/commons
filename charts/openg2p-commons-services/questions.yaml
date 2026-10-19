@@ -244,8 +244,8 @@ questions:
     Where the Consent Manager's signing key (.p12) comes from. demo = the
     bundled demo key: public, for testing only. existing = a Secret you create
     in this namespace first (Storage → Secrets, keys cm_signing.p12 and
-    password). Use existing for anything beyond testing, and always for an
-    exchange in production (other Consent Managers trust this key).
+    password). Use existing for anything beyond testing, and always for the
+    Exchange in production (other Consent Managers trust this key).
   type: enum
   options:
     - demo
@@ -281,7 +281,7 @@ questions:
 - variable: openg2p-consent-manager.global.agriStackExchange.role
   description: >-
     For a data exchange (e.g. Agri Stack) whose composites read several
-    registries. exchange = this CM issues a consent token per registry to the composite (the exchange install). department = this CM accepts the exchange CM's consent tokens (a registry's install). none = neither.
+    registries. exchange = this CM issues a consent token per registry to the Composite (the Exchange install). department = this CM accepts the Exchange CM's consent tokens (a registry's install). none = neither.
   type: enum
   options:
     - none
@@ -312,7 +312,7 @@ questions:
 
 - variable: openg2p-consent-manager.global.agriStackExchange.exchangeDomain
   description: >-
-    The exchange install's domain, e.g. agrix.example.org. Empty = agrix.<parent of this install's domain> (agrix.openg2p.org for trial.openg2p.org).
+    The Exchange install's domain, e.g. agrix.example.org. Empty = agrix.<parent of this install's domain> (agrix.openg2p.org for trial.openg2p.org).
   type: string
   default: ""
   label: Exchange Domain
@@ -321,7 +321,7 @@ questions:
 
 - variable: openg2p-consent-manager.global.agriStackExchange.trustedIssuer.issuer
   description: >-
-    The exchange CM's issuer ID. Empty = agri-stack-exchange-cm.
+    The Exchange CM's issuer ID. Empty = agri-stack-exchange-cm.
   type: string
   default: ""
   label: Trusted Token Issuer ID
@@ -339,7 +339,7 @@ questions:
 
 - variable: openg2p-consent-manager.global.agriStackExchange.trustedIssuer.jwksUrl
   description: >-
-    The exchange CM's JWKS URL. Empty = https://consent-manager-partner.<exchange domain>/api/consent-manager-partner/.well-known/jwks.json.
+    The Exchange CM's JWKS URL. Empty = https://consent-manager-partner.<exchange domain>/api/consent-manager-partner/.well-known/jwks.json.
   type: string
   default: ""
   label: Trusted Issuer JWKS URL
@@ -353,7 +353,7 @@ questions:
     and upload the subject's signed form; CM staff verify them. Creates the
     Keycloak realm `partner`. After install, run setup-partner-realm.sh once
     (consent-manager repository) for its roles and partner users. On for the
-    exchange.
+    Exchange.
   type: boolean
   default: false
   label: Partner Portal?
@@ -384,7 +384,7 @@ questions:
 
 - variable: openg2p-consent-manager.partnerPortal.compositeUrl
   description: >-
-    Optional: a composite's URL (an exchange's use-case service); the portal
+    Optional: a Composite's URL (e.g. the Exchange's use-case service); the portal
     then lists its use cases and fills requests from them. Empty = none; for
     the exchange role, https://agri-composite.<this install's domain>.
   type: string
@@ -421,7 +421,7 @@ questions:
 - variable: openg2p-inji-verify.enabled
   description: >-
     Install Inji Verify, which checks verifiable credentials presented to it.
-    Not needed where no credentials are verified (e.g. an exchange).
+    Not needed where no credentials are verified (e.g. the Exchange).
   type: boolean
   default: true
   label: Install Inji Verify?
