@@ -213,6 +213,9 @@ masterData:
       boundaryStore:
         endpoint: http://commons-garage:3900
         bucket: openg2p-geo
+      # Version notifications to the commons WebSub hub (installed by default,
+      # "Install WebSub?"). Single tpl pass in the subchart, so one level of {{ }}.
+      websubHubUrl: 'http://{{ .Release.Name }}-websub/hub'
   masterDataUi:
     iamPublicUrl: 'https://{{ tpl .Values.global.staffPortalApiHostname $ }}'
     envVars:
