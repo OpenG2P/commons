@@ -161,7 +161,7 @@ questions:
 - variable: openg2p-awe.enabled
   description: >-
     Install the shared Approval Workflow Engine. The registries' change requests
-    and the Consent Manager's policy approvals go through it.
+    go through it.
   type: boolean
   label: Install AWE?
   group: AWE
@@ -178,9 +178,11 @@ questions:
 # Partner Management
 - variable: partner-management.enabled
   description: >-
-    Install Partner Management — the central registry of partner public keys
-    (onboarding, approval & key rotation, plus the key-fetch API other modules
-    use). Deployed as commons-services-pm-*.
+    Install Partner Management — the central registry of partners, their public
+    keys and their access policies (what each partner may read from which
+    registry, or which use cases). Onboarding, key and policy changes are
+    approved here; other modules read keys and policies from its partner API.
+    Deployed as commons-services-pm-*.
   type: boolean
   label: Install Partner Management?
   group: Partner Management
@@ -200,7 +202,7 @@ questions:
     Install the Consent Manager — the Policy Decision Point that verifies
     partner-signed consent objects for outbound data sharing (the /validate PDP,
     receipts, JWKS, admin UI). Requires Partner Management (source of partner
-    keys). Deployed as commons-services-cm-*.
+    keys and access policies). Deployed as commons-services-cm-*.
   type: boolean
   default: true
   label: Install Consent Manager?
@@ -212,17 +214,6 @@ questions:
     consent-manager.<Base Domain>.
   type: string
   label: Consent Manager Portal Hostname
-  group: Consent Manager
-  show_if: openg2p-consent-manager.enabled=true
-
-- variable: openg2p-consent-manager.global.aweEnabled
-  description: >-
-    Require AWE approval for policy changes that widen a partner's access (and
-    for a new binding's first policy). Approvers need the consent-manager client
-    role CONSENT_MANAGER_APPROVER. Requires AWE.
-  type: boolean
-  default: false
-  label: Require AWE Approval for Policy Widening?
   group: Consent Manager
   show_if: openg2p-consent-manager.enabled=true
 
@@ -329,7 +320,7 @@ questions:
 
 - variable: openg2p-consent-manager.global.agriStackExchange.trustedIssuer.presenter
   description: >-
-    The partner ID of the Composite: the only caller that may present the Exchange's consent tokens here. Empty = agri-composite. Partners that call this registry directly, with a consent of their own, are not affected.
+    The partner ID of the Composite: the only caller that may present the Exchange's consent tokens here. Empty = agri-composite. What it may read here is capped by its access policy in this install's Partner Management (partner PARTNER_AGRI_COMPOSITE for agri-composite). Partners that call this registry directly, with a consent of their own, are not affected.
   type: string
   default: ""
   label: Trusted Token Presenter
