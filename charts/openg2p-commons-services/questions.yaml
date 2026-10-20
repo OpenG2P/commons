@@ -280,8 +280,7 @@ questions:
 # fields are overrides.
 - variable: openg2p-consent-manager.global.agriStackExchange.role
   description: >-
-    For a data exchange (e.g. Agri Stack) whose composites read several
-    registries. exchange = this CM issues a consent token per registry to the Composite (the Exchange install). department = this CM accepts the Exchange CM's consent tokens (a registry's install). none = neither.
+    Role of this Consent Manager in a data exchange (e.g. Agri Stack), where a Composite reads several registries. exchange: choose on the Exchange's install; this CM issues the Composite a consent token per registry. department: choose on each registry's install (e.g. a department's Farmer Registry); this CM accepts consent tokens from the Exchange CM. none: not part of a data exchange.
   type: enum
   options:
     - none
@@ -303,7 +302,7 @@ questions:
 
 - variable: openg2p-consent-manager.global.agriStackExchange.receiptPresenters
   description: >-
-    Comma-separated partner IDs allowed to ask for consent tokens. Empty = agri-composite.
+    Comma-separated partner IDs of the Composite(s) that may ask this CM for consent tokens, not the partners (e.g. banks) they serve. Empty = agri-composite.
   type: string
   default: ""
   label: Token Presenters
@@ -330,7 +329,7 @@ questions:
 
 - variable: openg2p-consent-manager.global.agriStackExchange.trustedIssuer.presenter
   description: >-
-    The only partner allowed to present its consent tokens here. Empty = agri-composite.
+    The partner ID of the Composite: the only caller that may present the Exchange's consent tokens here. Empty = agri-composite. Partners that call this registry directly, with a consent of their own, are not affected.
   type: string
   default: ""
   label: Trusted Token Presenter
@@ -349,11 +348,7 @@ questions:
 # Partner portal: consent collected in person by partner users. Off by default.
 - variable: openg2p-consent-manager.partnerPortal.enabled
   description: >-
-    The partner portal: partner users (e.g. bank staff) raise consent requests
-    and upload the subject's signed form; CM staff verify them. Creates the
-    Keycloak realm `partner`. After install, run setup-partner-realm.sh once
-    (consent-manager repository) for its roles and partner users. On for the
-    Exchange.
+    Turn on where partners' staff collect consent in this Consent Manager: in person, with the subject's national-ID login and signed form, checked by CM staff (e.g. on the Exchange's install). A registry's own install does not need it today: partners that call the registry directly present a consent they collected and signed themselves. Creates the Keycloak realm `partner`; after install, run setup-partner-realm.sh once (consent-manager repository) for its roles and partner users.
   type: boolean
   default: false
   label: Partner Portal?
@@ -364,7 +359,8 @@ questions:
   description: >-
     Require the subject's national-ID login through eSignet on every request
     (with the signed form and the staff check). Needs eSignet and, for testing,
-    the mock identity system. Always on for the exchange role.
+    the mock identity system (group National ID login). Always on for the
+    exchange role.
   type: boolean
   default: false
   label: Require National-ID Login (eSignet)?
@@ -394,10 +390,41 @@ questions:
   show_if: openg2p-consent-manager.enabled=true&&openg2p-consent-manager.partnerPortal.enabled=true
 
 # ---------------------------------------------------------------------------
+# National ID login (eSignet): used by several modules, so it has its own group.
+# ---------------------------------------------------------------------------
+- variable: esignet.enabled
+  description: >-
+    Install eSignet, the national-ID login service. Needed for the Consent
+    Manager's national-ID login (partner portal) and for credential issuance in
+    the Agent Portal (Inji Certify). Turn it off if neither is used.
+  type: boolean
+  label: Install eSignet?
+  group: National ID login (eSignet)
+
+- variable: mock-identity-system.enabled
+  description: >-
+    Install the mock identity system: test identities that eSignet checks people
+    against. On for testing; off when eSignet is connected to the real national
+    ID system.
+  type: boolean
+  label: Install Mock Identity System?
+  group: National ID login (eSignet)
+
+# Artifactory: serves runtime files (plugins, configs) to eSignet, the mock identity
+# system and Keymanager. It has its own switch, so it stays on unless turned off here.
+- variable: artifactory.enabled
+  description: >-
+    Install Artifactory, which serves runtime files to eSignet, the mock identity
+    system and Keymanager. On if any of them is on; off when all three are off.
+  type: boolean
+  label: Install Artifactory?
+  group: National ID login (eSignet)
+
+# ---------------------------------------------------------------------------
 # Inji Certify — the verifiable credential issuer.
 # ---------------------------------------------------------------------------
 - variable: openg2p-inji-certify.enabled
-  description: "Issue and sign verifiable credentials. One issuer per environment; the registries' agent portals push claims here. Turning it off leaves an environment unable to produce a credential at all."
+  description: "Issue and sign verifiable credentials. One issuer per environment; the registries' agent portals push claims here. Turning it off leaves an environment unable to produce a credential at all. Credential issuance also needs eSignet (group National ID login)."
   type: boolean
   default: true
   label: Install Inji Certify?
@@ -425,34 +452,6 @@ questions:
   type: boolean
   default: true
   label: Install Inji Verify?
-  group: Verifiable Credentials
-
-# eSignet: how a beneficiary proves who they are before a credential is issued.
-- variable: esignet.enabled
-  description: >-
-    Install eSignet, the login service a beneficiary uses to prove who they are
-    before the Agent Portal issues them a credential.
-  type: boolean
-  label: Install eSignet?
-  group: Verifiable Credentials
-
-- variable: mock-identity-system.enabled
-  description: >-
-    Install the mock identity system eSignet checks people against (test
-    identities). Needed by eSignet unless it is connected to a real ID system.
-  type: boolean
-  label: Install Mock Identity System?
-  group: Verifiable Credentials
-
-# Artifactory: serves runtime files (plugins, configs) to eSignet, the mock identity
-# system and Keymanager. It has its own switch, so it stays on unless turned off here.
-- variable: artifactory.enabled
-  description: >-
-    Install Artifactory, which serves runtime files to eSignet, the mock identity
-    system and Keymanager. Needed if any of them is on; turn it off when all three
-    are off.
-  type: boolean
-  label: Install Artifactory?
   group: Verifiable Credentials
 
 # Keymanager (standalone). Agri Stack does not use it; see values.yaml.
