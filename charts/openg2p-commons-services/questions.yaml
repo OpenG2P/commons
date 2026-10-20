@@ -410,16 +410,6 @@ questions:
   label: Install Mock Identity System?
   group: National ID login (eSignet)
 
-# Artifactory: serves runtime files (plugins, configs) to eSignet, the mock identity
-# system and Keymanager. It has its own switch, so it stays on unless turned off here.
-- variable: artifactory.enabled
-  description: >-
-    Install Artifactory, which serves runtime files to eSignet, the mock identity
-    system and Keymanager. On if any of them is on; off when all three are off.
-  type: boolean
-  label: Install Artifactory?
-  group: National ID login (eSignet)
-
 # ---------------------------------------------------------------------------
 # Inji Certify — the verifiable credential issuer.
 # ---------------------------------------------------------------------------

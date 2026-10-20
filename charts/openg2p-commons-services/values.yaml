@@ -314,8 +314,9 @@ odk-central:
           name: '{{ tpl .Values.oidcClientSecret $ }}'
           key: '{{ tpl .Values.oidcClientSecretKey $ }}'
 
-# Serves runtime files to eSignet, the mock identity system and Keymanager; has its
-# own switch (it does not follow theirs): turn it off when all three are off.
+# Serves runtime files to eSignet, the mock identity system and Keymanager (the MOSIP
+# components); nothing else uses it. Not in the Rancher form: it stays on so those
+# components always work. Turn it off here only when all three are off.
 artifactory:
   enabled: true
   image:
