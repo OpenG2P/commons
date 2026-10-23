@@ -1055,3 +1055,34 @@ mock-identity-system:
       repoUrl: https://github.com/openg2p/mosip-config
       branch: master
     rawConfig: ""
+
+# OpenG2P Registry Connector (API / worker / beat). Off by default.
+# Enable and set hostname / partner API service for the target registry.
+registryConnector:
+  enabled: false
+  global:
+    # Must match the hostname used on the Istio gateway / DNS.
+    # Update together with global.baseDomain when installing.
+    connectorHostname: connector.qa.openg2p.org
+    postgresqlHost: commons-postgresql
+    postgresqlPort: 5432
+    redisHost: commons-redis-master
+    redisPort: 6379
+    redisDb: 1
+    # In-cluster Partner API service (no scheme). Override per registry.
+    partnerApiService: registry-partner-api
+  postgres-init:
+    enabled: true
+    postgresql:
+      host: commons-postgresql
+      port: 5432
+      existingSecret: commons-postgresql
+      existingSecretPostgresPasswordKey: postgres-password
+  istio:
+    enabled: true
+    gateway:
+      create: false
+      name: internal
+    virtualservice:
+      enabled: true
+      gateway: internal
