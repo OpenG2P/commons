@@ -76,6 +76,11 @@ dependencies:
   version: 0.0.0-develop
   repository: https://openg2p.github.io/openg2p-helm
   condition: keycloak-init.enabled
+- name: registry-connector
+  version: 0.0.0-develop.9
+  repository: https://openg2p.github.io/openg2p-helm
+  condition: registryConnector.enabled
+  alias: registryConnector
 icon: https://openg2p.github.io/openg2p-helm/openg2p-logo.png
 annotations:
   catalog.cattle.io/display-name: "OpenG2P Commons"

@@ -189,3 +189,20 @@ questions:
   type: boolean
   label: Install Mock Identity System?
   group: eSignet
+
+# Registry Connector
+- variable: registryConnector.enabled
+  description: Install OpenG2P Registry Connector (API, worker, beat)
+  type: boolean
+  label: Install Registry Connector?
+  group: Registry Connector
+- variable: registryConnector.global.connectorHostname
+  description: Public hostname for the Registry Connector (update with base domain)
+  type: string
+  label: Registry Connector Hostname
+  group: Registry Connector
+- variable: registryConnector.global.partnerApiService
+  description: In-cluster Partner API service name (no scheme), e.g. registry-partner-api
+  type: string
+  label: Partner API Service
+  group: Registry Connector
