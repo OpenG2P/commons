@@ -62,11 +62,11 @@ dependencies:
   repository: https://openg2p.github.io/openg2p-helm
   condition: openg2p-awe.enabled
 - name: partner-management
-  version: 0.0.0-develop.32
+  version: 0.0.0-develop.33
   repository: https://openg2p.github.io/openg2p-helm
   condition: partner-management.enabled
 - name: openg2p-consent-manager
-  version: 0.0.0-develop.83
+  version: 0.0.0-develop.86
   repository: https://openg2p.github.io/openg2p-helm
   condition: openg2p-consent-manager.enabled
 - name: keycloak-init
