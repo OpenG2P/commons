@@ -350,7 +350,7 @@ questions:
 # Partner portal: consent collected in person by partner users. Off by default.
 - variable: openg2p-consent-manager.partnerPortal.enabled
   description: >-
-    Turn on where partners' staff collect consent in this Consent Manager: in person, with the subject's national-ID login and signed form, checked by CM staff (e.g. on the Exchange's install). A registry's own install does not need it today: partners that call the registry directly present a consent they collected and signed themselves. Creates the Keycloak realm `partner`; after install, run setup-partner-realm.sh once (consent-manager repository) for its roles and partner users.
+    Turn on where partners' staff collect consent in this Consent Manager: in person, with the subject's national-ID login and signed form, checked by CM staff (e.g. on the Exchange's install). A registry's own install does not need it today: partners that call the registry directly present a consent they collected and signed themselves. Creates the Keycloak realm `partner` with its client, roles and partner_id attribute; partner users are then added in Keycloak.
   type: boolean
   default: false
   label: Partner Portal?
