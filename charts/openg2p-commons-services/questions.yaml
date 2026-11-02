@@ -268,8 +268,10 @@ questions:
 
 # Consent tokens between Consent Managers, for a data exchange (e.g. Agri
 # Stack): none by default. A role alone works with the reference values; the
-# fields are overrides.
-- variable: openg2p-consent-manager.global.agriStackExchange.role
+# fields are overrides. Under global so that Partner Management sees the role
+# too (it onboards the Composite at install). No default in values.yaml: a
+# parent global would override the subcharts' own values.
+- variable: global.agriStackExchange.role
   description: >-
     Role of this Consent Manager in a data exchange (e.g. Agri Stack), where a Composite reads several registries. exchange: choose on the Exchange's install; this CM issues the Composite a consent token per registry. department: choose on each registry's install (e.g. a department's Farmer Registry); this CM accepts consent tokens from the Exchange CM. none: not part of a data exchange.
   type: enum
@@ -282,59 +284,68 @@ questions:
   group: Consent Manager
   show_if: openg2p-consent-manager.enabled=true
 
-- variable: openg2p-consent-manager.global.agriStackExchange.issuer
+- variable: global.agriStackExchange.issuer
   description: >-
     The issuer ID on the consent tokens this CM signs. Empty = agri-stack-exchange-cm.
   type: string
   default: ""
   label: Token Issuer ID
   group: Consent Manager
-  show_if: openg2p-consent-manager.enabled=true&&openg2p-consent-manager.global.agriStackExchange.role=exchange
+  show_if: openg2p-consent-manager.enabled=true&&global.agriStackExchange.role=exchange
 
-- variable: openg2p-consent-manager.global.agriStackExchange.receiptPresenters
+- variable: global.agriStackExchange.receiptPresenters
   description: >-
     Comma-separated partner IDs of the Composite(s) that may ask this CM for consent tokens, not the partners (e.g. banks) they serve. Empty = agri-composite.
   type: string
   default: ""
   label: Token Presenters
   group: Consent Manager
-  show_if: openg2p-consent-manager.enabled=true&&openg2p-consent-manager.global.agriStackExchange.role=exchange
+  show_if: openg2p-consent-manager.enabled=true&&global.agriStackExchange.role=exchange
 
-- variable: openg2p-consent-manager.global.agriStackExchange.exchangeDomain
+- variable: global.agriStackExchange.exchangeDomain
   description: >-
     The Exchange install's domain, e.g. agrix.example.org. Empty = agrix.<parent of this install's domain> (agrix.openg2p.org for trial.openg2p.org).
   type: string
   default: ""
   label: Exchange Domain
   group: Consent Manager
-  show_if: openg2p-consent-manager.enabled=true&&openg2p-consent-manager.global.agriStackExchange.role=department
+  show_if: openg2p-consent-manager.enabled=true&&global.agriStackExchange.role=department
 
-- variable: openg2p-consent-manager.global.agriStackExchange.trustedIssuer.issuer
+- variable: global.agriStackExchange.compositeJwksUrl
+  description: >-
+    Where Partner Management reads the Composite's public keys; it onboards the Composite (partner PARTNER_AGRI_COMPOSITE) with this URL at install, with no access policy. Empty = http://agri-composite-api/.well-known/jwks.json on the Exchange, https://agri-composite.<exchange domain>/.well-known/jwks.json in a department.
+  type: string
+  default: ""
+  label: Composite JWKS URL
+  group: Consent Manager
+  show_if: openg2p-consent-manager.enabled=true&&global.agriStackExchange.role!=none
+
+- variable: global.agriStackExchange.trustedIssuer.issuer
   description: >-
     The Exchange CM's issuer ID. Empty = agri-stack-exchange-cm.
   type: string
   default: ""
   label: Trusted Token Issuer ID
   group: Consent Manager
-  show_if: openg2p-consent-manager.enabled=true&&openg2p-consent-manager.global.agriStackExchange.role=department
+  show_if: openg2p-consent-manager.enabled=true&&global.agriStackExchange.role=department
 
-- variable: openg2p-consent-manager.global.agriStackExchange.trustedIssuer.presenter
+- variable: global.agriStackExchange.trustedIssuer.presenter
   description: >-
     The partner ID of the Composite: the only caller that may present the Exchange's consent tokens here. Empty = agri-composite. What it may read here is capped by its access policy in this install's Partner Management (partner PARTNER_AGRI_COMPOSITE for agri-composite). Partners that call this registry directly, with a consent of their own, are not affected.
   type: string
   default: ""
   label: Trusted Token Presenter
   group: Consent Manager
-  show_if: openg2p-consent-manager.enabled=true&&openg2p-consent-manager.global.agriStackExchange.role=department
+  show_if: openg2p-consent-manager.enabled=true&&global.agriStackExchange.role=department
 
-- variable: openg2p-consent-manager.global.agriStackExchange.trustedIssuer.jwksUrl
+- variable: global.agriStackExchange.trustedIssuer.jwksUrl
   description: >-
     The Exchange CM's JWKS URL. Empty = https://consent-manager-partner.<exchange domain>/api/consent-manager-partner/.well-known/jwks.json.
   type: string
   default: ""
   label: Trusted Issuer JWKS URL
   group: Consent Manager
-  show_if: openg2p-consent-manager.enabled=true&&openg2p-consent-manager.global.agriStackExchange.role=department
+  show_if: openg2p-consent-manager.enabled=true&&global.agriStackExchange.role=department
 
 # Partner portal: consent collected in person by partner users. Off by default.
 - variable: openg2p-consent-manager.partnerPortal.enabled
@@ -356,7 +367,7 @@ questions:
   default: false
   label: Require National-ID Login (eSignet)?
   group: Consent Manager
-  show_if: openg2p-consent-manager.enabled=true&&openg2p-consent-manager.partnerPortal.enabled=true&&openg2p-consent-manager.global.agriStackExchange.role!=exchange
+  show_if: openg2p-consent-manager.enabled=true&&openg2p-consent-manager.partnerPortal.enabled=true&&global.agriStackExchange.role!=exchange
 
 - variable: openg2p-consent-manager.partnerPortal.requiredSubjectIdentifiers
   description: >-

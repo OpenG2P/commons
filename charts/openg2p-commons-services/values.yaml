@@ -1145,6 +1145,22 @@ partner-management:
       # rejected 401 on issuer before its partner_manager role is even read.
       PARTNER_MANAGER_AUTH_DEFAULT_ISSUERS: '["{{ tpl .Values.global.keycloakExternalIssuerUrl $ }}"]'
       PARTNER_MANAGER_AUTH_DEFAULT_JWKS_URLS: '["{{ tpl .Values.global.keycloakIssuerUrl $ }}/protocol/openid-connect/certs"]'
+    # With an Exchange Role (global.agriStackExchange.role), the Composite is
+    # onboarded at install, its keys read from its JWKS URL when needed, with no
+    # access policy: in a department, what it may read is the department's own
+    # scope policy, added by its administrator. No role = nothing (an entry
+    # whose jwksUrl renders empty is skipped).
+    bootstrapPartners:
+      - partnerId: PARTNER_AGRI_COMPOSITE
+        name: Agri Stack Composite
+        jwksUrl: >-
+          {{- $x := .Values.global.agriStackExchange | default dict -}}
+          {{- $role := $x.role | default "" -}}
+          {{- if $x.compositeJwksUrl -}}{{ $x.compositeJwksUrl }}
+          {{- else if eq $role "exchange" -}}http://agri-composite-api/.well-known/jwks.json
+          {{- else if eq $role "department" -}}
+          https://agri-composite.{{ $x.exchangeDomain | default (printf "agrix.%s" (splitn "." 2 (tpl .Values.global.baseDomain $))._1) }}/.well-known/jwks.json
+          {{- end -}}
   partnerApi:
     nameOverride: pm-partner-api
     istio:
