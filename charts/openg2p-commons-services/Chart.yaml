@@ -5,7 +5,7 @@ type: application
 version: 0.0.0-develop
 dependencies:
 - name: openg2p-master-data
-  version: 0.0.0-develop.118
+  version: 0.0.0-develop.119
   repository: https://openg2p.github.io/openg2p-helm
   condition: masterData.enabled
   alias: masterData
@@ -38,7 +38,7 @@ dependencies:
   repository: https://openg2p.github.io/openg2p-helm
   condition: odk-central.enabled
 - name: openg2p-iam-service
-  version: 0.0.0-develop.102
+  version: 0.0.0-develop.147
   repository: https://openg2p.github.io/openg2p-helm
   condition: openg2p-iam-service.enabled
 - name: openg2p-inji-certify
@@ -58,19 +58,19 @@ dependencies:
   repository: https://openg2p.github.io/openg2p-helm
   condition: openg2p-staff-portal-ui.enabled
 - name: openg2p-awe
-  version: 0.0.0-develop.92
+  version: 0.0.0-develop.95
   repository: https://openg2p.github.io/openg2p-helm
   condition: openg2p-awe.enabled
 - name: partner-management
-  version: 0.0.0-develop.35
+  version: 0.0.0-develop.36
   repository: https://openg2p.github.io/openg2p-helm
   condition: partner-management.enabled
 - name: openg2p-consent-manager
-  version: 0.0.0-develop.89
+  version: 0.0.0-develop.92
   repository: https://openg2p.github.io/openg2p-helm
   condition: openg2p-consent-manager.enabled
 - name: keycloak-init
-  version: 0.0.0-develop.60
+  version: 0.0.0-develop.61
   repository: https://openg2p.github.io/openg2p-helm
   condition: keycloak-init.enabled
 icon: https://openg2p.github.io/openg2p-helm/openg2p-logo.png
