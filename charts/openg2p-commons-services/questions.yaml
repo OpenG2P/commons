@@ -93,6 +93,28 @@ questions:
   label: Install Master Data?
   group: Master Data
 
+- variable: masterData.masterDataAPI.catalogue.public.enabled
+  description: >-
+    Serve the public catalogue: the anonymous, read-only /public/ API with the
+    datasets marked public (DCAT, SKOS, CSV, JSON and GeoJSON downloads). It gets
+    its own host, below, that serves only /public/; /public/ is also reachable
+    on the Master Data host. Both go through the internal gateway: to publish it
+    on the internet, point a public DNS name and the public nginx at the host.
+  type: boolean
+  default: true
+  label: Public Catalogue?
+  group: Master Data
+  show_if: masterData.enabled=true
+
+- variable: masterData.masterDataAPI.catalogue.public.istio.host
+  description: >-
+    Hostname of the public catalogue (only /public/ is served on it). Defaults
+    to catalogue.<Base Domain>.
+  type: string
+  label: Public Catalogue Hostname
+  group: Master Data
+  show_if: masterData.enabled=true&&masterData.masterDataAPI.catalogue.public.enabled=true
+
 # The country pack. This is the ONE place an environment declares which country
 # it serves — registries read the geography, datasets and sample people from
 # Master Data and name no country of their own. Its own group, so it is not lost

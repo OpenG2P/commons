@@ -216,6 +216,18 @@ masterData:
       # Version notifications to the commons WebSub hub (installed by default,
       # "Install WebSub?"). Single tpl pass in the subchart, so one level of {{ }}.
       websubHubUrl: 'http://{{ .Release.Name }}-websub/hub'
+      # Public catalogue (anonymous /public/ API: datasets marked public, DCAT,
+      # SKOS, downloads), on by default. It is served on its own host, which
+      # routes only GET/HEAD/OPTIONS on /public/ (everything else 404), through
+      # the internal gateway: reachable over WireGuard like every other host until
+      # the operator also points a public DNS name and the public nginx at it.
+      # /public/ also stays reachable on the master-data host itself.
+      public:
+        enabled: true
+        istio:
+          enabled: true
+          host: 'catalogue.{{ tpl .Values.global.baseDomain $ }}'
+          gateway: internal
   masterDataUi:
     iamPublicUrl: 'https://{{ tpl .Values.global.staffPortalApiHostname $ }}'
     envVars:
