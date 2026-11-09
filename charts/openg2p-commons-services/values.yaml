@@ -224,6 +224,10 @@ masterData:
       # /public/ also stays reachable on the master-data host itself.
       public:
         enabled: true
+        # No per-caller limit in the API: behind nginx and the Istio gateway it
+        # cannot tell callers apart reliably. Limit the public host as a whole
+        # at the public nginx (limit_req) instead.
+        rateLimitPerMinute: 0
         istio:
           enabled: true
           host: 'catalogue.{{ tpl .Values.global.baseDomain $ }}'
