@@ -335,7 +335,7 @@ questions:
 
 - variable: global.agriStackExchange.compositeJwksUrl
   description: >-
-    Where Partner Management reads the Composite's public keys; it onboards the Composite (partner PARTNER_AGRI_COMPOSITE) with this URL at install, with no access policy. Empty = http://agri-composite-api/.well-known/jwks.json on the Exchange, https://agri-composite.<exchange domain>/.well-known/jwks.json in a department.
+    Where a department's Partner Management reads the Composite's public keys; it onboards the Composite (partner PARTNER_AGRI_COMPOSITE) with this URL at install, with no access policy. Empty = https://agri-composite.<exchange domain>/.well-known/jwks.json in a department; at the Exchange the Composite is not onboarded (nothing there needs its key) unless a URL is set here.
   type: string
   default: ""
   label: Composite JWKS URL
