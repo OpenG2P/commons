@@ -402,20 +402,6 @@ questions:
   group: Consent Manager
   show_if: openg2p-consent-manager.enabled=true&&openg2p-consent-manager.partnerPortal.enabled=true
 
-- variable: openg2p-consent-manager.partnerPortal.compositeUrl
-  description: >-
-    Optional: a Composite's URL (e.g. the Exchange's use-case service); the portal
-    then lists its use cases and fills requests from them. Empty = none; for
-    the exchange role, https://agri-composite.<this install's domain>.
-  type: string
-  default: ""
-  label: Composite URL
-  group: Consent Manager
-  show_if: openg2p-consent-manager.enabled=true&&openg2p-consent-manager.partnerPortal.enabled=true
-
-# ---------------------------------------------------------------------------
-# National ID login (eSignet): used by several modules, so it has its own group.
-# ---------------------------------------------------------------------------
 - variable: esignet.enabled
   description: >-
     Install eSignet, the national-ID login service. Needed for the Consent
