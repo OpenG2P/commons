@@ -5,7 +5,7 @@ type: application
 version: 2.3.3
 dependencies:
 - name: openg2p-master-data
-  version: 1.1.4-rc.110
+  version: 1.1.4
   repository: https://openg2p.github.io/openg2p-helm
   condition: master-data.enabled
   # Must be DNS-1123 (lowercase). Helm sets .Chart.Name to the alias for
@@ -37,7 +37,7 @@ dependencies:
   repository: https://openg2p.github.io/openg2p-helm
   condition: odk-central.enabled
 - name: openg2p-iam-service
-  version: 1.4.4-rc.125
+  version: 1.4.4
   repository: https://openg2p.github.io/openg2p-helm
   condition: openg2p-iam-service.enabled
 - name: openg2p-inji-certify
@@ -53,15 +53,15 @@ dependencies:
   repository: https://openg2p.github.io/openg2p-helm
   condition: openg2p-staff-portal-ui.enabled
 - name: openg2p-awe
-  version: 1.2.2
+  version: 1.2.4
   repository: https://openg2p.github.io/openg2p-helm
   condition: openg2p-awe.enabled
 - name: partner-management
-  version: 1.0.2
+  version: 1.0.3
   repository: https://openg2p.github.io/openg2p-helm
   condition: partner-management.enabled
 - name: openg2p-consent-manager
-  version: 1.0.2
+  version: 1.0.3
   repository: https://openg2p.github.io/openg2p-helm
   condition: openg2p-consent-manager.enabled
 - name: keycloak-init
