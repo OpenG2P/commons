@@ -34,7 +34,7 @@ env:
   HELM_REPO: openg2p/openg2p-helm
   HELM_REPO_BRANCH: gh-pages
   HELM_REPO_URL: https://openg2p.github.io/openg2p-helm
-  ALLOW_OVERWRITE: "false"
+  ALLOW_OVERWRITE: "true"
 
 jobs:
   version:
