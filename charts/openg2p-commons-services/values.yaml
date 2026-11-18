@@ -26,6 +26,7 @@ global:
   postgresqlSecretKey: postgres-password
   mailInstallationName: commons-mail
   minioInstallationName: commons-minio
+  garageInstallationName: commons-garage
 
   sysAdminEmail: admin@openg2p.sandbox.org
   redisInstallationName: commons-redis
@@ -106,6 +107,9 @@ master-data:
   # install cannot attach invented figures to a real country. A real deployment
   # names its country, so this one does.
   geoSeed:
+    objectStore:
+      endpoint: http://commons-garage:3900
+      bucket: openg2p-geo
     # The value is a DIRECTORY NAME under packs/ in openg2p-data
     # (https://github.com/openg2p/openg2p-data), conventionally the ISO 3166
     # alpha-3 code. Not a fixed list — adding a country means adding data to that
@@ -173,7 +177,7 @@ odk-central:
   s3BlobsEnabled: true
   # MinIO S3 API port (the bitnami chart exposes S3 on 9000, console on 9001).
   # Use the internal cluster service name — pod-to-pod, not via Istio.
-  s3ServerUrl: 'http://{{ tpl .Values.global.minioInstallationName $ }}:9000'
+  s3ServerUrl: 'http://{{ tpl .Values.global.garageInstallationName $ }}:3900'
 
   odk-central-enketo:
     enabled: true
@@ -215,8 +219,8 @@ odk-central:
         - sh
         - -c
         - |
-          until nc -zv {{ tpl .Values.global.minioInstallationName $ }} 9000; do
-            echo "Waiting for MinIO..."
+          until nc -zv {{ tpl .Values.global.garageInstallationName $ }} 3900; do
+            echo "Waiting for Garage..."
             sleep 2
           done
     envVars:
