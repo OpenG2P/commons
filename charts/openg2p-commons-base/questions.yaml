@@ -18,12 +18,13 @@ questions:
   label: Kafka UI Hostname
   group: Service Hostnames
 
-- variable: global.minioHostname
+- variable: global.garageHostname
   description: >-
-    Hostname for the MinIO console. Defaults to minio.<baseDomain>.
+    Public hostname of the S3-compatible object store API. Defaults to
+    garage.<Base Domain>.
   type: string
-  label: MinIO Hostname
-  group: Service Hostnames
+  label: Object Store (S3) Hostname
+  group: Object Store
 
 # Novu (OpenG2P Notification)
 - variable: novu.enabled
