@@ -1,0 +1,2428 @@
+[
+  {
+    "event": "change_request.created",
+    "trigger": "change-request-created",
+    "name": "Change request created",
+    "description": "Registrant email and SMS when a change request is created.",
+    "tags": [
+      "openg2p",
+      "registry"
+    ],
+    "payload_schema": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "change_request_id": {
+          "type": "string"
+        },
+        "record_name": {
+          "type": "string"
+        },
+        "register_id": {
+          "type": "string"
+        },
+        "register_mnemonic": {
+          "type": "string"
+        },
+        "register_subject": {
+          "type": "string"
+        },
+        "register_description": {
+          "type": "string"
+        },
+        "tab_id": {
+          "type": "string"
+        },
+        "section_id": {
+          "type": "string"
+        },
+        "section_mnemonic": {
+          "type": "string"
+        },
+        "section_register_id": {
+          "type": "string"
+        },
+        "internal_record_id": {
+          "type": "string"
+        },
+        "functional_record_id": {
+          "type": "string"
+        },
+        "approval_status": {
+          "type": "string"
+        },
+        "no_of_verifications_required": {
+          "type": "string"
+        },
+        "no_of_verifications_done": {
+          "type": "string"
+        },
+        "created_by": {
+          "type": "string"
+        },
+        "created_at": {
+          "type": "string"
+        },
+        "approved_by": {
+          "type": "string"
+        },
+        "approved_at": {
+          "type": "string"
+        },
+        "change_request_source": {
+          "type": "string"
+        },
+        "source_partner_id": {
+          "type": "string"
+        },
+        "remarks": {
+          "type": "string"
+        },
+        "rejection_reason": {
+          "type": "string"
+        },
+        "awe_request_id": {
+          "type": "string"
+        },
+        "awe_request_status_summary": {
+          "type": "string"
+        },
+        "deduplication_register_status": {
+          "type": "string"
+        },
+        "deduplication_register_failure_reason": {
+          "type": "string"
+        },
+        "deduplication_change_request_status": {
+          "type": "string"
+        },
+        "deduplication_change_request_failure_reason": {
+          "type": "string"
+        },
+        "registry_name": {
+          "type": "string"
+        }
+      }
+    },
+    "steps": [
+      {
+        "name": "Email",
+        "type": "email",
+        "controlValues": {
+          "subject": "We received your change request for {{payload.record_name}}",
+          "editorType": "html",
+          "bodyFile": "email/change-request-created.html"
+        }
+      },
+      {
+        "name": "SMS",
+        "type": "sms",
+        "controlValues": {
+          "body": "Change request received for {{payload.record_name}}. We will message you when it is approved or rejected."
+        }
+      }
+    ]
+  },
+  {
+    "event": "change_request.approved",
+    "trigger": "change-request-approved",
+    "name": "Change request approved",
+    "description": "Registrant email and SMS when a change request is approved.",
+    "tags": [
+      "openg2p",
+      "registry"
+    ],
+    "payload_schema": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "change_request_id": {
+          "type": "string"
+        },
+        "record_name": {
+          "type": "string"
+        },
+        "register_id": {
+          "type": "string"
+        },
+        "register_mnemonic": {
+          "type": "string"
+        },
+        "register_subject": {
+          "type": "string"
+        },
+        "register_description": {
+          "type": "string"
+        },
+        "tab_id": {
+          "type": "string"
+        },
+        "section_id": {
+          "type": "string"
+        },
+        "section_mnemonic": {
+          "type": "string"
+        },
+        "section_register_id": {
+          "type": "string"
+        },
+        "internal_record_id": {
+          "type": "string"
+        },
+        "functional_record_id": {
+          "type": "string"
+        },
+        "approval_status": {
+          "type": "string"
+        },
+        "no_of_verifications_required": {
+          "type": "string"
+        },
+        "no_of_verifications_done": {
+          "type": "string"
+        },
+        "created_by": {
+          "type": "string"
+        },
+        "created_at": {
+          "type": "string"
+        },
+        "approved_by": {
+          "type": "string"
+        },
+        "approved_at": {
+          "type": "string"
+        },
+        "change_request_source": {
+          "type": "string"
+        },
+        "source_partner_id": {
+          "type": "string"
+        },
+        "remarks": {
+          "type": "string"
+        },
+        "rejection_reason": {
+          "type": "string"
+        },
+        "awe_request_id": {
+          "type": "string"
+        },
+        "awe_request_status_summary": {
+          "type": "string"
+        },
+        "deduplication_register_status": {
+          "type": "string"
+        },
+        "deduplication_register_failure_reason": {
+          "type": "string"
+        },
+        "deduplication_change_request_status": {
+          "type": "string"
+        },
+        "deduplication_change_request_failure_reason": {
+          "type": "string"
+        },
+        "registry_name": {
+          "type": "string"
+        }
+      }
+    },
+    "steps": [
+      {
+        "name": "Email",
+        "type": "email",
+        "controlValues": {
+          "subject": "Your change request for {{payload.record_name}} was approved",
+          "editorType": "html",
+          "bodyFile": "email/change-request-approved.html"
+        }
+      },
+      {
+        "name": "SMS",
+        "type": "sms",
+        "controlValues": {
+          "body": "Approved: your change request for {{payload.record_name}} is now complete."
+        }
+      }
+    ]
+  },
+  {
+    "event": "change_request.rejected",
+    "trigger": "change-request-rejected",
+    "name": "Change request rejected",
+    "description": "Registrant email and SMS when a change request is rejected.",
+    "tags": [
+      "openg2p",
+      "registry"
+    ],
+    "payload_schema": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "change_request_id": {
+          "type": "string"
+        },
+        "record_name": {
+          "type": "string"
+        },
+        "register_id": {
+          "type": "string"
+        },
+        "register_mnemonic": {
+          "type": "string"
+        },
+        "register_subject": {
+          "type": "string"
+        },
+        "register_description": {
+          "type": "string"
+        },
+        "tab_id": {
+          "type": "string"
+        },
+        "section_id": {
+          "type": "string"
+        },
+        "section_mnemonic": {
+          "type": "string"
+        },
+        "section_register_id": {
+          "type": "string"
+        },
+        "internal_record_id": {
+          "type": "string"
+        },
+        "functional_record_id": {
+          "type": "string"
+        },
+        "approval_status": {
+          "type": "string"
+        },
+        "no_of_verifications_required": {
+          "type": "string"
+        },
+        "no_of_verifications_done": {
+          "type": "string"
+        },
+        "created_by": {
+          "type": "string"
+        },
+        "created_at": {
+          "type": "string"
+        },
+        "approved_by": {
+          "type": "string"
+        },
+        "approved_at": {
+          "type": "string"
+        },
+        "change_request_source": {
+          "type": "string"
+        },
+        "source_partner_id": {
+          "type": "string"
+        },
+        "remarks": {
+          "type": "string"
+        },
+        "rejection_reason": {
+          "type": "string"
+        },
+        "awe_request_id": {
+          "type": "string"
+        },
+        "awe_request_status_summary": {
+          "type": "string"
+        },
+        "deduplication_register_status": {
+          "type": "string"
+        },
+        "deduplication_register_failure_reason": {
+          "type": "string"
+        },
+        "deduplication_change_request_status": {
+          "type": "string"
+        },
+        "deduplication_change_request_failure_reason": {
+          "type": "string"
+        },
+        "registry_name": {
+          "type": "string"
+        }
+      }
+    },
+    "steps": [
+      {
+        "name": "Email",
+        "type": "email",
+        "controlValues": {
+          "subject": "Your change request for {{payload.record_name}} was not approved",
+          "editorType": "html",
+          "bodyFile": "email/change-request-rejected.html"
+        }
+      },
+      {
+        "name": "SMS",
+        "type": "sms",
+        "controlValues": {
+          "body": "Not approved: change request for {{payload.record_name}}.{% if payload.rejection_reason %} Reason: {{payload.rejection_reason}}.{% endif %}"
+        }
+      }
+    ]
+  },
+  {
+    "event": "intake_form.submission_created",
+    "trigger": "intake-form-submission-created",
+    "name": "Intake form submission created",
+    "description": "Registrant email and SMS when an intake application is received.",
+    "tags": [
+      "openg2p",
+      "registry"
+    ],
+    "payload_schema": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "submission_id": {
+          "type": "string"
+        },
+        "application_reference": {
+          "type": "string"
+        },
+        "record_name": {
+          "type": "string"
+        },
+        "register_id": {
+          "type": "string"
+        },
+        "register_mnemonic": {
+          "type": "string"
+        },
+        "register_subject": {
+          "type": "string"
+        },
+        "register_description": {
+          "type": "string"
+        },
+        "intake_form_mnemonic": {
+          "type": "string"
+        },
+        "form_id": {
+          "type": "string"
+        },
+        "internal_record_id": {
+          "type": "string"
+        },
+        "functional_record_id": {
+          "type": "string"
+        },
+        "approval_status": {
+          "type": "string"
+        },
+        "draft_status": {
+          "type": "string"
+        },
+        "created_by": {
+          "type": "string"
+        },
+        "first_created_at": {
+          "type": "string"
+        },
+        "last_updated_at": {
+          "type": "string"
+        },
+        "finalized_at": {
+          "type": "string"
+        },
+        "approved_by": {
+          "type": "string"
+        },
+        "approved_at": {
+          "type": "string"
+        },
+        "remarks": {
+          "type": "string"
+        },
+        "rejection_reason": {
+          "type": "string"
+        },
+        "submission_source": {
+          "type": "string"
+        },
+        "partner_id": {
+          "type": "string"
+        },
+        "awe_request_id": {
+          "type": "string"
+        },
+        "awe_request_status_summary": {
+          "type": "string"
+        },
+        "number_of_verifications_required": {
+          "type": "string"
+        },
+        "number_of_verifications_done": {
+          "type": "string"
+        },
+        "register_ingest_process_status": {
+          "type": "string"
+        },
+        "register_ingest_processed_timestamp": {
+          "type": "string"
+        },
+        "register_ingest_process_attempts": {
+          "type": "string"
+        },
+        "register_ingest_process_last_error_code": {
+          "type": "string"
+        },
+        "deduplication_status_vs_intake_forms": {
+          "type": "string"
+        },
+        "deduplication_intake_forms_process_timestamp": {
+          "type": "string"
+        },
+        "deduplication_intake_forms_attempts": {
+          "type": "string"
+        },
+        "deduplication_intake_forms_error": {
+          "type": "string"
+        },
+        "deduplication_status_vs_register": {
+          "type": "string"
+        },
+        "deduplication_register_process_timestamp": {
+          "type": "string"
+        },
+        "deduplication_register_forms_attempts": {
+          "type": "string"
+        },
+        "deduplication_register_error": {
+          "type": "string"
+        },
+        "registry_name": {
+          "type": "string"
+        }
+      }
+    },
+    "steps": [
+      {
+        "name": "Email",
+        "type": "email",
+        "controlValues": {
+          "subject": "Application {{payload.application_reference}} received",
+          "editorType": "html",
+          "bodyFile": "email/intake-form-submission-created.html"
+        }
+      },
+      {
+        "name": "SMS",
+        "type": "sms",
+        "controlValues": {
+          "body": "Application {{payload.application_reference}} received for {{payload.record_name}}. We will message you with the decision."
+        }
+      }
+    ]
+  },
+  {
+    "event": "intake_form.submission_approved",
+    "trigger": "intake-form-submission-approved",
+    "name": "Intake form submission approved",
+    "description": "Registrant email and SMS when an intake application is approved.",
+    "tags": [
+      "openg2p",
+      "registry"
+    ],
+    "payload_schema": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "submission_id": {
+          "type": "string"
+        },
+        "application_reference": {
+          "type": "string"
+        },
+        "record_name": {
+          "type": "string"
+        },
+        "register_id": {
+          "type": "string"
+        },
+        "register_mnemonic": {
+          "type": "string"
+        },
+        "register_subject": {
+          "type": "string"
+        },
+        "register_description": {
+          "type": "string"
+        },
+        "intake_form_mnemonic": {
+          "type": "string"
+        },
+        "form_id": {
+          "type": "string"
+        },
+        "internal_record_id": {
+          "type": "string"
+        },
+        "functional_record_id": {
+          "type": "string"
+        },
+        "approval_status": {
+          "type": "string"
+        },
+        "draft_status": {
+          "type": "string"
+        },
+        "created_by": {
+          "type": "string"
+        },
+        "first_created_at": {
+          "type": "string"
+        },
+        "last_updated_at": {
+          "type": "string"
+        },
+        "finalized_at": {
+          "type": "string"
+        },
+        "approved_by": {
+          "type": "string"
+        },
+        "approved_at": {
+          "type": "string"
+        },
+        "remarks": {
+          "type": "string"
+        },
+        "rejection_reason": {
+          "type": "string"
+        },
+        "submission_source": {
+          "type": "string"
+        },
+        "partner_id": {
+          "type": "string"
+        },
+        "awe_request_id": {
+          "type": "string"
+        },
+        "awe_request_status_summary": {
+          "type": "string"
+        },
+        "number_of_verifications_required": {
+          "type": "string"
+        },
+        "number_of_verifications_done": {
+          "type": "string"
+        },
+        "register_ingest_process_status": {
+          "type": "string"
+        },
+        "register_ingest_processed_timestamp": {
+          "type": "string"
+        },
+        "register_ingest_process_attempts": {
+          "type": "string"
+        },
+        "register_ingest_process_last_error_code": {
+          "type": "string"
+        },
+        "deduplication_status_vs_intake_forms": {
+          "type": "string"
+        },
+        "deduplication_intake_forms_process_timestamp": {
+          "type": "string"
+        },
+        "deduplication_intake_forms_attempts": {
+          "type": "string"
+        },
+        "deduplication_intake_forms_error": {
+          "type": "string"
+        },
+        "deduplication_status_vs_register": {
+          "type": "string"
+        },
+        "deduplication_register_process_timestamp": {
+          "type": "string"
+        },
+        "deduplication_register_forms_attempts": {
+          "type": "string"
+        },
+        "deduplication_register_error": {
+          "type": "string"
+        },
+        "registry_name": {
+          "type": "string"
+        }
+      }
+    },
+    "steps": [
+      {
+        "name": "Email",
+        "type": "email",
+        "controlValues": {
+          "subject": "Application {{payload.application_reference}} approved",
+          "editorType": "html",
+          "bodyFile": "email/intake-form-submission-approved.html"
+        }
+      },
+      {
+        "name": "SMS",
+        "type": "sms",
+        "controlValues": {
+          "body": "Approved: application {{payload.application_reference}} for {{payload.record_name}}."
+        }
+      }
+    ]
+  },
+  {
+    "event": "intake_form.submission_rejected",
+    "trigger": "intake-form-submission-rejected",
+    "name": "Intake form submission rejected",
+    "description": "Registrant email and SMS when an intake application is rejected.",
+    "tags": [
+      "openg2p",
+      "registry"
+    ],
+    "payload_schema": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "submission_id": {
+          "type": "string"
+        },
+        "application_reference": {
+          "type": "string"
+        },
+        "record_name": {
+          "type": "string"
+        },
+        "register_id": {
+          "type": "string"
+        },
+        "register_mnemonic": {
+          "type": "string"
+        },
+        "register_subject": {
+          "type": "string"
+        },
+        "register_description": {
+          "type": "string"
+        },
+        "intake_form_mnemonic": {
+          "type": "string"
+        },
+        "form_id": {
+          "type": "string"
+        },
+        "internal_record_id": {
+          "type": "string"
+        },
+        "functional_record_id": {
+          "type": "string"
+        },
+        "approval_status": {
+          "type": "string"
+        },
+        "draft_status": {
+          "type": "string"
+        },
+        "created_by": {
+          "type": "string"
+        },
+        "first_created_at": {
+          "type": "string"
+        },
+        "last_updated_at": {
+          "type": "string"
+        },
+        "finalized_at": {
+          "type": "string"
+        },
+        "approved_by": {
+          "type": "string"
+        },
+        "approved_at": {
+          "type": "string"
+        },
+        "remarks": {
+          "type": "string"
+        },
+        "rejection_reason": {
+          "type": "string"
+        },
+        "submission_source": {
+          "type": "string"
+        },
+        "partner_id": {
+          "type": "string"
+        },
+        "awe_request_id": {
+          "type": "string"
+        },
+        "awe_request_status_summary": {
+          "type": "string"
+        },
+        "number_of_verifications_required": {
+          "type": "string"
+        },
+        "number_of_verifications_done": {
+          "type": "string"
+        },
+        "register_ingest_process_status": {
+          "type": "string"
+        },
+        "register_ingest_processed_timestamp": {
+          "type": "string"
+        },
+        "register_ingest_process_attempts": {
+          "type": "string"
+        },
+        "register_ingest_process_last_error_code": {
+          "type": "string"
+        },
+        "deduplication_status_vs_intake_forms": {
+          "type": "string"
+        },
+        "deduplication_intake_forms_process_timestamp": {
+          "type": "string"
+        },
+        "deduplication_intake_forms_attempts": {
+          "type": "string"
+        },
+        "deduplication_intake_forms_error": {
+          "type": "string"
+        },
+        "deduplication_status_vs_register": {
+          "type": "string"
+        },
+        "deduplication_register_process_timestamp": {
+          "type": "string"
+        },
+        "deduplication_register_forms_attempts": {
+          "type": "string"
+        },
+        "deduplication_register_error": {
+          "type": "string"
+        },
+        "registry_name": {
+          "type": "string"
+        }
+      }
+    },
+    "steps": [
+      {
+        "name": "Email",
+        "type": "email",
+        "controlValues": {
+          "subject": "Application {{payload.application_reference}} was not approved",
+          "editorType": "html",
+          "bodyFile": "email/intake-form-submission-rejected.html"
+        }
+      },
+      {
+        "name": "SMS",
+        "type": "sms",
+        "controlValues": {
+          "body": "Not approved: application {{payload.application_reference}}.{% if payload.rejection_reason %} Reason: {{payload.rejection_reason}}.{% endif %}"
+        }
+      }
+    ]
+  },
+  {
+    "event": "register_export.completed",
+    "trigger": "register-export-completed",
+    "name": "Register export completed",
+    "description": "Staff in-app and email when an export is ready.",
+    "tags": [
+      "openg2p",
+      "registry"
+    ],
+    "payload_schema": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "export_id": {
+          "type": "string"
+        },
+        "register_id": {
+          "type": "string"
+        },
+        "register_mnemonic": {
+          "type": "string"
+        },
+        "register_subject": {
+          "type": "string"
+        },
+        "export_format": {
+          "type": "string"
+        },
+        "export_status": {
+          "type": "string"
+        },
+        "selection_mode": {
+          "type": "string"
+        },
+        "selected_record_count": {
+          "type": "string"
+        },
+        "total_records_exported": {
+          "type": "string"
+        },
+        "export_latest_error_code": {
+          "type": "string"
+        },
+        "export_no_of_attempts": {
+          "type": "string"
+        },
+        "export_latest_timestamp": {
+          "type": "string"
+        },
+        "file_object_name": {
+          "type": "string"
+        },
+        "file_presigned_url": {
+          "type": "string"
+        },
+        "file_url_expires_at": {
+          "type": "string"
+        },
+        "requested_by": {
+          "type": "string"
+        },
+        "queued_at": {
+          "type": "string"
+        },
+        "staff_portal_base_url": {
+          "type": "string"
+        },
+        "batch_size": {
+          "type": "string"
+        },
+        "last_processed_offset": {
+          "type": "string"
+        },
+        "search_text": {
+          "type": "string"
+        },
+        "sort_by": {
+          "type": "string"
+        },
+        "filter_by": {
+          "type": "string"
+        },
+        "policy_mnemonics": {
+          "type": "string"
+        },
+        "registry_name": {
+          "type": "string"
+        }
+      }
+    },
+    "steps": [
+      {
+        "name": "In-App",
+        "type": "in_app",
+        "controlValues": {
+          "subject": "Export ready",
+          "body": "Your {{payload.export_format}} export of {{payload.register_mnemonic}} is ready ({{payload.total_records_exported}} records).",
+          "primaryAction": {
+            "label": "Open register",
+            "redirect": {
+              "url": "{{payload.staff_portal_base_url}}/en/register/{{payload.register_mnemonic}}",
+              "target": "_self"
+            }
+          }
+        }
+      },
+      {
+        "name": "Email",
+        "type": "email",
+        "controlValues": {
+          "subject": "Export ready: {{payload.register_mnemonic}} ({{payload.export_format}})",
+          "editorType": "html",
+          "bodyFile": "email/register-export-completed.html"
+        }
+      }
+    ]
+  },
+  {
+    "event": "register_export.failed",
+    "trigger": "register-export-failed",
+    "name": "Register export failed",
+    "description": "Staff in-app and email when an export fails.",
+    "tags": [
+      "openg2p",
+      "registry"
+    ],
+    "payload_schema": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "export_id": {
+          "type": "string"
+        },
+        "register_id": {
+          "type": "string"
+        },
+        "register_mnemonic": {
+          "type": "string"
+        },
+        "register_subject": {
+          "type": "string"
+        },
+        "export_format": {
+          "type": "string"
+        },
+        "export_status": {
+          "type": "string"
+        },
+        "selection_mode": {
+          "type": "string"
+        },
+        "selected_record_count": {
+          "type": "string"
+        },
+        "total_records_exported": {
+          "type": "string"
+        },
+        "export_latest_error_code": {
+          "type": "string"
+        },
+        "export_no_of_attempts": {
+          "type": "string"
+        },
+        "export_latest_timestamp": {
+          "type": "string"
+        },
+        "file_object_name": {
+          "type": "string"
+        },
+        "file_presigned_url": {
+          "type": "string"
+        },
+        "file_url_expires_at": {
+          "type": "string"
+        },
+        "requested_by": {
+          "type": "string"
+        },
+        "queued_at": {
+          "type": "string"
+        },
+        "staff_portal_base_url": {
+          "type": "string"
+        },
+        "batch_size": {
+          "type": "string"
+        },
+        "last_processed_offset": {
+          "type": "string"
+        },
+        "search_text": {
+          "type": "string"
+        },
+        "sort_by": {
+          "type": "string"
+        },
+        "filter_by": {
+          "type": "string"
+        },
+        "policy_mnemonics": {
+          "type": "string"
+        },
+        "registry_name": {
+          "type": "string"
+        }
+      }
+    },
+    "steps": [
+      {
+        "name": "In-App",
+        "type": "in_app",
+        "controlValues": {
+          "subject": "Export failed",
+          "body": "Your {{payload.export_format}} export of {{payload.register_mnemonic}} failed{% if payload.export_latest_error_code %}: {{payload.export_latest_error_code}}{% endif %}.",
+          "primaryAction": {
+            "label": "Open register",
+            "redirect": {
+              "url": "{{payload.staff_portal_base_url}}/en/register/{{payload.register_mnemonic}}",
+              "target": "_self"
+            }
+          }
+        }
+      },
+      {
+        "name": "Email",
+        "type": "email",
+        "controlValues": {
+          "subject": "Export failed: {{payload.register_mnemonic}} ({{payload.export_format}})",
+          "editorType": "html",
+          "bodyFile": "email/register-export-failed.html"
+        }
+      }
+    ]
+  },
+  {
+    "event": "approval.stage_started",
+    "trigger": "approval-stage-started",
+    "name": "Approval stage started",
+    "description": "Staff in-app and email to a stage's approvers when the stage activates.",
+    "tags": [
+      "openg2p",
+      "awe"
+    ],
+    "payload_schema": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "request_id": {
+          "type": "string"
+        },
+        "artifact_type": {
+          "type": "string"
+        },
+        "artifact_type_label": {
+          "type": "string"
+        },
+        "artifact_id": {
+          "type": "string"
+        },
+        "change_request_id": {
+          "type": "string"
+        },
+        "submission_id": {
+          "type": "string"
+        },
+        "application_reference": {
+          "type": "string"
+        },
+        "register_mnemonic": {
+          "type": "string"
+        },
+        "register_subject": {
+          "type": "string"
+        },
+        "record_name": {
+          "type": "string"
+        },
+        "section_mnemonic": {
+          "type": "string"
+        },
+        "intake_form_mnemonic": {
+          "type": "string"
+        },
+        "staff_portal_base_url": {
+          "type": "string"
+        },
+        "task_path": {
+          "type": "string"
+        },
+        "tasks_list_path": {
+          "type": "string"
+        },
+        "policy_key": {
+          "type": "string"
+        },
+        "policy_id": {
+          "type": "string"
+        },
+        "policy_name": {
+          "type": "string"
+        },
+        "policy_description": {
+          "type": "string"
+        },
+        "policy_version": {
+          "type": "string"
+        },
+        "source_service": {
+          "type": "string"
+        },
+        "requester": {
+          "type": "string"
+        },
+        "requester_name": {
+          "type": "string"
+        },
+        "request_status": {
+          "type": "string"
+        },
+        "current_stage_order": {
+          "type": "string"
+        },
+        "request_created_at": {
+          "type": "string"
+        },
+        "completed_at": {
+          "type": "string"
+        },
+        "stage_id": {
+          "type": "string"
+        },
+        "stage_name": {
+          "type": "string"
+        },
+        "stage_order": {
+          "type": "string"
+        },
+        "stage_mode": {
+          "type": "string"
+        },
+        "stage_mode_value": {
+          "type": "string"
+        },
+        "sla_hours": {
+          "type": "string"
+        },
+        "on_breach": {
+          "type": "string"
+        },
+        "on_empty": {
+          "type": "string"
+        },
+        "parallel_group": {
+          "type": "string"
+        },
+        "due_at": {
+          "type": "string"
+        },
+        "task_id": {
+          "type": "string"
+        },
+        "assignee": {
+          "type": "string"
+        },
+        "assignee_name": {
+          "type": "string"
+        },
+        "task_kind": {
+          "type": "string"
+        },
+        "task_status": {
+          "type": "string"
+        },
+        "delegated_from": {
+          "type": "string"
+        },
+        "claimed_at": {
+          "type": "string"
+        },
+        "approvers": {
+          "type": "string"
+        }
+      }
+    },
+    "steps": [
+      {
+        "name": "In-App",
+        "type": "in_app",
+        "controlValues": {
+          "subject": "Approval needed: {{payload.stage_name}}",
+          "body": "{{payload.stage_name}} needs your approval for {% if payload.record_name %}{{payload.record_name}}{% elsif payload.application_reference %}application {{payload.application_reference}}{% else %}{{payload.artifact_type_label}}{% endif %}{% if payload.register_subject %} ({% if payload.register_subject %}{{payload.register_subject}}{% elsif payload.register_mnemonic %}{{payload.register_mnemonic}}{% else %}—{% endif %}){% endif %}.{% if payload.due_at %} Due by {{payload.due_at}}.{% endif %}",
+          "primaryAction": {
+            "label": "View task",
+            "redirect": {
+              "url": "{{payload.staff_portal_base_url}}/en{{payload.task_path}}",
+              "target": "_self"
+            }
+          },
+          "secondaryAction": {
+            "label": "Show all tasks",
+            "redirect": {
+              "url": "{{payload.staff_portal_base_url}}/en{{payload.tasks_list_path}}",
+              "target": "_self"
+            }
+          }
+        }
+      },
+      {
+        "name": "Email",
+        "type": "email",
+        "controlValues": {
+          "subject": "Action required: approve {{payload.stage_name}}",
+          "editorType": "html",
+          "bodyFile": "email/approval-stage-started.html"
+        }
+      }
+    ]
+  },
+  {
+    "event": "approval.task_reassigned",
+    "trigger": "approval-task-reassigned",
+    "name": "Approval task reassigned",
+    "description": "Staff in-app and email to the new assignee when a task is reassigned.",
+    "tags": [
+      "openg2p",
+      "awe"
+    ],
+    "payload_schema": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "request_id": {
+          "type": "string"
+        },
+        "artifact_type": {
+          "type": "string"
+        },
+        "artifact_type_label": {
+          "type": "string"
+        },
+        "artifact_id": {
+          "type": "string"
+        },
+        "change_request_id": {
+          "type": "string"
+        },
+        "submission_id": {
+          "type": "string"
+        },
+        "application_reference": {
+          "type": "string"
+        },
+        "register_mnemonic": {
+          "type": "string"
+        },
+        "register_subject": {
+          "type": "string"
+        },
+        "record_name": {
+          "type": "string"
+        },
+        "section_mnemonic": {
+          "type": "string"
+        },
+        "intake_form_mnemonic": {
+          "type": "string"
+        },
+        "staff_portal_base_url": {
+          "type": "string"
+        },
+        "task_path": {
+          "type": "string"
+        },
+        "tasks_list_path": {
+          "type": "string"
+        },
+        "policy_key": {
+          "type": "string"
+        },
+        "policy_id": {
+          "type": "string"
+        },
+        "policy_name": {
+          "type": "string"
+        },
+        "policy_description": {
+          "type": "string"
+        },
+        "policy_version": {
+          "type": "string"
+        },
+        "source_service": {
+          "type": "string"
+        },
+        "requester": {
+          "type": "string"
+        },
+        "requester_name": {
+          "type": "string"
+        },
+        "request_status": {
+          "type": "string"
+        },
+        "current_stage_order": {
+          "type": "string"
+        },
+        "request_created_at": {
+          "type": "string"
+        },
+        "completed_at": {
+          "type": "string"
+        },
+        "stage_id": {
+          "type": "string"
+        },
+        "stage_name": {
+          "type": "string"
+        },
+        "stage_order": {
+          "type": "string"
+        },
+        "stage_mode": {
+          "type": "string"
+        },
+        "stage_mode_value": {
+          "type": "string"
+        },
+        "sla_hours": {
+          "type": "string"
+        },
+        "on_breach": {
+          "type": "string"
+        },
+        "on_empty": {
+          "type": "string"
+        },
+        "parallel_group": {
+          "type": "string"
+        },
+        "due_at": {
+          "type": "string"
+        },
+        "task_id": {
+          "type": "string"
+        },
+        "assignee": {
+          "type": "string"
+        },
+        "assignee_name": {
+          "type": "string"
+        },
+        "task_kind": {
+          "type": "string"
+        },
+        "task_status": {
+          "type": "string"
+        },
+        "delegated_from": {
+          "type": "string"
+        },
+        "claimed_at": {
+          "type": "string"
+        },
+        "reassigned_from": {
+          "type": "string"
+        },
+        "reassigned_from_name": {
+          "type": "string"
+        },
+        "actor": {
+          "type": "string"
+        },
+        "actor_name": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "string"
+        },
+        "new_task_id": {
+          "type": "string"
+        }
+      }
+    },
+    "steps": [
+      {
+        "name": "In-App",
+        "type": "in_app",
+        "controlValues": {
+          "subject": "Approval task reassigned to you",
+          "body": "{{payload.stage_name}} for {% if payload.record_name %}{{payload.record_name}}{% elsif payload.application_reference %}application {{payload.application_reference}}{% else %}{{payload.artifact_type_label}}{% endif %} was reassigned to you from {% if payload.reassigned_from_name %}{{payload.reassigned_from_name}}{% elsif payload.reassigned_from %}{{payload.reassigned_from}}{% else %}—{% endif %}{% if payload.actor_name %} by {{payload.actor_name}}{% elsif payload.actor %} by {{payload.actor}}{% endif %}.{% if payload.reason %} Reason: {{payload.reason}}.{% endif %}",
+          "primaryAction": {
+            "label": "View task",
+            "redirect": {
+              "url": "{{payload.staff_portal_base_url}}/en{{payload.task_path}}",
+              "target": "_self"
+            }
+          },
+          "secondaryAction": {
+            "label": "Show all tasks",
+            "redirect": {
+              "url": "{{payload.staff_portal_base_url}}/en{{payload.tasks_list_path}}",
+              "target": "_self"
+            }
+          }
+        }
+      },
+      {
+        "name": "Email",
+        "type": "email",
+        "controlValues": {
+          "subject": "Approval task reassigned to you: {{payload.stage_name}}",
+          "editorType": "html",
+          "bodyFile": "email/approval-task-reassigned.html"
+        }
+      }
+    ]
+  },
+  {
+    "event": "approval.stage_escalated",
+    "trigger": "approval-stage-escalated",
+    "name": "Approval stage escalated",
+    "description": "Staff in-app and email to approvers added when a stage breaches its SLA.",
+    "tags": [
+      "openg2p",
+      "awe"
+    ],
+    "payload_schema": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "request_id": {
+          "type": "string"
+        },
+        "artifact_type": {
+          "type": "string"
+        },
+        "artifact_type_label": {
+          "type": "string"
+        },
+        "artifact_id": {
+          "type": "string"
+        },
+        "change_request_id": {
+          "type": "string"
+        },
+        "submission_id": {
+          "type": "string"
+        },
+        "application_reference": {
+          "type": "string"
+        },
+        "register_mnemonic": {
+          "type": "string"
+        },
+        "register_subject": {
+          "type": "string"
+        },
+        "record_name": {
+          "type": "string"
+        },
+        "section_mnemonic": {
+          "type": "string"
+        },
+        "intake_form_mnemonic": {
+          "type": "string"
+        },
+        "staff_portal_base_url": {
+          "type": "string"
+        },
+        "task_path": {
+          "type": "string"
+        },
+        "tasks_list_path": {
+          "type": "string"
+        },
+        "policy_key": {
+          "type": "string"
+        },
+        "policy_id": {
+          "type": "string"
+        },
+        "policy_name": {
+          "type": "string"
+        },
+        "policy_description": {
+          "type": "string"
+        },
+        "policy_version": {
+          "type": "string"
+        },
+        "source_service": {
+          "type": "string"
+        },
+        "requester": {
+          "type": "string"
+        },
+        "requester_name": {
+          "type": "string"
+        },
+        "request_status": {
+          "type": "string"
+        },
+        "current_stage_order": {
+          "type": "string"
+        },
+        "request_created_at": {
+          "type": "string"
+        },
+        "completed_at": {
+          "type": "string"
+        },
+        "stage_id": {
+          "type": "string"
+        },
+        "stage_name": {
+          "type": "string"
+        },
+        "stage_order": {
+          "type": "string"
+        },
+        "stage_mode": {
+          "type": "string"
+        },
+        "stage_mode_value": {
+          "type": "string"
+        },
+        "sla_hours": {
+          "type": "string"
+        },
+        "on_breach": {
+          "type": "string"
+        },
+        "on_empty": {
+          "type": "string"
+        },
+        "parallel_group": {
+          "type": "string"
+        },
+        "due_at": {
+          "type": "string"
+        },
+        "task_id": {
+          "type": "string"
+        },
+        "assignee": {
+          "type": "string"
+        },
+        "assignee_name": {
+          "type": "string"
+        },
+        "task_kind": {
+          "type": "string"
+        },
+        "task_status": {
+          "type": "string"
+        },
+        "delegated_from": {
+          "type": "string"
+        },
+        "claimed_at": {
+          "type": "string"
+        },
+        "actor": {
+          "type": "string"
+        },
+        "actor_name": {
+          "type": "string"
+        },
+        "added_approvers": {
+          "type": "string"
+        }
+      }
+    },
+    "steps": [
+      {
+        "name": "In-App",
+        "type": "in_app",
+        "controlValues": {
+          "subject": "Escalated approval needs you",
+          "body": "{{payload.stage_name}} for {% if payload.record_name %}{{payload.record_name}}{% elsif payload.application_reference %}application {{payload.application_reference}}{% else %}{{payload.artifact_type_label}}{% endif %} breached its SLA. You were added as an escalated approver.{% if payload.due_at %} New due time: {{payload.due_at}}.{% endif %}",
+          "primaryAction": {
+            "label": "View task",
+            "redirect": {
+              "url": "{{payload.staff_portal_base_url}}/en{{payload.task_path}}",
+              "target": "_self"
+            }
+          },
+          "secondaryAction": {
+            "label": "Show all tasks",
+            "redirect": {
+              "url": "{{payload.staff_portal_base_url}}/en{{payload.tasks_list_path}}",
+              "target": "_self"
+            }
+          }
+        }
+      },
+      {
+        "name": "Email",
+        "type": "email",
+        "controlValues": {
+          "subject": "Escalated approval: {{payload.stage_name}} needs you",
+          "editorType": "html",
+          "bodyFile": "email/approval-stage-escalated.html"
+        }
+      }
+    ]
+  },
+  {
+    "event": "approval.task_expired",
+    "trigger": "approval-task-expired",
+    "name": "Approval task expired",
+    "description": "Staff in-app and email to an assignee whose approval task expired.",
+    "tags": [
+      "openg2p",
+      "awe"
+    ],
+    "payload_schema": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "request_id": {
+          "type": "string"
+        },
+        "artifact_type": {
+          "type": "string"
+        },
+        "artifact_type_label": {
+          "type": "string"
+        },
+        "artifact_id": {
+          "type": "string"
+        },
+        "change_request_id": {
+          "type": "string"
+        },
+        "submission_id": {
+          "type": "string"
+        },
+        "application_reference": {
+          "type": "string"
+        },
+        "register_mnemonic": {
+          "type": "string"
+        },
+        "register_subject": {
+          "type": "string"
+        },
+        "record_name": {
+          "type": "string"
+        },
+        "section_mnemonic": {
+          "type": "string"
+        },
+        "intake_form_mnemonic": {
+          "type": "string"
+        },
+        "staff_portal_base_url": {
+          "type": "string"
+        },
+        "task_path": {
+          "type": "string"
+        },
+        "tasks_list_path": {
+          "type": "string"
+        },
+        "policy_key": {
+          "type": "string"
+        },
+        "policy_id": {
+          "type": "string"
+        },
+        "policy_name": {
+          "type": "string"
+        },
+        "policy_description": {
+          "type": "string"
+        },
+        "policy_version": {
+          "type": "string"
+        },
+        "source_service": {
+          "type": "string"
+        },
+        "requester": {
+          "type": "string"
+        },
+        "requester_name": {
+          "type": "string"
+        },
+        "request_status": {
+          "type": "string"
+        },
+        "current_stage_order": {
+          "type": "string"
+        },
+        "request_created_at": {
+          "type": "string"
+        },
+        "completed_at": {
+          "type": "string"
+        },
+        "stage_id": {
+          "type": "string"
+        },
+        "stage_name": {
+          "type": "string"
+        },
+        "stage_order": {
+          "type": "string"
+        },
+        "stage_mode": {
+          "type": "string"
+        },
+        "stage_mode_value": {
+          "type": "string"
+        },
+        "sla_hours": {
+          "type": "string"
+        },
+        "on_breach": {
+          "type": "string"
+        },
+        "on_empty": {
+          "type": "string"
+        },
+        "parallel_group": {
+          "type": "string"
+        },
+        "due_at": {
+          "type": "string"
+        },
+        "task_id": {
+          "type": "string"
+        },
+        "assignee": {
+          "type": "string"
+        },
+        "assignee_name": {
+          "type": "string"
+        },
+        "task_kind": {
+          "type": "string"
+        },
+        "task_status": {
+          "type": "string"
+        },
+        "delegated_from": {
+          "type": "string"
+        },
+        "claimed_at": {
+          "type": "string"
+        }
+      }
+    },
+    "steps": [
+      {
+        "name": "In-App",
+        "type": "in_app",
+        "controlValues": {
+          "subject": "Your approval task expired",
+          "body": "Your task on {{payload.stage_name}} for {% if payload.record_name %}{{payload.record_name}}{% elsif payload.application_reference %}application {{payload.application_reference}}{% else %}{{payload.artifact_type_label}}{% endif %} expired{% if payload.due_at %} at {{payload.due_at}}{% endif %}. The stage on-breach policy decides what happens next.",
+          "primaryAction": {
+            "label": "View task",
+            "redirect": {
+              "url": "{{payload.staff_portal_base_url}}/en{{payload.task_path}}",
+              "target": "_self"
+            }
+          },
+          "secondaryAction": {
+            "label": "Show all tasks",
+            "redirect": {
+              "url": "{{payload.staff_portal_base_url}}/en{{payload.tasks_list_path}}",
+              "target": "_self"
+            }
+          }
+        }
+      },
+      {
+        "name": "Email",
+        "type": "email",
+        "controlValues": {
+          "subject": "Your approval task expired: {{payload.stage_name}}",
+          "editorType": "html",
+          "bodyFile": "email/approval-task-expired.html"
+        }
+      }
+    ]
+  },
+  {
+    "event": "approval.request_approved",
+    "trigger": "approval-request-approved",
+    "name": "Approval request approved",
+    "description": "Staff in-app and email to the requester when a request is approved.",
+    "tags": [
+      "openg2p",
+      "awe"
+    ],
+    "payload_schema": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "request_id": {
+          "type": "string"
+        },
+        "artifact_type": {
+          "type": "string"
+        },
+        "artifact_type_label": {
+          "type": "string"
+        },
+        "artifact_id": {
+          "type": "string"
+        },
+        "change_request_id": {
+          "type": "string"
+        },
+        "submission_id": {
+          "type": "string"
+        },
+        "application_reference": {
+          "type": "string"
+        },
+        "register_mnemonic": {
+          "type": "string"
+        },
+        "register_subject": {
+          "type": "string"
+        },
+        "record_name": {
+          "type": "string"
+        },
+        "section_mnemonic": {
+          "type": "string"
+        },
+        "intake_form_mnemonic": {
+          "type": "string"
+        },
+        "staff_portal_base_url": {
+          "type": "string"
+        },
+        "task_path": {
+          "type": "string"
+        },
+        "tasks_list_path": {
+          "type": "string"
+        },
+        "policy_key": {
+          "type": "string"
+        },
+        "policy_id": {
+          "type": "string"
+        },
+        "policy_name": {
+          "type": "string"
+        },
+        "policy_description": {
+          "type": "string"
+        },
+        "policy_version": {
+          "type": "string"
+        },
+        "source_service": {
+          "type": "string"
+        },
+        "requester": {
+          "type": "string"
+        },
+        "requester_name": {
+          "type": "string"
+        },
+        "request_status": {
+          "type": "string"
+        },
+        "current_stage_order": {
+          "type": "string"
+        },
+        "request_created_at": {
+          "type": "string"
+        },
+        "completed_at": {
+          "type": "string"
+        },
+        "actor": {
+          "type": "string"
+        },
+        "actor_name": {
+          "type": "string"
+        },
+        "decision_id": {
+          "type": "string"
+        },
+        "decision_comment": {
+          "type": "string"
+        }
+      }
+    },
+    "steps": [
+      {
+        "name": "In-App",
+        "type": "in_app",
+        "controlValues": {
+          "subject": "Request approved",
+          "body": "Your approval request for {% if payload.record_name %}{{payload.record_name}}{% elsif payload.application_reference %}application {{payload.application_reference}}{% else %}{{payload.artifact_type_label}}{% endif %}{% if payload.register_subject %} ({% if payload.register_subject %}{{payload.register_subject}}{% elsif payload.register_mnemonic %}{{payload.register_mnemonic}}{% else %}—{% endif %}){% endif %} was approved{% if payload.actor_name %} by {{payload.actor_name}}{% elsif payload.actor %} by {{payload.actor}}{% endif %}.",
+          "primaryAction": {
+            "label": "View task",
+            "redirect": {
+              "url": "{{payload.staff_portal_base_url}}/en{{payload.task_path}}",
+              "target": "_self"
+            }
+          },
+          "secondaryAction": {
+            "label": "Show all tasks",
+            "redirect": {
+              "url": "{{payload.staff_portal_base_url}}/en{{payload.tasks_list_path}}",
+              "target": "_self"
+            }
+          }
+        }
+      },
+      {
+        "name": "Email",
+        "type": "email",
+        "controlValues": {
+          "subject": "Approved: {% if payload.record_name %}{{payload.record_name}}{% elsif payload.application_reference %}application {{payload.application_reference}}{% else %}{{payload.artifact_type_label}}{% endif %}",
+          "editorType": "html",
+          "bodyFile": "email/approval-request-approved.html"
+        }
+      }
+    ]
+  },
+  {
+    "event": "approval.request_rejected",
+    "trigger": "approval-request-rejected",
+    "name": "Approval request rejected",
+    "description": "Staff in-app and email to the requester when a request is rejected.",
+    "tags": [
+      "openg2p",
+      "awe"
+    ],
+    "payload_schema": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "request_id": {
+          "type": "string"
+        },
+        "artifact_type": {
+          "type": "string"
+        },
+        "artifact_type_label": {
+          "type": "string"
+        },
+        "artifact_id": {
+          "type": "string"
+        },
+        "change_request_id": {
+          "type": "string"
+        },
+        "submission_id": {
+          "type": "string"
+        },
+        "application_reference": {
+          "type": "string"
+        },
+        "register_mnemonic": {
+          "type": "string"
+        },
+        "register_subject": {
+          "type": "string"
+        },
+        "record_name": {
+          "type": "string"
+        },
+        "section_mnemonic": {
+          "type": "string"
+        },
+        "intake_form_mnemonic": {
+          "type": "string"
+        },
+        "staff_portal_base_url": {
+          "type": "string"
+        },
+        "task_path": {
+          "type": "string"
+        },
+        "tasks_list_path": {
+          "type": "string"
+        },
+        "policy_key": {
+          "type": "string"
+        },
+        "policy_id": {
+          "type": "string"
+        },
+        "policy_name": {
+          "type": "string"
+        },
+        "policy_description": {
+          "type": "string"
+        },
+        "policy_version": {
+          "type": "string"
+        },
+        "source_service": {
+          "type": "string"
+        },
+        "requester": {
+          "type": "string"
+        },
+        "requester_name": {
+          "type": "string"
+        },
+        "request_status": {
+          "type": "string"
+        },
+        "current_stage_order": {
+          "type": "string"
+        },
+        "request_created_at": {
+          "type": "string"
+        },
+        "completed_at": {
+          "type": "string"
+        },
+        "actor": {
+          "type": "string"
+        },
+        "actor_name": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "string"
+        },
+        "decision_id": {
+          "type": "string"
+        },
+        "decision_comment": {
+          "type": "string"
+        }
+      }
+    },
+    "steps": [
+      {
+        "name": "In-App",
+        "type": "in_app",
+        "controlValues": {
+          "subject": "Request rejected",
+          "body": "Your approval request for {% if payload.record_name %}{{payload.record_name}}{% elsif payload.application_reference %}application {{payload.application_reference}}{% else %}{{payload.artifact_type_label}}{% endif %}{% if payload.register_subject %} ({% if payload.register_subject %}{{payload.register_subject}}{% elsif payload.register_mnemonic %}{{payload.register_mnemonic}}{% else %}—{% endif %}){% endif %} was rejected{% if payload.actor_name %} by {{payload.actor_name}}{% elsif payload.actor %} by {{payload.actor}}{% endif %}.{% if payload.reason %} Reason: {{payload.reason}}.{% endif %}",
+          "primaryAction": {
+            "label": "View task",
+            "redirect": {
+              "url": "{{payload.staff_portal_base_url}}/en{{payload.task_path}}",
+              "target": "_self"
+            }
+          },
+          "secondaryAction": {
+            "label": "Show all tasks",
+            "redirect": {
+              "url": "{{payload.staff_portal_base_url}}/en{{payload.tasks_list_path}}",
+              "target": "_self"
+            }
+          }
+        }
+      },
+      {
+        "name": "Email",
+        "type": "email",
+        "controlValues": {
+          "subject": "Rejected: {% if payload.record_name %}{{payload.record_name}}{% elsif payload.application_reference %}application {{payload.application_reference}}{% else %}{{payload.artifact_type_label}}{% endif %}",
+          "editorType": "html",
+          "bodyFile": "email/approval-request-rejected.html"
+        }
+      }
+    ]
+  },
+  {
+    "event": "approval.request_cancelled",
+    "trigger": "approval-request-cancelled",
+    "name": "Approval request cancelled",
+    "description": "Staff in-app and email to the requester when a request is cancelled.",
+    "tags": [
+      "openg2p",
+      "awe"
+    ],
+    "payload_schema": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "request_id": {
+          "type": "string"
+        },
+        "artifact_type": {
+          "type": "string"
+        },
+        "artifact_type_label": {
+          "type": "string"
+        },
+        "artifact_id": {
+          "type": "string"
+        },
+        "change_request_id": {
+          "type": "string"
+        },
+        "submission_id": {
+          "type": "string"
+        },
+        "application_reference": {
+          "type": "string"
+        },
+        "register_mnemonic": {
+          "type": "string"
+        },
+        "register_subject": {
+          "type": "string"
+        },
+        "record_name": {
+          "type": "string"
+        },
+        "section_mnemonic": {
+          "type": "string"
+        },
+        "intake_form_mnemonic": {
+          "type": "string"
+        },
+        "staff_portal_base_url": {
+          "type": "string"
+        },
+        "task_path": {
+          "type": "string"
+        },
+        "tasks_list_path": {
+          "type": "string"
+        },
+        "policy_key": {
+          "type": "string"
+        },
+        "policy_id": {
+          "type": "string"
+        },
+        "policy_name": {
+          "type": "string"
+        },
+        "policy_description": {
+          "type": "string"
+        },
+        "policy_version": {
+          "type": "string"
+        },
+        "source_service": {
+          "type": "string"
+        },
+        "requester": {
+          "type": "string"
+        },
+        "requester_name": {
+          "type": "string"
+        },
+        "request_status": {
+          "type": "string"
+        },
+        "current_stage_order": {
+          "type": "string"
+        },
+        "request_created_at": {
+          "type": "string"
+        },
+        "completed_at": {
+          "type": "string"
+        },
+        "actor": {
+          "type": "string"
+        },
+        "actor_name": {
+          "type": "string"
+        },
+        "reason": {
+          "type": "string"
+        }
+      }
+    },
+    "steps": [
+      {
+        "name": "In-App",
+        "type": "in_app",
+        "controlValues": {
+          "subject": "Request cancelled",
+          "body": "Your approval request for {% if payload.record_name %}{{payload.record_name}}{% elsif payload.application_reference %}application {{payload.application_reference}}{% else %}{{payload.artifact_type_label}}{% endif %}{% if payload.register_subject %} ({% if payload.register_subject %}{{payload.register_subject}}{% elsif payload.register_mnemonic %}{{payload.register_mnemonic}}{% else %}—{% endif %}){% endif %} was cancelled{% if payload.actor_name %} by {{payload.actor_name}}{% elsif payload.actor %} by {{payload.actor}}{% endif %}.{% if payload.reason %} Reason: {{payload.reason}}.{% endif %}",
+          "primaryAction": {
+            "label": "View task",
+            "redirect": {
+              "url": "{{payload.staff_portal_base_url}}/en{{payload.task_path}}",
+              "target": "_self"
+            }
+          },
+          "secondaryAction": {
+            "label": "Show all tasks",
+            "redirect": {
+              "url": "{{payload.staff_portal_base_url}}/en{{payload.tasks_list_path}}",
+              "target": "_self"
+            }
+          }
+        }
+      },
+      {
+        "name": "Email",
+        "type": "email",
+        "controlValues": {
+          "subject": "Cancelled: {% if payload.record_name %}{{payload.record_name}}{% elsif payload.application_reference %}application {{payload.application_reference}}{% else %}{{payload.artifact_type_label}}{% endif %}",
+          "editorType": "html",
+          "bodyFile": "email/approval-request-cancelled.html"
+        }
+      }
+    ]
+  },
+  {
+    "event": "approval.stage_quorum_skipped",
+    "trigger": "approval-stage-quorum-skipped",
+    "name": "Approval stage quorum skipped",
+    "description": "Staff in-app to approvers whose tasks were closed as skipped once quorum was met.",
+    "tags": [
+      "openg2p",
+      "awe"
+    ],
+    "payload_schema": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "request_id": {
+          "type": "string"
+        },
+        "artifact_type": {
+          "type": "string"
+        },
+        "artifact_type_label": {
+          "type": "string"
+        },
+        "artifact_id": {
+          "type": "string"
+        },
+        "change_request_id": {
+          "type": "string"
+        },
+        "submission_id": {
+          "type": "string"
+        },
+        "application_reference": {
+          "type": "string"
+        },
+        "register_mnemonic": {
+          "type": "string"
+        },
+        "register_subject": {
+          "type": "string"
+        },
+        "record_name": {
+          "type": "string"
+        },
+        "section_mnemonic": {
+          "type": "string"
+        },
+        "intake_form_mnemonic": {
+          "type": "string"
+        },
+        "staff_portal_base_url": {
+          "type": "string"
+        },
+        "task_path": {
+          "type": "string"
+        },
+        "tasks_list_path": {
+          "type": "string"
+        },
+        "policy_key": {
+          "type": "string"
+        },
+        "policy_id": {
+          "type": "string"
+        },
+        "policy_name": {
+          "type": "string"
+        },
+        "policy_description": {
+          "type": "string"
+        },
+        "policy_version": {
+          "type": "string"
+        },
+        "source_service": {
+          "type": "string"
+        },
+        "requester": {
+          "type": "string"
+        },
+        "requester_name": {
+          "type": "string"
+        },
+        "request_status": {
+          "type": "string"
+        },
+        "current_stage_order": {
+          "type": "string"
+        },
+        "request_created_at": {
+          "type": "string"
+        },
+        "completed_at": {
+          "type": "string"
+        },
+        "stage_id": {
+          "type": "string"
+        },
+        "stage_name": {
+          "type": "string"
+        },
+        "stage_order": {
+          "type": "string"
+        },
+        "stage_mode": {
+          "type": "string"
+        },
+        "stage_mode_value": {
+          "type": "string"
+        },
+        "sla_hours": {
+          "type": "string"
+        },
+        "on_breach": {
+          "type": "string"
+        },
+        "on_empty": {
+          "type": "string"
+        },
+        "parallel_group": {
+          "type": "string"
+        },
+        "due_at": {
+          "type": "string"
+        },
+        "task_id": {
+          "type": "string"
+        },
+        "assignee": {
+          "type": "string"
+        },
+        "assignee_name": {
+          "type": "string"
+        },
+        "task_kind": {
+          "type": "string"
+        },
+        "task_status": {
+          "type": "string"
+        },
+        "delegated_from": {
+          "type": "string"
+        },
+        "claimed_at": {
+          "type": "string"
+        },
+        "skipped_assignees": {
+          "type": "string"
+        },
+        "skipped_assignee_names": {
+          "type": "string"
+        }
+      }
+    },
+    "steps": [
+      {
+        "name": "In-App",
+        "type": "in_app",
+        "controlValues": {
+          "subject": "No action needed",
+          "body": "Quorum was already met on {{payload.stage_name}}. Your approval task for {% if payload.record_name %}{{payload.record_name}}{% elsif payload.application_reference %}application {{payload.application_reference}}{% else %}{{payload.artifact_type_label}}{% endif %} was closed as no longer needed.",
+          "primaryAction": {
+            "label": "View task",
+            "redirect": {
+              "url": "{{payload.staff_portal_base_url}}/en{{payload.task_path}}",
+              "target": "_self"
+            }
+          },
+          "secondaryAction": {
+            "label": "Show all tasks",
+            "redirect": {
+              "url": "{{payload.staff_portal_base_url}}/en{{payload.tasks_list_path}}",
+              "target": "_self"
+            }
+          }
+        }
+      }
+    ]
+  }
+]
