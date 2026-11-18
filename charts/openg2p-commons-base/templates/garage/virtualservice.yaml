@@ -1,0 +1,29 @@
+{{- if .Values.garage.enabled }}
+{{- $hostname := tpl .Values.global.garageHostname $ }}
+{{- $destination := printf "%s-garage" .Release.Name }}
+{{- $apiPort := 3900 }}
+{{- $gateway := "internal" }}
+---
+# Garage S3 API
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: {{ .Release.Name }}-garage-api
+  labels: {{- include "common.labels.standard" (dict "customLabels" .Values.garage.commonLabels "context" $) | nindent 4 }}
+spec:
+  hosts:
+  - {{ $hostname | quote }}
+  gateways:
+  - {{ $gateway }}
+  http:
+  - headers:
+      request:
+        set:
+          x-forwarded-host: {{ $hostname | quote }}
+          x-forwarded-proto: https
+    route:
+    - destination:
+        host: {{ $destination }}
+        port:
+          number: {{ $apiPort }}
+{{- end }}

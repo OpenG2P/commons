@@ -1,0 +1,110 @@
+{{- if .Values.garage.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  # A regular Job, not a post-install hook: Helm runs post-install hooks only
+  # after every resource is ready, but services that need the credentials this
+  # Job writes (e.g. Novu's `commons-minio` Secret) are never ready without it,
+  # so as a hook the install deadlocked until the timeout. It waits for Garage
+  # itself and is idempotent; the revision suffix gives each upgrade a fresh Job.
+  name: {{ .Release.Name }}-garage-init-{{ .Release.Revision }}
+spec:
+  backoffLimit: 5
+  ttlSecondsAfterFinished: 600
+  template:
+    spec:
+      restartPolicy: OnFailure
+      serviceAccountName: {{ .Release.Name }}-garage-init
+      containers:
+        - name: garage-init
+          image: bitnami/kubectl:latest
+          command:
+            - sh
+            - -c
+            - |
+              set -e
+              NS={{ .Release.Namespace }}
+              POD={{ .Release.Name }}-garage-0
+              KX="kubectl exec -n $NS $POD --"
+
+              echo "Waiting for Garage node..."
+              until $KX ./garage status > /dev/null 2>&1; do
+                sleep 3
+              done
+
+              NODE_ID=$($KX ./garage status | awk '/NO ROLE ASSIGNED/{print $1}')
+              if [ -n "$NODE_ID" ]; then
+                echo "Assigning layout to $NODE_ID"
+                $KX ./garage layout assign "$NODE_ID" -z zone1 -c 1G
+                $KX ./garage layout apply --version 1
+              else
+                echo "Layout already assigned, skipping."
+              fi
+
+              # ---- Access keys (idempotent) ----
+              # `garage key create NAME` never fails on an existing name: it makes
+              # another key with the same name. So reuse the key the commons-minio
+              # Secret already holds (services use it); create one only when there
+              # is none; and always pick exactly one.
+              secret_field() {
+                kubectl get secret commons-minio -n $NS -o jsonpath="{.data.$1}" 2>/dev/null | base64 -d 2>/dev/null || true
+              }
+              ensure_key() {  # $1 key name, $2 Secret field holding its ID
+                id=$(secret_field "$2")
+                if [ -n "$id" ] && $KX ./garage key info "$id" > /dev/null 2>&1; then
+                  echo "$id"; return
+                fi
+                id=$($KX ./garage key list 2>/dev/null | awk -v n="$1" '$3 == n {print $1; exit}')
+                if [ -z "$id" ]; then
+                  $KX ./garage key create "$1" > /dev/null
+                  id=$($KX ./garage key list 2>/dev/null | awk -v n="$1" '$3 == n {print $1; exit}')
+                fi
+                echo "$id"
+              }
+              key_secret() {
+                $KX ./garage key info "$1" --show-secret 2>/dev/null | awk '/Secret key/ {print $3}'
+              }
+
+              # Shared read-write key (ODK Central, registries, Master Data, Novu)
+              echo "Ensuring garage-key..."
+              GARAGE_KEY_ID=$(ensure_key garage-key root-user)
+              GARAGE_SECRET=$(key_secret "$GARAGE_KEY_ID")
+              # Read-only key (registries' read-only access)
+              echo "Ensuring garage-readonly-key..."
+              READONLY_KEY_ID=$(ensure_key garage-readonly-key readonly-user)
+              READONLY_SECRET=$(key_secret "$READONLY_KEY_ID")
+              [ -n "$GARAGE_KEY_ID" ] && [ -n "$GARAGE_SECRET" ] && [ -n "$READONLY_KEY_ID" ] && [ -n "$READONLY_SECRET" ] || {
+                echo "Could not determine Garage access keys"; exit 1; }
+
+              # ---- Create buckets (idempotent) ----
+              # consent-evidence: the Consent Manager's uploaded consent evidence (signed forms).
+              BUCKETS="odk-central default documents templates import-files export-files openg2p-geo novu consent-evidence"
+              for bucket in $BUCKETS; do
+                echo "Ensuring bucket $bucket..."
+                $KX ./garage bucket create "$bucket" || true
+              done
+
+              # ---- Grant permissions on buckets ----
+              for bucket in $BUCKETS; do
+                echo "Granting read-write on $bucket to garage-key"
+                $KX ./garage bucket allow --read --write --owner "$bucket" --key "$GARAGE_KEY_ID"
+              done
+
+              for bucket in default documents templates export-files; do
+                echo "Granting read-only on $bucket to garage-readonly-key"
+                $KX ./garage bucket allow --read --owner "$bucket" --key "$READONLY_KEY_ID"
+              done
+
+              # ---- Single consolidated secret: commons-minio ----
+              # Used by ODK Central, Registry, and any other consumer.
+              # 4 key pairs: root (read-write) creds + readonly creds.
+              kubectl create secret generic commons-minio \
+                -n $NS \
+                --from-literal=root-user="$GARAGE_KEY_ID" \
+                --from-literal=root-password="$GARAGE_SECRET" \
+                --from-literal=readonly-user="$READONLY_KEY_ID" \
+                --from-literal=readonly-password="$READONLY_SECRET" \
+                --dry-run=client -o yaml | kubectl apply -f -
+
+              echo "Garage provisioning complete."
+{{- end }}

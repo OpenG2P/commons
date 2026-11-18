@@ -21,6 +21,7 @@ global:
   # Service hostnames owned by commons-base — single source of truth used by both
   # the actual service deployments and the keycloak-init redirect URIs below.
   kafkaUiHostname: 'kafka.{{ tpl .Values.global.baseDomain $ }}'
+  garageHostname: 'garage.{{ tpl .Values.global.baseDomain $ }}'
   minioHostname: 'minio.{{ tpl .Values.global.baseDomain $ }}'
   novuApiHostname: 'novu-api.{{ tpl .Values.global.baseDomain $ }}'
   novuWsHostname: 'novu-ws.{{ tpl .Values.global.baseDomain $ }}'
@@ -255,7 +256,7 @@ redis-auth:
       enabled: false
 
 minio:
-  enabled: true
+  enabled: false
   hostname: '{{ tpl .Values.global.minioHostname $ }}'
   persistence:
     enabled: true
@@ -344,6 +345,23 @@ minio:
       tls:
         mode: SIMPLE
         credentialName: ""
+
+
+garage:
+  enabled: true
+  garage:
+    replicationFactor: "1"
+    s3:
+      api:
+        region: "us-east-1"
+  persistence:
+    enabled: true
+    data:
+      size: 16Gi
+    meta:
+      size: 1Gi
+  deployment:
+    replicaCount: 1
 
 kafka:
   enabled: true
@@ -652,7 +670,7 @@ novu:
       NOVU_SECRET_KEY: ''
     extraEnvVars:
       - name: S3_LOCAL_STACK
-        value: 'http://{{ .Release.Name }}-minio:9000'
+        value: 'http://{{ .Release.Name }}-garage:3900'
       - name: AWS_ACCESS_KEY_ID
         valueFrom:
           secretKeyRef:
@@ -670,7 +688,7 @@ novu:
       tag: 3.19.0
     extraEnvVars:
       - name: S3_LOCAL_STACK
-        value: 'http://{{ .Release.Name }}-minio:9000'
+        value: 'http://{{ .Release.Name }}-garage:3900'
       - name: AWS_ACCESS_KEY_ID
         valueFrom:
           secretKeyRef:
@@ -751,7 +769,7 @@ novu:
   # Object storage is the commons MinIO. Create the bucket before enabling.
   externalS3:
     storageService: s3
-    endpoint: 'http://commons-minio:9000'
+    endpoint: 'http://commons-garage:3900'
     bucketName: novu
     region: us-east-1
     accessKey: unused
