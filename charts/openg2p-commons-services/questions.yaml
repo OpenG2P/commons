@@ -129,11 +129,11 @@ questions:
   label: Redis Auth Hostname
   group: Infrastructure
 
-- variable: global.minioInstallationName
+- variable: global.garageInstallationName
   description: >-
-    MinIO service name from the base chart. Set to <base-release-name>-minio.
+    Garage service name from the base chart. Set to <base-release-name>-garage.
   type: string
-  label: MinIO Hostname
+  label: Garage Hostname
   group: Infrastructure
 
 - variable: global.mailInstallationName
