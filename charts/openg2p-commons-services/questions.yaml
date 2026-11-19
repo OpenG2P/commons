@@ -391,6 +391,19 @@ questions:
   group: Consent Manager
   show_if: openg2p-consent-manager.enabled=true&&openg2p-consent-manager.partnerPortal.enabled=true&&global.agriStackExchange.role!=exchange
 
+- variable: openg2p-consent-manager.partnerPortal.assistedConfirmation.enabled
+  description: >-
+    Assisted confirmation (consent scenario 0): after the subject's national-ID
+    login, one "I agree" in the partner portal makes the consent active at once,
+    with no signed form and no CM staff check. The weakest proof: used only for
+    partners whose Partner Management policy also allows it (May collect
+    consents by assisted confirmation). Needs the national-ID login.
+  type: boolean
+  default: false
+  label: Allow Assisted Confirmation (no form)?
+  group: Consent Manager
+  show_if: openg2p-consent-manager.enabled=true&&openg2p-consent-manager.partnerPortal.enabled=true
+
 - variable: openg2p-consent-manager.partnerPortal.requiredSubjectIdentifiers
   description: >-
     Comma-separated identifiers every request must carry besides the subject
