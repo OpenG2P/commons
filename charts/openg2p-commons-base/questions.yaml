@@ -18,12 +18,20 @@ questions:
   label: Kafka UI Hostname
   group: Service Hostnames
 
-- variable: global.garageHostname
+# Object Store
+- variable: global.garageEnabled
   description: >-
-    Public hostname of the S3-compatible object store API. Defaults to
-    garage.<Base Domain>.
-  type: string
-  label: Object Store (S3) Hostname
+    We recommend using Garage as the object store.
+  type: boolean
+  label: Install Garage
+  default: true
+  group: Object Store
+
+- variable: global.minioEnabled
+  description: MinIO is available as an alternative object store.
+  type: boolean
+  label: Install MinIO
+  default: false
   group: Object Store
 
 # Novu (OpenG2P Notification)
@@ -138,12 +146,7 @@ questions:
   label: Mail Server Hostname
   group: Mail
 
-# Minio
-- variable: minio.enabled
-  description: This installs Minio for document store.
-  type: boolean
-  label: Install Minio?
-  group: Minio
+
 
 # Kafka
 - variable: kafka.enabled
