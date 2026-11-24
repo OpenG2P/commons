@@ -19,16 +19,19 @@ questions:
   group: Service Hostnames
 
 # Object Store
-- variable: global.minioEnabled
-  description: Enable MinIO object storage.
-  type: boolean
-  label: Install MinIO
-  group: Object Store
-
 - variable: global.garageEnabled
-  description: Enable Garage object storage.
+  description: >-
+    We recommend using Garage as the object store.
   type: boolean
   label: Install Garage
+  default: true
+  group: Object Store
+
+- variable: global.minioEnabled
+  description: MinIO is available as an alternative object store.
+  type: boolean
+  label: Install MinIO
+  default: false
   group: Object Store
 
 # Novu (OpenG2P Notification)
