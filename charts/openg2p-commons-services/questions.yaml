@@ -394,13 +394,14 @@ questions:
 - variable: openg2p-consent-manager.partnerPortal.assistedConfirmation.enabled
   description: >-
     Assisted confirmation (consent scenario 0): after the subject's national-ID
-    login, one "I agree" in the partner portal makes the consent active at once,
-    with no signed form and no CM staff check. The weakest proof: used only for
-    partners whose Partner Management policy also allows it (May collect
-    consents by assisted confirmation). Needs the national-ID login.
+    login, one "I agree" in the partner portal makes the consent active at once.
+    The signed form is still uploaded (required) and kept with the consent, but
+    no Consent Approver checks it. The weakest proof: used only for partners
+    whose Partner Management policy also allows it (May collect consents by
+    assisted confirmation). Needs the national-ID login.
   type: boolean
   default: false
-  label: Allow Assisted Confirmation (no form)?
+  label: Allow Assisted Confirmation (no approver)?
   group: Consent Manager
   show_if: openg2p-consent-manager.enabled=true&&openg2p-consent-manager.partnerPortal.enabled=true
 
